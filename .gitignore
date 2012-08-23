@@ -161,3 +161,11 @@ pip-log.txt
 
 # Mac crap
 .DS_Store
+
+
+###################
+## Sketch-specific
+###################
+
+html.h
+
