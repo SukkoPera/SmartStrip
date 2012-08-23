@@ -1,0 +1,23 @@
+<html>
+<body>
+<h3>Socket #GETP_rel#</h3>
+<form method="get">
+<input type="hidden" name="rel" value="#GETP_rel#" />
+<input type="radio" name="mode" value="on" #RELAY_ON_CHK#/>ON<br />
+<input type="radio" name="mode" value="off" #RELAY_OFF_CHK#/>OFF<br />
+<input type="radio" name="mode" value="temp" #RELAY_TEMP_CHK#/>Enabled when T
+<select name="thres">
+<option value="gt" #RELAY_TGT_CHK#>&gt;</option>
+<option value="lt" #RELAY_TLT_CHK#>&lt;</option>
+</select>
+<input name="temp" size="3" maxlength="2"/>
+<select name="units">
+<option value="C">&deg;C</option>
+<option value="F">&deg;F</option>
+</select>
+- Delay <input name="throt" size="3" maxlength="2"/> min<br />
+<br />
+<input type="submit" value="Save" />
+</form>
+</body>
+</html>

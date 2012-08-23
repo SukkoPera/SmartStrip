@@ -1,0 +1,47 @@
+SmartStrip
+==========
+
+SmartStrip is a sketch for Arduino meant to allow advanced control of relays
+through a web interface.
+
+While there are already similar sketches out there, SmartStrip will have many
+unique features when it is complete, too many to mention now :).
+
+At the moment the only targeted platform is KMTronic's DINo:
+http://sigma-shop.com/product/72/web-internet-ethernet-controlled-relay-board-arduino-compatible-rs485-usb.html.
+
+The DINo uses the ENC28J60 Ethernet Controller. SmartStrip supports it through
+the EtherCard library, so you will need it to compile the sketch. Get it at
+https://github.com/jcw/ethercard/.
+
+I chose this board since it has everything I need for my purposes, so it is the
+only platform which should work "out of the box". Other boards/configurations
+can probably be supported with minor changes in the code, as long as they use
+the ENC28J60. Support for the WIZ5100 controller will hopefully come in the
+future, probably when the sketch will outgrow the limits of the ATmega328 and I
+will need to move the development to my Mega 2560, since I use it with a
+WIZ5100-based Ethernet shield ;).
+
+The webserver component is designed to allow reuse in other projects. Hopefully
+documentation for that will come in the future, but it should be quite easy to
+do, if you look at the smartstrip.ino file.
+
+
+SmartStrip is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+SmartStrip is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with SmartStrip.  If not, see <http://www.gnu.org/licenses/>.
+
+
+That's all for the moment, please use the official github page to report issues
+and such: https://github.com/SukkoPera/smartstrip.
+
+Enjoy!
