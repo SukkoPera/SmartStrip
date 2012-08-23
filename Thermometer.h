@@ -26,9 +26,6 @@
 #include <DallasTemperature.h>
 
 
-#define THERMO_READ_INTERVAL (1 * 1000U)        //delay between temperature readings
-
-
 struct Temperature {
 	bool valid;
 	float celsius;
@@ -52,8 +49,8 @@ class Thermometer {
 	static void printAddress (DeviceAddress deviceAddress) {
 		for (uint8_t i = 0; i < 8; i++) {
 			if (deviceAddress[i] < 16)
-				Serial.print ("0");
-			Serial.print (deviceAddress[i], HEX);
+				DPRINT (F("0"));
+			DPRINT (deviceAddress[i], HEX);
 		}
 	}
 
@@ -71,37 +68,37 @@ class Thermometer {
 public:	
 	Thermometer (int busPin = ONE_WIRE_BUS_PIN): oneWire (busPin), sensors (&oneWire) {
 	}
-	
-	bool setup (void) {
+
+	void begin () {
 		// locate devices on the bus
-		Serial.print (F("Scanning for temperature sensors on pin "));
-		Serial.print (ONE_WIRE_BUS_PIN);
-		Serial.println ();
+		DPRINT (F("Scanning for temperature sensors on pin "));
+		DPRINT (ONE_WIRE_BUS_PIN);
+		DPRINTLN ();
 		sensors.begin ();
 
 		// Report parasite power requirements
-		Serial.print (F("Parasite power is: "));
-		Serial.println (sensors.isParasitePowerMode () ? F("ON") : F("OFF"));
+		DPRINT (F("Parasite power is: "));
+		DPRINTLN (sensors.isParasitePowerMode () ? F("ON") : F("OFF"));
 
 		if (sensors.getDeviceCount () > 0) {
-			Serial.print (F("Found "));
-			Serial.print (sensors.getDeviceCount (), DEC);
-			Serial.println (F(" device(s)"));
+			DPRINT (F("Found "));
+			DPRINT (sensors.getDeviceCount (), DEC);
+			DPRINTLN (F(" device(s)"));
 
 			if (!sensors.getAddress (thermometerAddress, 0)) {
-				Serial.println (F("Unable to find address for Device 0"));
+				DPRINTLN (F("Unable to find address for Device 0"));
 				thermometerAvailable = false;
 			} else {
 				// show the addresses we found on the bus
-				Serial.print (F("Using device with address: "));
+				DPRINT (F("Using device with address: "));
 				printAddress (thermometerAddress);
-				Serial.println ();
+				DPRINTLN ();
 
 				// set the resolution
 				sensors.setResolution (thermometerAddress, THERMOMETER_RESOLUTION);
-				Serial.print (F("Device Resolution: "));
-				Serial.print (sensors.getResolution (thermometerAddress), DEC);
-				Serial.println ();
+				DPRINT (F("Device Resolution: "));
+				DPRINT (sensors.getResolution (thermometerAddress), DEC);
+				DPRINTLN ();
 
 				thermometerAvailable = true;
 			}
@@ -109,8 +106,6 @@ public:
 			Serial.println (F("No sensors found"));
 			thermometerAvailable = false;
 		}
-
-		return thermometerAvailable;
 	}
 
 	void loop (void) {

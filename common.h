@@ -20,6 +20,8 @@
 #ifndef COMMON_H_
 #define COMMON_H_
 
+// #define NDEBUG
+
 //#define USE_UNIX
 //#define USE_ARDUINO_TIME_LIBRARY
 
@@ -29,11 +31,18 @@
 #define RELAY3_PIN 6
 #define RELAY4_PIN 5
 
+// Define to enable temperature-controlled relays
+#define ENABLE_THERMOMETER
+
 // DS18B20's data wire is connected to pin 2
 #define ONE_WIRE_BUS_PIN 2
 
 // DS18B20's data resolution
 #define THERMOMETER_RESOLUTION 9
+
+//Delay between temperature readings
+#define THERMO_READ_INTERVAL (1 * 1000U)
+
 
 #define EEPROM_MAGIC 0x50545353UL			// "SSTP"
 #define EEPROM_SIZE 64						// Don't waste write cycles of much more EEPROM than we need
@@ -99,6 +108,6 @@
 #define DEFAULT_GATEWAY_ADDRESS_B4 254
 
 
-#define PROGRAM_VERSION "0.4git"
+#define PROGRAM_VERSION "0.5git"
 
 #endif

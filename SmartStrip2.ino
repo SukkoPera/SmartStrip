@@ -17,8 +17,6 @@
  *   along with SmartStrip.  If not, see <http://www.gnu.org/licenses/>.   *
  ***************************************************************************/
 
-#include "common.h"
-
 #include <Webbino.h>
 #ifdef USE_ENC28J60
 	#include <EtherCard.h>
@@ -32,10 +30,10 @@
 #include <DallasTemperature.h>
 #include <EEPROMAnything.h>
 #include <Panic.h>
-// #include <Time.h>
 #include "Thermometer.h"
 #include "Relay.h"
 #include "enums.h"
+#include "common.h"
 #include "html.h"
 
 // Other stuff
@@ -46,10 +44,10 @@ byte lastSelectedRelay;
 // Instantiate the WebServer
 WebServer webserver;
 
+#ifdef ENABLE_THERMOMETER
 // Instantiate the thermometer
 Thermometer thermometer;
-
-bool justStarted;
+#endif
 
 
 Relay relays[RELAYS_NO] = {
@@ -58,6 +56,9 @@ Relay relays[RELAYS_NO] = {
 	Relay (3, RELAY3_PIN),
 	Relay (4, RELAY4_PIN)
 };
+
+static bool relayHysteresis[RELAYS_NO];
+
 
 void checkAndFormatEEPROM () {
 	unsigned long magic;
@@ -70,7 +71,7 @@ void checkAndFormatEEPROM () {
 
 	if (magic != EEPROM_MAGIC) {
 		// Need to format EEPROMAnything
-		DPRINT (F("Formatting EEPROMAnything (Wrong Magic: 0x"));
+		DPRINT (F("Formatting EEPROM (Wrong Magic: 0x"));
 		DPRINT (magic >> 16, HEX);			// It seems we can't print a long in a single pass
 		DPRINT (magic, HEX);
 		DPRINTLN (F(")"));
@@ -108,9 +109,9 @@ void checkAndFormatEEPROM () {
 		EEPROMAnything.write (EEPROM_GATEWAY_B3_ADDR, DEFAULT_GATEWAY_ADDRESS_B3);
 		EEPROMAnything.write (EEPROM_GATEWAY_B4_ADDR, DEFAULT_GATEWAY_ADDRESS_B4);
 
-		DPRINTLN (F("EEPROMAnything Format complete"));
+		DPRINTLN (F("EEPROM Format complete"));
 	} else {
-		DPRINTLN (F("EEPROMAnything OK"));
+		DPRINTLN (F("EEPROM OK"));
 	}
 }
 	
@@ -226,7 +227,7 @@ void config_func (HTTPRequestParser& request) {
 		EEPROMAnything.write (EEPROM_GATEWAY_B4_ADDR, buf[3]);
 	}
 
-	Serial.println (F("Configuration saved"));
+	DPRINTLN (F("Configuration saved"));
 }
 
 void sck_func (HTTPRequestParser& request) {
@@ -399,28 +400,29 @@ char *floatToString (double val, char *outstr) {
 	return outstr;
 }
 
+#ifdef ENABLE_THERMOMETER
 static char *evaluate_temp_deg () {
+	DPRINTLN ("AAAA");
 	Temperature& temp = thermometer.getTemp ();
-	if (temp.valid) {
-		//dtostrf (temp.celsius, -1, 2, replaceBuffer);
+	if (temp.valid)
 		floatToString (temp.celsius, replaceBuffer);
-	} else {
+	else
 		strlcpy_P (replaceBuffer, NOT_AVAIL_STR, REP_BUFFER_LEN);
-	}
 	
 	return replaceBuffer;
 }
 
 static char *evaluate_temp_fahr () {
+	DPRINTLN ("AAAABBBB");
 	Temperature& temp = thermometer.getTemp ();
-	if (temp.valid) {
-		//dtostrf (temp.toFahrenheit (), -1, 2, replaceBuffer);
-		floatToString (temp.celsius, replaceBuffer);
-	} else
+	if (temp.valid)
+		floatToString (temp.toFahrenheit (), replaceBuffer);
+	else
 		strlcpy_P (replaceBuffer, NOT_AVAIL_STR, REP_BUFFER_LEN);
 	
 	return replaceBuffer;
 }
+#endif
 
 static char *ip2str (const byte *buf) {
 #if 0
@@ -657,8 +659,6 @@ static char *evaluate_free_ram () {
 // Max length of these is MAX_TAG_LEN (24)
 static const char subDateStr[] PROGMEM = "DATE";
 static const char subTimeStr[] PROGMEM = "TIME";
-static const char subDegCStr[] PROGMEM = "DEGC";
-static const char subDegFStr[] PROGMEM = "DEGF";
 static const char subMacAddrStr[] PROGMEM = "MACADDR";
 static const char subIPAddressStr[] PROGMEM = "NET_IP";
 static const char subNetmaskStr[] PROGMEM = "NET_MASK";
@@ -667,17 +667,19 @@ static const char subNMDHCPStr[] PROGMEM = "NETMODE_DHCP_CHK";
 static const char subNMStaticStr[] PROGMEM = "NETMODE_STATIC_CHK";
 static const char subRelayOnStr[] PROGMEM = "RELAY_ON_CHK";
 static const char subRelayOffStr[] PROGMEM = "RELAY_OFF_CHK";
+#ifdef ENABLE_THERMOMETER
+static const char subDegCStr[] PROGMEM = "DEGC";
+static const char subDegFStr[] PROGMEM = "DEGF";
 static const char subRelayTempStr[] PROGMEM = "RELAY_TEMP_CHK";
 static const char subRelayTempGTStr[] PROGMEM = "RELAY_TGT_CHK";
 static const char subRelayTempLTStr[] PROGMEM = "RELAY_TLT_CHK";
+#endif
 static const char subVerStr[] PROGMEM = "VERSION";
 static const char subUptimeStr[] PROGMEM = "UPTIME";
 static const char subFreeRAMStr[] PROGMEM = "FREERAM";
 
 static var_substitution subDateVarSub PROGMEM = {subDateStr, evaluate_date};
 static var_substitution subTimeVarSub PROGMEM =	{subTimeStr, evaluate_time};
-static var_substitution subDegCVarSub PROGMEM =	{subDegCStr, evaluate_temp_deg};
-static var_substitution subDegFVarSub PROGMEM = {subDegFStr, evaluate_temp_fahr};
 static var_substitution subMacAddrVarSub PROGMEM = {subMacAddrStr, evaluate_mac_addr};
 static var_substitution subIPAddressVarSub PROGMEM = {subIPAddressStr, evaluate_ip};
 static var_substitution subNetmaskVarSub PROGMEM = {subNetmaskStr, evaluate_netmask};
@@ -686,9 +688,13 @@ static var_substitution subNMDHCPVarSub PROGMEM = {subNMDHCPStr, evaluate_netmod
 static var_substitution subNMStaticVarSub PROGMEM = {subNMStaticStr, evaluate_netmode_static_checked};
 static var_substitution subRelayOnVarSub PROGMEM = {subRelayOnStr, evaluate_relay_on_checked};
 static var_substitution subRelayOffVarSub PROGMEM = {subRelayOffStr, evaluate_relay_off_checked};
+#ifdef ENABLE_THERMOMETER
+static var_substitution subDegCVarSub PROGMEM =	{subDegCStr, evaluate_temp_deg};
+static var_substitution subDegFVarSub PROGMEM = {subDegFStr, evaluate_temp_fahr};
 static var_substitution subRelayTempVarSub PROGMEM = {subRelayTempStr, evaluate_relay_temp_checked};
 static var_substitution subRelayTempGTVarSub PROGMEM = {subRelayTempGTStr, evaluate_relay_temp_gt_checked};
 static var_substitution subRelayTempLTVarSub PROGMEM = {subRelayTempLTStr, evaluate_relay_temp_lt_checked};
+#endif
 static var_substitution subVerVarSub PROGMEM = {subVerStr, evaluate_version};
 static var_substitution subUptimeVarSub PROGMEM = {subUptimeStr, evaluate_uptime};
 static var_substitution subFreeRAMVarSub PROGMEM = {subFreeRAMStr, evaluate_free_ram};
@@ -696,8 +702,6 @@ static var_substitution subFreeRAMVarSub PROGMEM = {subFreeRAMStr, evaluate_free
 static var_substitution *substitutions[] PROGMEM = {
 	&subDateVarSub,
 	&subTimeVarSub,
-	&subDegCVarSub,
-	&subDegFVarSub,
 	&subMacAddrVarSub,
 	&subIPAddressVarSub,
 	&subNetmaskVarSub,
@@ -706,9 +710,13 @@ static var_substitution *substitutions[] PROGMEM = {
 	&subNMStaticVarSub,
 	&subRelayOnVarSub,
 	&subRelayOffVarSub,
+#ifdef ENABLE_THERMOMETER
+	&subDegCVarSub,
+	&subDegFVarSub,
 	&subRelayTempVarSub,
 	&subRelayTempGTVarSub,
 	&subRelayTempLTVarSub,
+#endif
 	&subVerVarSub,
 	&subUptimeVarSub,
 	&subFreeRAMVarSub,
@@ -727,7 +735,7 @@ void setup () {
 	byte mac[6];
 
 	Serial.begin (9600);
-	Serial.println (F("SmartStrip " PROGRAM_VERSION));
+	DPRINTLN (F("SmartStrip " PROGRAM_VERSION));
 
 	// Check and format EEPROMAnything, in case
 	checkAndFormatEEPROM ();
@@ -772,16 +780,16 @@ void setup () {
 			if (!webserver.begin (mac, ip, mask, gw))
 				panic.panic (F("Failed to set static IP address"));
 			else
-				Serial.println (F("Static IP setup done"));
+				DPRINTLN (F("Static IP setup done"));
 			break;
 		}
 		default:
 		case NETMODE_DHCP:
-			Serial.println (F("Trying to get an IP address through DHCP"));
+			DPRINTLN (F("Trying to get an IP address through DHCP"));
 			if (!webserver.begin (mac)) {
 				panic.panic (F("Failed to get configuration from DHCP"));
 			} else {
-				Serial.println (F("DHCP configuration done"));
+				DPRINTLN (F("DHCP configuration done"));
 #if 0
 				ether.printIp ("IP:\t", webserver.getIP ());
 				ether.printIp ("Mask:\t", webserver.getNetmask ());
@@ -792,9 +800,14 @@ void setup () {
 			break;
 	}
 
-	thermometer.setup ();
+#ifdef ENABLE_THERMOMETER
+	thermometer.begin ();
+#endif
 
-	justStarted = true;
+	for (int i = 0; i < RELAYS_NO; i++)
+		relayHysteresis[i] = false;			// Start with no hysteresis
+
+// 	DPRINTLN ("setup() complete");
 }
 
 #define THRES 34
@@ -802,10 +815,13 @@ void setup () {
 
 void loop () {
 	webserver.processPacket ();
+#ifdef ENABLE_THERMOMETER
 	thermometer.loop ();
+#endif
 
 	for (int i = 0; i < RELAYS_NO; i++) {
 		Relay& r = relays[i];
+		bool& hysteresisEnabled = relayHysteresis[i];
 		
 		switch (r.mode) {
 			case RELMD_ON:
@@ -816,12 +832,13 @@ void loop () {
 				if (r.state != RELAY_OFF)
 					r.switchState (RELAY_OFF);
 				break;
+#ifdef ENABLE_THERMOMETER
 			case RELMD_GT: {
 				Temperature& temp = thermometer.getTemp ();
 				if (temp.valid) {
-					if (((justStarted && temp.celsius > THRES) || (!justStarted && temp.celsius > THRES + THYST)) && r.state != RELAY_ON) {
+					if (((!hysteresisEnabled && temp.celsius > THRES) || (hysteresisEnabled && temp.celsius > THRES + THYST)) && r.state != RELAY_ON) {
 						r.switchState (RELAY_ON);
-						justStarted = false;
+						hysteresisEnabled = false;
 					} else if (temp.celsius <= THRES && r.state != RELAY_OFF) {
 						r.switchState (RELAY_OFF);
 					}
@@ -830,15 +847,17 @@ void loop () {
 			} case RELMD_LT: {
 				Temperature& temp = thermometer.getTemp ();
 				if (temp.valid) {
-					if (((justStarted && temp.celsius < THRES) || (!justStarted && temp.celsius < THRES - THYST)) && r.state != RELAY_ON) {
+					if (((!hysteresisEnabled && temp.celsius < THRES) || (hysteresisEnabled && temp.celsius < THRES - THYST)) && r.state != RELAY_ON) {
 						r.switchState (RELAY_ON);
-						justStarted = false;
+						hysteresisEnabled = false;
 					} else if (temp.celsius >= THRES && r.state != RELAY_OFF) {
 						r.switchState (RELAY_OFF);
 					}
 				}
 				break;
-			} default:
+			}
+#endif
+			default:
 // 				DPRINT ("Relay ");
 // 				DPRINT (r.id);
 // 				DPRINT (" mode is ");
