@@ -179,7 +179,7 @@ bool tokenize (const char *str, PGM_P sep, byte *buffer, size_t bufsize, int bas
 	return ret;
 }
 
-void config_func (HTTPRequestParser& request) {
+void netconfig_func (HTTPRequestParser& request) {
 	char *param;
 	byte buf[6];
 
@@ -230,48 +230,80 @@ void config_func (HTTPRequestParser& request) {
 	DPRINTLN (F("Configuration saved"));
 }
 
+void relconfig_func (HTTPRequestParser& request) {
+	char *param;
+
+	param = request.get_get_parameter (F("delay"));
+	if (strlen (param) > 0) {
+		for (byte i = 0; i < RELAYS_NO; i++) {
+			Relay& relay = relays[i];
+
+			relay.delay = atoi (param);
+
+			param = request.get_get_parameter (F("hyst"));
+			if (strlen (param) > 0)
+				relay.hysteresis = atoi (param);
+		}
+	}
+}
+
 void sck_func (HTTPRequestParser& request) {
 	char *param;
 
 	param = request.get_get_parameter (F("rel"));
 	if (strlen (param) > 0) {
-		int relay = atoi (param);
-		panic_assert (panic, relay >= 1 && relay <= RELAYS_NO);
-
-		param = request.get_get_parameter (F("mode"));
-		if (strlen (param) > 0) {		// Only do something if we got this parameter
-			if (strcmp_P (param, PSTR ("on")) == 0) {
-				relays[relay - 1].mode = RELMD_ON;
-			} else if (strcmp_P (param, PSTR ("off")) == 0) {
-				relays[relay - 1].mode = RELMD_OFF;
-			} else if (strcmp_P (param, PSTR ("temp")) == 0) {
-				param = request.get_get_parameter (F("thres"));
-				if (strcmp_P (param, PSTR ("gt")) == 0)
-					relays[relay - 1].mode = RELMD_GT;
-				else
-					relays[relay - 1].mode = RELMD_LT;
-			}
-		}
+		int relayNo = atoi (param);
+		panic_assert (panic, relayNo >= 1 && relayNo <= RELAYS_NO);
 
 		/* Save the last selected relay for later. I know this is crap, but...
 		 * See below.
 		 */
-		lastSelectedRelay = relay;
+		lastSelectedRelay = relayNo;
+		
+		Relay& relay = relays[relayNo - 1];
+
+		param = request.get_get_parameter (F("mode"));
+		if (strlen (param) > 0) {		// Only do something if we got this parameter
+			if (strcmp_P (param, PSTR ("on")) == 0) {
+				relay.mode = RELMD_ON;
+			} else if (strcmp_P (param, PSTR ("off")) == 0) {
+				relay.mode = RELMD_OFF;
+			} else if (strcmp_P (param, PSTR ("temp")) == 0) {
+				param = request.get_get_parameter (F("thres"));
+				if (strcmp_P (param, PSTR ("gt")) == 0)
+					relay.mode = RELMD_GT;
+				else
+					relay.mode = RELMD_LT;
+
+				param = request.get_get_parameter (F("temp"));
+				relay.threshold = atoi (param);
+				
+				param = request.get_get_parameter (F("units"));
+				if (strcmp_P (param, PSTR ("F")) == 0)
+					relay.units = TEMP_F;
+				else
+					relay.units = TEMP_C;
+			}
+		}
 	}
 }
 
 static Page aboutPage PROGMEM = {about_html_name, about_html, NULL};
-static Page configPage PROGMEM = {config_html_name, config_html, config_func};
 static Page indexPage PROGMEM = {index_html_name, index_html, NULL};
 static Page leftPage PROGMEM = {left_html_name, left_html, NULL};
+static Page netconfigPage PROGMEM = {network_html_name, network_html, netconfig_func};
+static Page relconfigPage PROGMEM = {relays_html_name, relays_html, relconfig_func};
 static Page sckPage PROGMEM = {sck_html_name, sck_html, sck_func};
+static Page welcomePage PROGMEM = {welcome_html_name, welcome_html, NULL};
 
 static Page *pages[] PROGMEM = {
 	&aboutPage,
-	&configPage,
 	&indexPage,
 	&leftPage,
+	&netconfigPage,
+	&relconfigPage,
 	&sckPage,
+	&welcomePage,
  	NULL
 };
 
@@ -402,7 +434,6 @@ char *floatToString (double val, char *outstr) {
 
 #ifdef ENABLE_THERMOMETER
 static char *evaluate_temp_deg () {
-	DPRINTLN ("AAAA");
 	Temperature& temp = thermometer.getTemp ();
 	if (temp.valid)
 		floatToString (temp.celsius, replaceBuffer);
@@ -413,7 +444,6 @@ static char *evaluate_temp_deg () {
 }
 
 static char *evaluate_temp_fahr () {
-	DPRINTLN ("AAAABBBB");
 	Temperature& temp = thermometer.getTemp ();
 	if (temp.valid)
 		floatToString (temp.toFahrenheit (), replaceBuffer);
@@ -594,6 +624,37 @@ static char *evaluate_relay_temp_lt_checked () {
 	return replaceBuffer;
 }
 
+static char *evaluate_relay_temp_threshold () {
+	replaceBuffer[0] = '\0';
+
+	if (lastSelectedRelay >= 1 && lastSelectedRelay <= 4)
+		itoa (relays[lastSelectedRelay - 1].threshold, replaceBuffer, DEC);
+
+	return replaceBuffer;
+}
+
+static char *evaluate_relay_temp_units_c_checked () {
+	replaceBuffer[0] = '\0';
+
+	if (lastSelectedRelay >= 1 && lastSelectedRelay <= 4) {
+		if (relays[lastSelectedRelay - 1].units == TEMP_C)
+			strlcpy_P (replaceBuffer, SELECTED_STRING, REP_BUFFER_LEN);
+	}
+
+	return replaceBuffer;
+}
+
+static char *evaluate_relay_temp_units_f_checked () {
+	replaceBuffer[0] = '\0';
+
+	if (lastSelectedRelay >= 1 && lastSelectedRelay <= 4) {
+		if (relays[lastSelectedRelay - 1].units == TEMP_F)
+			strlcpy_P (replaceBuffer, SELECTED_STRING, REP_BUFFER_LEN);
+	}
+
+	return replaceBuffer;
+}
+
 static char *evaluate_version () {
 	strlcpy (replaceBuffer, PROGRAM_VERSION, REP_BUFFER_LEN);
 	return replaceBuffer;
@@ -673,6 +734,9 @@ static const char subDegFStr[] PROGMEM = "DEGF";
 static const char subRelayTempStr[] PROGMEM = "RELAY_TEMP_CHK";
 static const char subRelayTempGTStr[] PROGMEM = "RELAY_TGT_CHK";
 static const char subRelayTempLTStr[] PROGMEM = "RELAY_TLT_CHK";
+static const char subRelayTempThresholdStr[] PROGMEM = "RELAY_THRES";
+static const char subRelayTempUnitsCStr[] PROGMEM = "RELAY_TEMPC_CHK";
+static const char subRelayTempUnitsFStr[] PROGMEM = "RELAY_TEMPF_CHK";
 #endif
 static const char subVerStr[] PROGMEM = "VERSION";
 static const char subUptimeStr[] PROGMEM = "UPTIME";
@@ -694,6 +758,9 @@ static var_substitution subDegFVarSub PROGMEM = {subDegFStr, evaluate_temp_fahr}
 static var_substitution subRelayTempVarSub PROGMEM = {subRelayTempStr, evaluate_relay_temp_checked};
 static var_substitution subRelayTempGTVarSub PROGMEM = {subRelayTempGTStr, evaluate_relay_temp_gt_checked};
 static var_substitution subRelayTempLTVarSub PROGMEM = {subRelayTempLTStr, evaluate_relay_temp_lt_checked};
+static var_substitution subRelayTempThresholdVarSub PROGMEM = {subRelayTempThresholdStr, evaluate_relay_temp_threshold};
+static var_substitution subRelayTempUnitsCVarSub PROGMEM = {subRelayTempUnitsCStr, evaluate_relay_temp_units_c_checked};
+static var_substitution subRelayTempUnitsFVarSub PROGMEM = {subRelayTempUnitsFStr, evaluate_relay_temp_units_f_checked};
 #endif
 static var_substitution subVerVarSub PROGMEM = {subVerStr, evaluate_version};
 static var_substitution subUptimeVarSub PROGMEM = {subUptimeStr, evaluate_uptime};
@@ -716,6 +783,9 @@ static var_substitution *substitutions[] PROGMEM = {
 	&subRelayTempVarSub,
 	&subRelayTempGTVarSub,
 	&subRelayTempLTVarSub,
+	&subRelayTempThresholdVarSub,
+	&subRelayTempUnitsCVarSub,
+	&subRelayTempUnitsFVarSub,
 #endif
 	&subVerVarSub,
 	&subUptimeVarSub,
@@ -810,9 +880,6 @@ void setup () {
 // 	DPRINTLN ("setup() complete");
 }
 
-#define THRES 34
-#define THYST 1.0
-
 void loop () {
 	webserver.processPacket ();
 #ifdef ENABLE_THERMOMETER
@@ -836,10 +903,10 @@ void loop () {
 			case RELMD_GT: {
 				Temperature& temp = thermometer.getTemp ();
 				if (temp.valid) {
-					if (((!hysteresisEnabled && temp.celsius > THRES) || (hysteresisEnabled && temp.celsius > THRES + THYST)) && r.state != RELAY_ON) {
+					if (((!hysteresisEnabled && temp.celsius > r.threshold) || (hysteresisEnabled && temp.celsius > r.threshold + r.hysteresis)) && r.state != RELAY_ON) {
 						r.switchState (RELAY_ON);
 						hysteresisEnabled = false;
-					} else if (temp.celsius <= THRES && r.state != RELAY_OFF) {
+					} else if (temp.celsius <= r.threshold && r.state != RELAY_OFF) {
 						r.switchState (RELAY_OFF);
 					}
 				}
@@ -847,10 +914,10 @@ void loop () {
 			} case RELMD_LT: {
 				Temperature& temp = thermometer.getTemp ();
 				if (temp.valid) {
-					if (((!hysteresisEnabled && temp.celsius < THRES) || (hysteresisEnabled && temp.celsius < THRES - THYST)) && r.state != RELAY_ON) {
+					if (((!hysteresisEnabled && temp.celsius < r.threshold) || (hysteresisEnabled && temp.celsius < r.threshold - r.hysteresis)) && r.state != RELAY_ON) {
 						r.switchState (RELAY_ON);
 						hysteresisEnabled = false;
-					} else if (temp.celsius >= THRES && r.state != RELAY_OFF) {
+					} else if (temp.celsius >= r.threshold && r.state != RELAY_OFF) {
 						r.switchState (RELAY_OFF);
 					}
 				}

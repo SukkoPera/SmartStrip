@@ -10,12 +10,11 @@
 <option value="gt" #RELAY_TGT_CHK#>&gt;</option>
 <option value="lt" #RELAY_TLT_CHK#>&lt;</option>
 </select>
-<input name="temp" size="3" maxlength="2"/>
+<input name="temp" size="3" value="#RELAY_THRES#"/>
 <select name="units">
-<option value="C">&deg;C</option>
-<option value="F">&deg;F</option>
-</select>
-- Delay <input name="throt" size="3" maxlength="2"/> min<br />
+<option value="C" #RELAY_TEMPC_CHK#>&deg;C</option>
+<option value="F" #RELAY_TEMPF_CHK#>&deg;F</option>
+</select><br />
 <br />
 <input type="submit" value="Save" />
 </form>
