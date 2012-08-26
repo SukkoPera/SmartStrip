@@ -41,6 +41,17 @@ Relay::Relay (byte _id, byte _pin): id (_id), pin (_pin) {
 
 void Relay::readOptions () {
 	EEPROMAnything.readAnything (optionAddress[id - 1], dynamic_cast<RelayOptions&> (*this));
+
+/*	DPRINT ("sizeof (RelayOptions) = ");
+	DPRINTLN (sizeof (RelayOptions));
+	DPRINT ("Relay ");
+	DPRINT (id);
+	DPRINT (" mode is ");
+	DPRINT (mode);
+	DPRINT (" and state is ");
+	DPRINT (state);
+	DPRINT (" and delay is ");
+	DPRINTLN (delay);*/
 }
 
 void Relay::writeOptions () {
@@ -58,7 +69,7 @@ void Relay::setDefaults () {
 
 void Relay::switchState (RelayState newState) {
 	DPRINT (F("Turning "));
-	DPRINT (state ? F("ON") : F("OFF"));
+	DPRINT (newState == RELAY_ON ? F("ON") : F("OFF"));
 	DPRINT (F(" relay "));
 	DPRINTLN (id, DEC);
 

@@ -242,7 +242,7 @@ void relconfig_func (HTTPRequestParser& request) {
 
 			param = request.get_get_parameter (F("hyst"));
 			if (strlen (param) > 0)
-				relay.hysteresis = atoi (param);
+				relay.hysteresis = atoi (param) * 10;
 		}
 	}
 }
@@ -283,6 +283,8 @@ void sck_func (HTTPRequestParser& request) {
 					relay.units = TEMP_F;
 				else
 					relay.units = TEMP_C;
+
+				relayHysteresis[relayNo - 1] = false;
 			}
 		}
 	}
@@ -320,7 +322,7 @@ static char replaceBuffer[REP_BUFFER_LEN];
 const char NOT_AVAIL_STR[] PROGMEM = "N/A";
 
 
-static char *evaluate_date () {
+static char *evaluate_date (void *data) {
 #ifdef USE_UNIX
 	char *tmp;
 	time_t tt;
@@ -358,7 +360,7 @@ static char *evaluate_date () {
 	return replaceBuffer;
 }
 
-static char *evaluate_time () {
+static char *evaluate_time (void *data) {
 #ifdef USE_UNIX
 	char *tmp;
 	time_t tt;
@@ -433,7 +435,7 @@ char *floatToString (double val, char *outstr) {
 }
 
 #ifdef ENABLE_THERMOMETER
-static char *evaluate_temp_deg () {
+static char *evaluate_temp_deg (void *data) {
 	Temperature& temp = thermometer.getTemp ();
 	if (temp.valid)
 		floatToString (temp.celsius, replaceBuffer);
@@ -443,7 +445,7 @@ static char *evaluate_temp_deg () {
 	return replaceBuffer;
 }
 
-static char *evaluate_temp_fahr () {
+static char *evaluate_temp_fahr (void *data) {
 	Temperature& temp = thermometer.getTemp ();
 	if (temp.valid)
 		floatToString (temp.toFahrenheit (), replaceBuffer);
@@ -476,15 +478,15 @@ static char *ip2str (const byte *buf) {
 	return replaceBuffer;
 }
 
-static char *evaluate_ip () {
+static char *evaluate_ip (void *data) {
  	return ip2str (webserver.getIP ());
 }
 
-static char *evaluate_netmask () {
+static char *evaluate_netmask (void *data) {
 	return ip2str (webserver.getNetmask ());
 }
 
-static char *evaluate_gw () {
+static char *evaluate_gw (void *data) {
 	return ip2str (webserver.getGateway ());
 }
 
@@ -495,7 +497,7 @@ static char int2hex (int i) {
 		return i - 10 + 'A';
 }
 
-static char *evaluate_mac_addr () {
+static char *evaluate_mac_addr (void *data) {
 	byte tmp;
 
 	tmp = EEPROMAnything.read (EEPROM_MAC_B1_ADDR);
@@ -541,7 +543,7 @@ static char *evaluate_mac_addr () {
 const char CHECKED_STRING[] PROGMEM = "checked";
 const char SELECTED_STRING[] PROGMEM = "selected=\"true\"";
 
-static char *evaluate_netmode_dhcp_checked () {
+static char *evaluate_netmode_dhcp_checked (void *data) {
 	int netmode = EEPROMAnything.read (EEPROM_NETMODE_ADDR);
 
 	if (netmode == NETMODE_DHCP)
@@ -552,7 +554,7 @@ static char *evaluate_netmode_dhcp_checked () {
 	return replaceBuffer;	
 }
 
-static char *evaluate_netmode_static_checked () {
+static char *evaluate_netmode_static_checked (void *data) {
 	int netmode = EEPROMAnything.read (EEPROM_NETMODE_ADDR);
 
 	if (netmode == NETMODE_STATIC)
@@ -563,38 +565,48 @@ static char *evaluate_netmode_static_checked () {
 	return replaceBuffer;
 }
 
+static char *evaluate_relay_status (void *data) {
+	replaceBuffer[0] = '\0';
+	int relayNo = reinterpret_cast<int> (data);
+
+	if (relayNo >= 1 && relayNo <= RELAYS_NO) {
+		switch (relays[relayNo - 1].state) {
+			case RELAY_ON:
+				strlcpy_P (replaceBuffer, PSTR ("ON"), REP_BUFFER_LEN);
+				break;
+			case RELAY_OFF:
+				strlcpy_P (replaceBuffer, PSTR ("OFF"), REP_BUFFER_LEN);
+				break;
+			default:
+				break;
+		}
+	}
+
+	return replaceBuffer;
+}
+
 /* OK, this works in a quite crap way, but it's going to work as long as a
  * single instance of the web interface is being used, which is likely our
  * case.
  *
  * PS: lastSelectedRelay is saved in sck_func().
  */
-static char *evaluate_relay_on_checked () {
+static char *evaluate_relay_onoff_checked (void *data) {
 	replaceBuffer[0] = '\0';
 
-	if (lastSelectedRelay >= 1 && lastSelectedRelay <= 4) {
-		if (relays[lastSelectedRelay - 1].mode == RELMD_ON)
+	if (lastSelectedRelay >= 1 && lastSelectedRelay <= RELAYS_NO) {
+		int md = reinterpret_cast<int> (data);			// If we cast to RelayMode it won't compile, nevermind!
+		if (relays[lastSelectedRelay - 1].mode == md)
 			strlcpy_P (replaceBuffer, CHECKED_STRING, REP_BUFFER_LEN);
 	}
 
 	return replaceBuffer;
 }
 
-static char *evaluate_relay_off_checked () {
+static char *evaluate_relay_temp_checked (void *data) {
 	replaceBuffer[0] = '\0';
 
-	if (lastSelectedRelay >= 1 && lastSelectedRelay <= 4) {
-		if (relays[lastSelectedRelay - 1].mode == RELMD_OFF)
-			strlcpy_P (replaceBuffer, CHECKED_STRING, REP_BUFFER_LEN);
-	}
-
-	return replaceBuffer;
-}
-
-static char *evaluate_relay_temp_checked () {
-	replaceBuffer[0] = '\0';
-
-	if (lastSelectedRelay >= 1 && lastSelectedRelay <= 4) {
+	if (lastSelectedRelay >= 1 && lastSelectedRelay <= RELAYS_NO) {
 		if (relays[lastSelectedRelay - 1].mode == RELMD_GT || relays[lastSelectedRelay - 1].mode == RELMD_LT)
 			strlcpy_P (replaceBuffer, CHECKED_STRING, REP_BUFFER_LEN);
 	}
@@ -602,10 +614,10 @@ static char *evaluate_relay_temp_checked () {
 	return replaceBuffer;
 }
 
-static char *evaluate_relay_temp_gt_checked () {
+static char *evaluate_relay_temp_gt_checked (void *data) {
 	replaceBuffer[0] = '\0';
 
-	if (lastSelectedRelay >= 1 && lastSelectedRelay <= 4) {
+	if (lastSelectedRelay >= 1 && lastSelectedRelay <= RELAYS_NO) {
 		if (relays[lastSelectedRelay - 1].mode == RELMD_GT)
 			strlcpy_P (replaceBuffer, SELECTED_STRING, REP_BUFFER_LEN);
 	}
@@ -613,10 +625,10 @@ static char *evaluate_relay_temp_gt_checked () {
 	return replaceBuffer;
 }
 
-static char *evaluate_relay_temp_lt_checked () {
+static char *evaluate_relay_temp_lt_checked (void *data) {
 	replaceBuffer[0] = '\0';
 
-	if (lastSelectedRelay >= 1 && lastSelectedRelay <= 4) {
+	if (lastSelectedRelay >= 1 && lastSelectedRelay <= RELAYS_NO) {
 		if (relays[lastSelectedRelay - 1].mode == RELMD_LT)
 			strlcpy_P (replaceBuffer, SELECTED_STRING, REP_BUFFER_LEN);
 	}
@@ -624,19 +636,19 @@ static char *evaluate_relay_temp_lt_checked () {
 	return replaceBuffer;
 }
 
-static char *evaluate_relay_temp_threshold () {
+static char *evaluate_relay_temp_threshold (void *data) {
 	replaceBuffer[0] = '\0';
 
-	if (lastSelectedRelay >= 1 && lastSelectedRelay <= 4)
+	if (lastSelectedRelay >= 1 && lastSelectedRelay <= RELAYS_NO)
 		itoa (relays[lastSelectedRelay - 1].threshold, replaceBuffer, DEC);
 
 	return replaceBuffer;
 }
 
-static char *evaluate_relay_temp_units_c_checked () {
+static char *evaluate_relay_temp_units_c_checked (void *data) {
 	replaceBuffer[0] = '\0';
 
-	if (lastSelectedRelay >= 1 && lastSelectedRelay <= 4) {
+	if (lastSelectedRelay >= 1 && lastSelectedRelay <= RELAYS_NO) {
 		if (relays[lastSelectedRelay - 1].units == TEMP_C)
 			strlcpy_P (replaceBuffer, SELECTED_STRING, REP_BUFFER_LEN);
 	}
@@ -644,10 +656,10 @@ static char *evaluate_relay_temp_units_c_checked () {
 	return replaceBuffer;
 }
 
-static char *evaluate_relay_temp_units_f_checked () {
+static char *evaluate_relay_temp_units_f_checked (void *data) {
 	replaceBuffer[0] = '\0';
 
-	if (lastSelectedRelay >= 1 && lastSelectedRelay <= 4) {
+	if (lastSelectedRelay >= 1 && lastSelectedRelay <= RELAYS_NO) {
 		if (relays[lastSelectedRelay - 1].units == TEMP_F)
 			strlcpy_P (replaceBuffer, SELECTED_STRING, REP_BUFFER_LEN);
 	}
@@ -655,15 +667,44 @@ static char *evaluate_relay_temp_units_f_checked () {
 	return replaceBuffer;
 }
 
-static char *evaluate_version () {
+static char *evaluate_relay_temp_delay (void *data) {
+	// Always use first relay's data
+	itoa (relays[0].delay, replaceBuffer, DEC);
+
+	return replaceBuffer;
+}
+
+static char *evaluate_relay_temp_margin (void *data) {
+	// Always use first relay's data
+	itoa (relays[0].hysteresis / 10, replaceBuffer, DEC);
+	
+	return replaceBuffer;
+}
+
+static char *evaluate_version (void *data) {
 	strlcpy (replaceBuffer, PROGRAM_VERSION, REP_BUFFER_LEN);
 	return replaceBuffer;
+}
+
+// FIXME :D
+char *my_itoa (int val, char *s, int base, byte width = 0) {
+	char *ret;
+	
+	if (width == 2 && val < 10) {
+		s[0] = '0';
+		itoa (val, s + 1, base);
+		ret = s;
+	} else {
+		ret = itoa (val, s, base);
+	}
+
+	return ret;
 }
 
 // Wahahahah! Prolly the most advanced function of its kind!
 // FIXME: Save some bytes removing temp vars.
 // FIXME: Check that string does not overflow buffer (which is likely!)
-static char *evaluate_uptime () {
+static char *evaluate_uptime (void *data) {
 	unsigned long uptime = millis () / 1000;
 	byte d, h, m, s;
 
@@ -697,17 +738,17 @@ static char *evaluate_uptime () {
 	strcat_P (replaceBuffer, s == 1 ? PSTR (" second") : PSTR (" seconds"));
 #else
 	// Shorter format: "2 days, 4:12:22", saves 70 bytes and doesn't overflow :D
-	itoa (h, replaceBuffer + strlen (replaceBuffer), DEC);
+	my_itoa (h, replaceBuffer + strlen (replaceBuffer), DEC, 2);
 	strcat_P (replaceBuffer, PSTR (":"));
-	itoa (m, replaceBuffer + strlen (replaceBuffer), DEC);
+	my_itoa (m, replaceBuffer + strlen (replaceBuffer), DEC, 2);
 	strcat_P (replaceBuffer, PSTR (":"));
-	itoa (s, replaceBuffer + strlen (replaceBuffer), DEC);
+	my_itoa (s, replaceBuffer + strlen (replaceBuffer), DEC, 2);
 #endif
 	
 	return replaceBuffer;
 }
 
-static char *evaluate_free_ram () {
+static char *evaluate_free_ram (void *data) {
 	extern int __heap_start, *__brkval;
 	int v;
 
@@ -728,6 +769,10 @@ static const char subNMDHCPStr[] PROGMEM = "NETMODE_DHCP_CHK";
 static const char subNMStaticStr[] PROGMEM = "NETMODE_STATIC_CHK";
 static const char subRelayOnStr[] PROGMEM = "RELAY_ON_CHK";
 static const char subRelayOffStr[] PROGMEM = "RELAY_OFF_CHK";
+static const char subRelay1StatusStr[] PROGMEM = "RELAY1_ST";
+static const char subRelay2StatusStr[] PROGMEM = "RELAY2_ST";
+static const char subRelay3StatusStr[] PROGMEM = "RELAY3_ST";
+static const char subRelay4StatusStr[] PROGMEM = "RELAY4_ST";
 #ifdef ENABLE_THERMOMETER
 static const char subDegCStr[] PROGMEM = "DEGC";
 static const char subDegFStr[] PROGMEM = "DEGF";
@@ -737,34 +782,42 @@ static const char subRelayTempLTStr[] PROGMEM = "RELAY_TLT_CHK";
 static const char subRelayTempThresholdStr[] PROGMEM = "RELAY_THRES";
 static const char subRelayTempUnitsCStr[] PROGMEM = "RELAY_TEMPC_CHK";
 static const char subRelayTempUnitsFStr[] PROGMEM = "RELAY_TEMPF_CHK";
+static const char subRelayTempDelayStr[] PROGMEM = "RELAY_DELAY";
+static const char subRelayTempMarginStr[] PROGMEM = "RELAY_MARGIN";
 #endif
 static const char subVerStr[] PROGMEM = "VERSION";
 static const char subUptimeStr[] PROGMEM = "UPTIME";
 static const char subFreeRAMStr[] PROGMEM = "FREERAM";
 
-static var_substitution subDateVarSub PROGMEM = {subDateStr, evaluate_date};
-static var_substitution subTimeVarSub PROGMEM =	{subTimeStr, evaluate_time};
-static var_substitution subMacAddrVarSub PROGMEM = {subMacAddrStr, evaluate_mac_addr};
-static var_substitution subIPAddressVarSub PROGMEM = {subIPAddressStr, evaluate_ip};
-static var_substitution subNetmaskVarSub PROGMEM = {subNetmaskStr, evaluate_netmask};
-static var_substitution subGatewayVarSub PROGMEM = {subGatewayStr, evaluate_gw};
-static var_substitution subNMDHCPVarSub PROGMEM = {subNMDHCPStr, evaluate_netmode_dhcp_checked};
-static var_substitution subNMStaticVarSub PROGMEM = {subNMStaticStr, evaluate_netmode_static_checked};
-static var_substitution subRelayOnVarSub PROGMEM = {subRelayOnStr, evaluate_relay_on_checked};
-static var_substitution subRelayOffVarSub PROGMEM = {subRelayOffStr, evaluate_relay_off_checked};
+static var_substitution subDateVarSub PROGMEM = {subDateStr, evaluate_date, NULL};
+static var_substitution subTimeVarSub PROGMEM =	{subTimeStr, evaluate_time, NULL};
+static var_substitution subMacAddrVarSub PROGMEM = {subMacAddrStr, evaluate_mac_addr, NULL};
+static var_substitution subIPAddressVarSub PROGMEM = {subIPAddressStr, evaluate_ip, NULL};
+static var_substitution subNetmaskVarSub PROGMEM = {subNetmaskStr, evaluate_netmask, NULL};
+static var_substitution subGatewayVarSub PROGMEM = {subGatewayStr, evaluate_gw, NULL};
+static var_substitution subNMDHCPVarSub PROGMEM = {subNMDHCPStr, evaluate_netmode_dhcp_checked, NULL};
+static var_substitution subNMStaticVarSub PROGMEM = {subNMStaticStr, evaluate_netmode_static_checked, NULL};
+static var_substitution subRelayOnVarSub PROGMEM = {subRelayOnStr, evaluate_relay_onoff_checked, reinterpret_cast<void *> (RELMD_ON)};
+static var_substitution subRelayOffVarSub PROGMEM = {subRelayOffStr, evaluate_relay_onoff_checked, reinterpret_cast<void *> (RELMD_OFF)};
+static var_substitution subRelay1StatusVarSub PROGMEM = {subRelay1StatusStr, evaluate_relay_status, reinterpret_cast<void *> (1)};
+static var_substitution subRelay2StatusVarSub PROGMEM = {subRelay2StatusStr, evaluate_relay_status, reinterpret_cast<void *> (2)};
+static var_substitution subRelay3StatusVarSub PROGMEM = {subRelay3StatusStr, evaluate_relay_status, reinterpret_cast<void *> (3)};
+static var_substitution subRelay4StatusVarSub PROGMEM = {subRelay4StatusStr, evaluate_relay_status, reinterpret_cast<void *> (4)};
 #ifdef ENABLE_THERMOMETER
-static var_substitution subDegCVarSub PROGMEM =	{subDegCStr, evaluate_temp_deg};
-static var_substitution subDegFVarSub PROGMEM = {subDegFStr, evaluate_temp_fahr};
-static var_substitution subRelayTempVarSub PROGMEM = {subRelayTempStr, evaluate_relay_temp_checked};
-static var_substitution subRelayTempGTVarSub PROGMEM = {subRelayTempGTStr, evaluate_relay_temp_gt_checked};
-static var_substitution subRelayTempLTVarSub PROGMEM = {subRelayTempLTStr, evaluate_relay_temp_lt_checked};
-static var_substitution subRelayTempThresholdVarSub PROGMEM = {subRelayTempThresholdStr, evaluate_relay_temp_threshold};
-static var_substitution subRelayTempUnitsCVarSub PROGMEM = {subRelayTempUnitsCStr, evaluate_relay_temp_units_c_checked};
-static var_substitution subRelayTempUnitsFVarSub PROGMEM = {subRelayTempUnitsFStr, evaluate_relay_temp_units_f_checked};
+static var_substitution subDegCVarSub PROGMEM =	{subDegCStr, evaluate_temp_deg, NULL};
+static var_substitution subDegFVarSub PROGMEM = {subDegFStr, evaluate_temp_fahr, NULL};
+static var_substitution subRelayTempVarSub PROGMEM = {subRelayTempStr, evaluate_relay_temp_checked, NULL};
+static var_substitution subRelayTempGTVarSub PROGMEM = {subRelayTempGTStr, evaluate_relay_temp_gt_checked, NULL};
+static var_substitution subRelayTempLTVarSub PROGMEM = {subRelayTempLTStr, evaluate_relay_temp_lt_checked, NULL};
+static var_substitution subRelayTempThresholdVarSub PROGMEM = {subRelayTempThresholdStr, evaluate_relay_temp_threshold, NULL};
+static var_substitution subRelayTempUnitsCVarSub PROGMEM = {subRelayTempUnitsCStr, evaluate_relay_temp_units_c_checked, NULL};
+static var_substitution subRelayTempUnitsFVarSub PROGMEM = {subRelayTempUnitsFStr, evaluate_relay_temp_units_f_checked, NULL};
+static var_substitution subRelayTempDelayVarSub PROGMEM = {subRelayTempDelayStr, evaluate_relay_temp_delay, NULL};
+static var_substitution subRelayTempMarginVarSub PROGMEM = {subRelayTempMarginStr, evaluate_relay_temp_margin, NULL};
 #endif
-static var_substitution subVerVarSub PROGMEM = {subVerStr, evaluate_version};
-static var_substitution subUptimeVarSub PROGMEM = {subUptimeStr, evaluate_uptime};
-static var_substitution subFreeRAMVarSub PROGMEM = {subFreeRAMStr, evaluate_free_ram};
+static var_substitution subVerVarSub PROGMEM = {subVerStr, evaluate_version, NULL};
+static var_substitution subUptimeVarSub PROGMEM = {subUptimeStr, evaluate_uptime, NULL};
+static var_substitution subFreeRAMVarSub PROGMEM = {subFreeRAMStr, evaluate_free_ram, NULL};
 	
 static var_substitution *substitutions[] PROGMEM = {
 	&subDateVarSub,
@@ -777,6 +830,10 @@ static var_substitution *substitutions[] PROGMEM = {
 	&subNMStaticVarSub,
 	&subRelayOnVarSub,
 	&subRelayOffVarSub,
+	&subRelay1StatusVarSub,
+	&subRelay2StatusVarSub,
+	&subRelay3StatusVarSub,
+	&subRelay4StatusVarSub,
 #ifdef ENABLE_THERMOMETER
 	&subDegCVarSub,
 	&subDegFVarSub,
@@ -786,6 +843,8 @@ static var_substitution *substitutions[] PROGMEM = {
 	&subRelayTempThresholdVarSub,
 	&subRelayTempUnitsCVarSub,
 	&subRelayTempUnitsFVarSub,
+	&subRelayTempDelayVarSub,
+	&subRelayTempMarginVarSub,
 #endif
 	&subVerVarSub,
 	&subUptimeVarSub,
@@ -903,9 +962,9 @@ void loop () {
 			case RELMD_GT: {
 				Temperature& temp = thermometer.getTemp ();
 				if (temp.valid) {
-					if (((!hysteresisEnabled && temp.celsius > r.threshold) || (hysteresisEnabled && temp.celsius > r.threshold + r.hysteresis)) && r.state != RELAY_ON) {
+					if (((!hysteresisEnabled && temp.celsius > r.threshold) || (hysteresisEnabled && temp.celsius > r.threshold + r.hysteresis / 10.0)) && r.state != RELAY_ON) {
 						r.switchState (RELAY_ON);
-						hysteresisEnabled = false;
+						hysteresisEnabled = true;
 					} else if (temp.celsius <= r.threshold && r.state != RELAY_OFF) {
 						r.switchState (RELAY_OFF);
 					}
@@ -914,9 +973,9 @@ void loop () {
 			} case RELMD_LT: {
 				Temperature& temp = thermometer.getTemp ();
 				if (temp.valid) {
-					if (((!hysteresisEnabled && temp.celsius < r.threshold) || (hysteresisEnabled && temp.celsius < r.threshold - r.hysteresis)) && r.state != RELAY_ON) {
+					if (((!hysteresisEnabled && temp.celsius < r.threshold) || (hysteresisEnabled && temp.celsius < r.threshold - r.hysteresis / 10.0)) && r.state != RELAY_ON) {
 						r.switchState (RELAY_ON);
-						hysteresisEnabled = false;
+						hysteresisEnabled = true;
 					} else if (temp.celsius >= r.threshold && r.state != RELAY_OFF) {
 						r.switchState (RELAY_OFF);
 					}
