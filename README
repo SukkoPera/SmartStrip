@@ -1,32 +1,31 @@
 SmartStrip
 ==========
-
 SmartStrip is a sketch for Arduino meant to allow advanced control of relays
 through a web interface.
 
 While there are already similar sketches out there, SmartStrip will have many
 unique features when it is complete, too many to mention now :).
 
-At the moment the only targeted platform is KMTronic's DINo:
+At the moment the main targeted platform is KMTronic's DINo:
 http://sigma-shop.com/product/72/web-internet-ethernet-controlled-relay-board-arduino-compatible-rs485-usb.html.
-
-The DINo uses the ENC28J60 Ethernet Controller. SmartStrip supports it through
-the EtherCard library, so you will need it to compile the sketch. Get it at
-https://github.com/jcw/ethercard/.
-
 I chose this board since it has everything I need for my purposes, so it is the
 only platform which should work "out of the box". Other boards/configurations
-can probably be supported with minor changes in the code, as long as they use
-the ENC28J60. Support for the WIZ5100 controller will hopefully come in the
-future, probably when the sketch will outgrow the limits of the ATmega328 and I
-will need to move the development to my Mega 2560, since I use it with a
-WIZ5100-based Ethernet shield ;).
+can probably be supported with minor changes in the code. As SmartStrip uses
+the Webbino library for its webserver part, it is both compatible with the
+official Ethernet Shield and ENC28J60-based shields. Unfortunately when W5100
+support is enabled the resulting binary is too big to fit an Atmega328, so you
+will either need to use an Arduino Mega or disable some features. Features can
+be enabled and disabled in the "common.h" file. The used I/O pins can also be
+changed there.
 
-The webserver component is designed to allow reuse in other projects. Hopefully
-documentation for that will come in the future, but it should be quite easy to
-do, if you look at the smartstrip.ino file.
+As mentioned, SmartStrip uses the Webbino libraries, and actually depends upon
+other libraries that are part of my Sukkino collection, so you will need to
+install it if you want to compile this sketch. It is available at:
+https://github.com/SukkoPera/Sukkino.
 
 
+License
+=======
 SmartStrip is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
@@ -42,6 +41,6 @@ along with SmartStrip.  If not, see <http://www.gnu.org/licenses/>.
 
 
 That's all for the moment, please use the official github page to report issues
-and such: https://github.com/SukkoPera/smartstrip.
+and such: https://github.com/SukkoPera/SmartStrip.
 
 Enjoy!
