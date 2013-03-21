@@ -32,16 +32,16 @@
 #define RELAY4_PIN 5
 
 // Define to enable temperature-controlled relays
-#define ENABLE_THERMOMETER
+//#define ENABLE_THERMOMETER
 
-// DS18B20's data wire is connected to pin 2
-#define ONE_WIRE_BUS_PIN 2
+// Thermometer's data wire is connected to pin 5
+#define THERMOMETER_PIN 5
 
 // DS18B20's data resolution
 #define THERMOMETER_RESOLUTION 9
 
 //Delay between temperature readings
-#define THERMO_READ_INTERVAL (1 * 1000U)
+#define THERMO_READ_INTERVAL (5 * 1000U)
 
 
 #define EEPROM_MAGIC 0x50545353UL			// "SSTP"

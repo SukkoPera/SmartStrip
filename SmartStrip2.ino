@@ -26,11 +26,9 @@
 #endif
 
 #include <avr/pgmspace.h>
-#include <OneWire.h>
-#include <DallasTemperature.h>
 #include <EEPROMAnything.h>
 #include <Panic.h>
-#include "Thermometer.h"
+#include "debug.h"
 #include "Relay.h"
 #include "enums.h"
 #include "common.h"
@@ -45,8 +43,20 @@ byte lastSelectedRelay;
 WebServer webserver;
 
 #ifdef ENABLE_THERMOMETER
+
+#include <Thermometer.h>
+#ifdef USE_DALLAS_THERMO
+	#include <OneWire.h>
+	#include <DallasTemperature.h>
+#elif defined USE_DHT_THERMO
+	#include <DHT.h>
+#endif
+
 // Instantiate the thermometer
 Thermometer thermometer;
+
+// Time the last temperature request was issued
+unsigned long lastTemperatureRequest = 0;
 #endif
 
 
@@ -930,7 +940,7 @@ void setup () {
 	}
 
 #ifdef ENABLE_THERMOMETER
-	thermometer.begin ();
+	thermometer.begin (THERMOMETER_PIN);
 #endif
 
 	for (int i = 0; i < RELAYS_NO; i++)
@@ -941,9 +951,6 @@ void setup () {
 
 void loop () {
 	webserver.processPacket ();
-#ifdef ENABLE_THERMOMETER
-	thermometer.loop ();
-#endif
 
 	for (int i = 0; i < RELAYS_NO; i++) {
 		Relay& r = relays[i];
@@ -960,27 +967,35 @@ void loop () {
 				break;
 #ifdef ENABLE_THERMOMETER
 			case RELMD_GT: {
-				Temperature& temp = thermometer.getTemp ();
-				if (temp.valid) {
-					if (((!hysteresisEnabled && temp.celsius > r.threshold) || (hysteresisEnabled && temp.celsius > r.threshold + r.hysteresis / 10.0)) && r.state != RELAY_ON) {
-						r.switchState (RELAY_ON);
-						hysteresisEnabled = true;
-					} else if (temp.celsius <= r.threshold && r.state != RELAY_OFF) {
-						r.switchState (RELAY_OFF);
-					}
-				}
+                                if (thermometer.available && millis () - lastTemperatureRequest > THERMO_READ_INTERVAL) {
+        				Temperature& temp = thermometer.getTemp ();
+        				if (temp.valid) {
+        					if (((!hysteresisEnabled && temp.celsius > r.threshold) || (hysteresisEnabled && temp.celsius > r.threshold + r.hysteresis / 10.0)) && r.state != RELAY_ON) {
+        						r.switchState (RELAY_ON);
+        						hysteresisEnabled = true;
+        					} else if (temp.celsius <= r.threshold && r.state != RELAY_OFF) {
+        						r.switchState (RELAY_OFF);
+        					}
+        				}
+        
+                                        lastTemperatureRequest = millis ();
+                                }    
 				break;
 			} case RELMD_LT: {
-				Temperature& temp = thermometer.getTemp ();
-				if (temp.valid) {
-					if (((!hysteresisEnabled && temp.celsius < r.threshold) || (hysteresisEnabled && temp.celsius < r.threshold - r.hysteresis / 10.0)) && r.state != RELAY_ON) {
-						r.switchState (RELAY_ON);
-						hysteresisEnabled = true;
-					} else if (temp.celsius >= r.threshold && r.state != RELAY_OFF) {
-						r.switchState (RELAY_OFF);
-					}
-				}
-				break;
+                                if (thermometer.available && millis () - lastTemperatureRequest > THERMO_READ_INTERVAL) {
+        				Temperature& temp = thermometer.getTemp ();
+        				if (temp.valid) {
+        					if (((!hysteresisEnabled && temp.celsius < r.threshold) || (hysteresisEnabled && temp.celsius < r.threshold - r.hysteresis / 10.0)) && r.state != RELAY_ON) {
+        						r.switchState (RELAY_ON);
+        						hysteresisEnabled = true;
+        					} else if (temp.celsius >= r.threshold && r.state != RELAY_OFF) {
+        						r.switchState (RELAY_OFF);
+        					}
+        				}
+        
+                                        lastTemperatureRequest = millis ();
+                                }
+                                break;
 			}
 #endif
 			default:
