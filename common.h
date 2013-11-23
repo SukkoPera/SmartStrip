@@ -45,11 +45,10 @@
 
 
 #define EEPROM_MAGIC 0x50545353UL			// "SSTP"
-#define EEPROM_SIZE 64						// Don't waste write cycles of much more EEPROM than we need
 #define EEPROM_R1_PARAM_ADDR 4
 #define EEPROM_R2_PARAM_ADDR 20
-#define EEPROM_R3_PARAM_ADDR 32
-#define EEPROM_R4_PARAM_ADDR 48
+#define EEPROM_R3_PARAM_ADDR 36
+#define EEPROM_R4_PARAM_ADDR 52
 #define EEPROM_MAC_B1_ADDR 64
 #define EEPROM_MAC_B2_ADDR 65
 #define EEPROM_MAC_B3_ADDR 66
