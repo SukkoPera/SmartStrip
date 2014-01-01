@@ -27,7 +27,6 @@
 
 #include <avr/pgmspace.h>
 #include <EEPROMAnything.h>
-#include <Panic.h>
 #include "debug.h"
 #include "Relay.h"
 #include "enums.h"
@@ -35,7 +34,6 @@
 #include "html.h"
 
 // Other stuff
-Panic panic;
 byte lastSelectedRelay;
 
 
@@ -263,40 +261,40 @@ void sck_func (HTTPRequestParser& request) {
 	param = request.get_get_parameter (F("rel"));
 	if (strlen (param) > 0) {
 		int relayNo = atoi (param);
-		panic_assert (panic, relayNo >= 1 && relayNo <= RELAYS_NO);
-
-		/* Save the last selected relay for later. I know this is crap, but...
-		 * See below.
-		 */
-		lastSelectedRelay = relayNo;
-		
-		Relay& relay = relays[relayNo - 1];
-
-		param = request.get_get_parameter (F("mode"));
-		if (strlen (param) > 0) {		// Only do something if we got this parameter
-			if (strcmp_P (param, PSTR ("on")) == 0) {
-				relay.mode = RELMD_ON;
-			} else if (strcmp_P (param, PSTR ("off")) == 0) {
-				relay.mode = RELMD_OFF;
-			} else if (strcmp_P (param, PSTR ("temp")) == 0) {
-				param = request.get_get_parameter (F("thres"));
-				if (strcmp_P (param, PSTR ("gt")) == 0)
-					relay.mode = RELMD_GT;
-				else
-					relay.mode = RELMD_LT;
-
-				param = request.get_get_parameter (F("temp"));
-				relay.threshold = atoi (param);
-				
-				param = request.get_get_parameter (F("units"));
-				if (strcmp_P (param, PSTR ("F")) == 0)
-					relay.units = TEMP_F;
-				else
-					relay.units = TEMP_C;
-
-				relayHysteresis[relayNo - 1] = false;
-			}
-		}
+		if (relayNo >= 1 && relayNo <= RELAYS_NO) {
+        		/* Save the last selected relay for later. I know this is crap, but...
+        		 * See below.
+        		 */
+        		lastSelectedRelay = relayNo;
+        		
+        		Relay& relay = relays[relayNo - 1];
+        
+        		param = request.get_get_parameter (F("mode"));
+        		if (strlen (param) > 0) {		// Only do something if we got this parameter
+        			if (strcmp_P (param, PSTR ("on")) == 0) {
+        				relay.mode = RELMD_ON;
+        			} else if (strcmp_P (param, PSTR ("off")) == 0) {
+        				relay.mode = RELMD_OFF;
+        			} else if (strcmp_P (param, PSTR ("temp")) == 0) {
+        				param = request.get_get_parameter (F("thres"));
+        				if (strcmp_P (param, PSTR ("gt")) == 0)
+        					relay.mode = RELMD_GT;
+        				else
+        					relay.mode = RELMD_LT;
+        
+        				param = request.get_get_parameter (F("temp"));
+        				relay.threshold = atoi (param);
+        				
+        				param = request.get_get_parameter (F("units"));
+        				if (strcmp_P (param, PSTR ("F")) == 0)
+        					relay.units = TEMP_F;
+        				else
+        					relay.units = TEMP_C;
+        
+        				relayHysteresis[relayNo - 1] = false;
+        			}
+        		}
+                }
 	}
 }
 
@@ -333,15 +331,7 @@ const char NOT_AVAIL_STR[] PROGMEM = "N/A";
 
 
 static char *evaluate_date (void *data) {
-#ifdef USE_UNIX
-	char *tmp;
-	time_t tt;
-	struct tm now;
-
-	time (&tt);
-	localtime_r (&tt, &now);
-	strftime (replaceBuffer, REP_BUFFER_LEN, "%d/%m/%Y", &now);
-#elif defined USE_ARDUINO_TIME_LIBRARY
+#ifdef USE_ARDUINO_TIME_LIBRARY
 	int x;
 
 	time_t t = now ();
@@ -371,15 +361,7 @@ static char *evaluate_date (void *data) {
 }
 
 static char *evaluate_time (void *data) {
-#ifdef USE_UNIX
-	char *tmp;
-	time_t tt;
-	struct tm now;
-
-	time (&tt);
-	localtime_r (&tt, &now);
-	strftime (replaceBuffer, REP_BUFFER_LEN, "%H:%M:%S", &now);
-#elif defined USE_ARDUINO_TIME_LIBRARY
+#ifdef USE_ARDUINO_TIME_LIBRARY
 	int x;
 
 	time_t t = now ();
@@ -467,23 +449,12 @@ static char *evaluate_temp_fahr (void *data) {
 #endif
 
 static char *ip2str (const byte *buf) {
-#if 0
-	itoa (buf[0], replaceBuffer, DEC);
-	strcat_P (replaceBuffer, PSTR ("."));
-	itoa (buf[1], replaceBuffer + strlen (replaceBuffer), DEC);
-	strcat_P (replaceBuffer, PSTR ("."));
-	itoa (buf[2], replaceBuffer + strlen (replaceBuffer), DEC);
-	strcat_P (replaceBuffer, PSTR ("."));
-	itoa (buf[3], replaceBuffer + strlen (replaceBuffer), DEC);
-#else
-	// Saves 10 bytes :D
 	replaceBuffer[0] = '\0';
 	for (int i = 0; i < 3; i++) {
 		itoa (buf[i], replaceBuffer + strlen (replaceBuffer), DEC);
 		strcat_P (replaceBuffer, PSTR ("."));
 	}
 	itoa (buf[3], replaceBuffer + strlen (replaceBuffer), DEC);
-#endif
 	
 	return replaceBuffer;
 }
@@ -758,6 +729,7 @@ static char *evaluate_uptime (void *data) {
 	return replaceBuffer;
 }
 
+// See http://playground.arduino.cc/Code/AvailableMemory
 static char *evaluate_free_ram (void *data) {
 	extern int __heap_start, *__brkval;
 	int v;
@@ -873,7 +845,7 @@ static var_substitution *substitutions[] PROGMEM = {
 void setup () {
 	byte mac[6];
 
-	Serial.begin (9600);
+	DSTART ();
 	DPRINTLN (F("SmartStrip " PROGRAM_VERSION));
 
 	// Check and format EEPROMAnything, in case
@@ -916,17 +888,18 @@ void setup () {
 			gw[2] = EEPROMAnything.read (EEPROM_GATEWAY_B3_ADDR);
 			gw[3] = EEPROMAnything.read (EEPROM_GATEWAY_B4_ADDR);
 
-			if (!webserver.begin (mac, ip, mask, gw))
-				panic.panic (F("Failed to set static IP address"));
-			else
+			if (!webserver.begin (mac, ip, mask, gw)) {
+				DPRINTLN (F("Failed to set static IP address"));
+			} else {
 				DPRINTLN (F("Static IP setup done"));
+                        }
 			break;
 		}
 		default:
 		case NETMODE_DHCP:
 			DPRINTLN (F("Trying to get an IP address through DHCP"));
 			if (!webserver.begin (mac)) {
-				panic.panic (F("Failed to get configuration from DHCP"));
+				DPRINTLN (F("Failed to get configuration from DHCP"));
 			} else {
 				DPRINTLN (F("DHCP configuration done"));
 #if 0
@@ -966,8 +939,8 @@ void loop () {
 					r.switchState (RELAY_OFF);
 				break;
 #ifdef ENABLE_THERMOMETER
-			case RELMD_GT: {
-                                if (thermometer.available && millis () - lastTemperatureRequest > THERMO_READ_INTERVAL) {
+			case RELMD_GT:
+                                if (thermometer.available && (millis () - lastTemperatureRequest > THERMO_READ_INTERVAL)) {
         				Temperature& temp = thermometer.getTemp ();
         				if (temp.valid) {
         					if (((!hysteresisEnabled && temp.celsius > r.threshold) || (hysteresisEnabled && temp.celsius > r.threshold + r.hysteresis / 10.0)) && r.state != RELAY_ON) {
@@ -981,8 +954,8 @@ void loop () {
                                         lastTemperatureRequest = millis ();
                                 }    
 				break;
-			} case RELMD_LT: {
-                                if (thermometer.available && millis () - lastTemperatureRequest > THERMO_READ_INTERVAL) {
+			case RELMD_LT:
+                                if (thermometer.available && (millis () - lastTemperatureRequest > THERMO_READ_INTERVAL)) {
         				Temperature& temp = thermometer.getTemp ();
         				if (temp.valid) {
         					if (((!hysteresisEnabled && temp.celsius < r.threshold) || (hysteresisEnabled && temp.celsius < r.threshold - r.hysteresis / 10.0)) && r.state != RELAY_ON) {
@@ -996,17 +969,8 @@ void loop () {
                                         lastTemperatureRequest = millis ();
                                 }
                                 break;
-			}
 #endif
 			default:
-// 				DPRINT ("Relay ");
-// 				DPRINT (r.id);
-// 				DPRINT (" mode is ");
-// 				DPRINT (r.mode);
-// 				DPRINT (" and state is ");
-// 				DPRINTLN (r.state);
-
-				panic_assert_not_reached (panic);
 				break;
 		}
 	}

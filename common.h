@@ -20,9 +20,8 @@
 #ifndef COMMON_H_
 #define COMMON_H_
 
-// #define NDEBUG
+#define NDEBUG
 
-//#define USE_UNIX
 //#define USE_ARDUINO_TIME_LIBRARY
 
 #define RELAYS_NO 4
@@ -32,10 +31,10 @@
 #define RELAY4_PIN 5
 
 // Define to enable temperature-controlled relays
-//#define ENABLE_THERMOMETER
+#define ENABLE_THERMOMETER
 
 // Thermometer's data wire is connected to pin 5
-#define THERMOMETER_PIN 5
+#define THERMOMETER_PIN 2
 
 // DS18B20's data resolution
 #define THERMOMETER_RESOLUTION 9

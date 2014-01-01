@@ -19,12 +19,9 @@
 
 #include <Arduino.h>
 #include <EEPROMAnything.h>
-#include <Panic.h>
 #include "common.h"
 #include "debug.h"
 #include "Relay.h"
-
-extern Panic panic;
 
 
 const int Relay::optionAddress[RELAYS_NO] = {
@@ -35,8 +32,8 @@ const int Relay::optionAddress[RELAYS_NO] = {
 };
 
 Relay::Relay (byte _id, byte _pin): id (_id), pin (_pin) {
-	panic_assert (panic, _id >= 1 && _id <= RELAYS_NO);
-	pinMode (_pin, OUTPUT);
+	//if (_id >= 1 && _id <= RELAYS_NO)
+        pinMode (_pin, OUTPUT);
 }
 
 void Relay::readOptions () {
@@ -79,3 +76,4 @@ void Relay::switchState (RelayState newState) {
 void Relay::effectState () {
 	digitalWrite (pin, state);
 }
+
