@@ -18,7 +18,7 @@
  ***************************************************************************/
 
 #include <Arduino.h>
-#include <EEPROMAnything.h>
+#include <EEPROM.h>
 #include "common.h"
 #include "debug.h"
 #include "Relay.h"
@@ -37,7 +37,7 @@ Relay::Relay (byte _id, byte _pin): id (_id), pin (_pin) {
 }
 
 void Relay::readOptions () {
-	EEPROMAnything.readAnything (optionAddress[id - 1], dynamic_cast<RelayOptions&> (*this));
+	EEPROM.get (optionAddress[id - 1], dynamic_cast<RelayOptions&> (*this));
 
 /*	DPRINT ("sizeof (RelayOptions) = ");
 	DPRINTLN (sizeof (RelayOptions));
@@ -52,7 +52,7 @@ void Relay::readOptions () {
 }
 
 void Relay::writeOptions () {
-	EEPROMAnything.writeAnything (optionAddress[id - 1], dynamic_cast<RelayOptions&> (*this));
+	EEPROM.put (optionAddress[id - 1], dynamic_cast<RelayOptions&> (*this));
 }
 
 void Relay::setDefaults () {

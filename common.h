@@ -31,7 +31,7 @@
 #define RELAY4_PIN 5
 
 // Define to enable temperature-controlled relays
-#define ENABLE_THERMOMETER
+//#define ENABLE_THERMOMETER
 
 // Thermometer's data wire is connected to pin 5
 #define THERMOMETER_PIN 2
@@ -109,3 +109,4 @@
 #define PROGRAM_VERSION "0.5git"
 
 #endif
+

@@ -25,8 +25,8 @@
 	#include <Ethernet.h>
 #endif
 
+#include <EEPROM.h>
 #include <avr/pgmspace.h>
-#include <EEPROMAnything.h>
 #include "debug.h"
 #include "Relay.h"
 #include "enums.h"
@@ -72,10 +72,7 @@ void checkAndFormatEEPROM () {
 	unsigned long magic;
 
 	// The casts here are very important
-	magic = ((unsigned long) EEPROMAnything.read (0)) << 24;
-	magic |= ((unsigned long) EEPROMAnything.read (1)) << 16;
-	magic |= ((unsigned long) EEPROMAnything.read (2)) << 8;
-	magic |= (unsigned long) EEPROMAnything.read (3);
+	EEPROM.get (0, magic);
 
 	if (magic != EEPROM_MAGIC) {
 		// Need to format EEPROMAnything
@@ -85,44 +82,44 @@ void checkAndFormatEEPROM () {
 		DPRINTLN (F(")"));
 
 		// Magic header
-		EEPROMAnything.write (0, (EEPROM_MAGIC >> 24) & 0xFF);
-		EEPROMAnything.write (1, (EEPROM_MAGIC >> 16) & 0xFF);
-		EEPROMAnything.write (2, (EEPROM_MAGIC >> 8) & 0xFF);
-		EEPROMAnything.write (3, EEPROM_MAGIC & 0xFF);
+		EEPROM.put (0, (EEPROM_MAGIC >> 24) & 0xFF);
+		EEPROM.put (1, (EEPROM_MAGIC >> 16) & 0xFF);
+		EEPROM.put (2, (EEPROM_MAGIC >> 8) & 0xFF);
+		EEPROM.put (3, EEPROM_MAGIC & 0xFF);
 
 		// Relay data
-		for (int i = 0; i < RELAYS_NO; i++) {
+		for (byte i = 0; i < RELAYS_NO; i++) {
 			relays[i].setDefaults ();
 			relays[i].writeOptions ();
 		}
 
 		// Network configuration
-		EEPROMAnything.write (EEPROM_MAC_B1_ADDR, DEFAULT_MAC_ADDRESS_B1);
-		EEPROMAnything.write (EEPROM_MAC_B2_ADDR, DEFAULT_MAC_ADDRESS_B2);
-		EEPROMAnything.write (EEPROM_MAC_B3_ADDR, DEFAULT_MAC_ADDRESS_B3);
-		EEPROMAnything.write (EEPROM_MAC_B4_ADDR, DEFAULT_MAC_ADDRESS_B4);
-		EEPROMAnything.write (EEPROM_MAC_B5_ADDR, DEFAULT_MAC_ADDRESS_B5);
-		EEPROMAnything.write (EEPROM_MAC_B6_ADDR, DEFAULT_MAC_ADDRESS_B6);
-		EEPROMAnything.write (EEPROM_NETMODE_ADDR, DEFAULT_NET_MODE);
-		EEPROMAnything.write (EEPROM_IP_B1_ADDR, DEFAULT_IP_ADDRESS_B1);
-		EEPROMAnything.write (EEPROM_IP_B2_ADDR, DEFAULT_IP_ADDRESS_B2);
-		EEPROMAnything.write (EEPROM_IP_B3_ADDR, DEFAULT_IP_ADDRESS_B3);
-		EEPROMAnything.write (EEPROM_IP_B4_ADDR, DEFAULT_IP_ADDRESS_B4);
-		EEPROMAnything.write (EEPROM_NETMASK_B1_ADDR, DEFAULT_NETMASK_B1);
-		EEPROMAnything.write (EEPROM_NETMASK_B2_ADDR, DEFAULT_NETMASK_B2);
-		EEPROMAnything.write (EEPROM_NETMASK_B3_ADDR, DEFAULT_NETMASK_B3);
-		EEPROMAnything.write (EEPROM_NETMASK_B4_ADDR, DEFAULT_NETMASK_B4);
-		EEPROMAnything.write (EEPROM_GATEWAY_B1_ADDR, DEFAULT_GATEWAY_ADDRESS_B1);
-		EEPROMAnything.write (EEPROM_GATEWAY_B2_ADDR, DEFAULT_GATEWAY_ADDRESS_B2);
-		EEPROMAnything.write (EEPROM_GATEWAY_B3_ADDR, DEFAULT_GATEWAY_ADDRESS_B3);
-		EEPROMAnything.write (EEPROM_GATEWAY_B4_ADDR, DEFAULT_GATEWAY_ADDRESS_B4);
+		EEPROM.put (EEPROM_MAC_B1_ADDR, DEFAULT_MAC_ADDRESS_B1);
+		EEPROM.put (EEPROM_MAC_B2_ADDR, DEFAULT_MAC_ADDRESS_B2);
+		EEPROM.put (EEPROM_MAC_B3_ADDR, DEFAULT_MAC_ADDRESS_B3);
+		EEPROM.put (EEPROM_MAC_B4_ADDR, DEFAULT_MAC_ADDRESS_B4);
+		EEPROM.put (EEPROM_MAC_B5_ADDR, DEFAULT_MAC_ADDRESS_B5);
+		EEPROM.put (EEPROM_MAC_B6_ADDR, DEFAULT_MAC_ADDRESS_B6);
+		EEPROM.put (EEPROM_NETMODE_ADDR, DEFAULT_NET_MODE);
+		EEPROM.put (EEPROM_IP_B1_ADDR, DEFAULT_IP_ADDRESS_B1);
+		EEPROM.put (EEPROM_IP_B2_ADDR, DEFAULT_IP_ADDRESS_B2);
+		EEPROM.put (EEPROM_IP_B3_ADDR, DEFAULT_IP_ADDRESS_B3);
+		EEPROM.put (EEPROM_IP_B4_ADDR, DEFAULT_IP_ADDRESS_B4);
+		EEPROM.put (EEPROM_NETMASK_B1_ADDR, DEFAULT_NETMASK_B1);
+		EEPROM.put (EEPROM_NETMASK_B2_ADDR, DEFAULT_NETMASK_B2);
+		EEPROM.put (EEPROM_NETMASK_B3_ADDR, DEFAULT_NETMASK_B3);
+		EEPROM.put (EEPROM_NETMASK_B4_ADDR, DEFAULT_NETMASK_B4);
+		EEPROM.put (EEPROM_GATEWAY_B1_ADDR, DEFAULT_GATEWAY_ADDRESS_B1);
+		EEPROM.put (EEPROM_GATEWAY_B2_ADDR, DEFAULT_GATEWAY_ADDRESS_B2);
+		EEPROM.put (EEPROM_GATEWAY_B3_ADDR, DEFAULT_GATEWAY_ADDRESS_B3);
+		EEPROM.put (EEPROM_GATEWAY_B4_ADDR, DEFAULT_GATEWAY_ADDRESS_B4);
 
 		DPRINTLN (F("EEPROM Format complete"));
 	} else {
 		DPRINTLN (F("EEPROM OK"));
 	}
 }
-	
+
 
 /******************************************************************************
  * DEFINITION OF PAGES                                                        *
@@ -153,7 +150,7 @@ int my_strtoi (const char *nptr, int base) {
 			c -= isupper(c) ? 'A' - 10 : 'a' - 10;
 		else
 			break;
-		
+
 		if (c >= base)
 			break;
 
@@ -194,45 +191,45 @@ void netconfig_func (HTTPRequestParser& request) {
 	param = request.get_get_parameter (F("mac"));
 	if (strlen (param) > 0) {
 		if (tokenize (param, PSTR ("%3A"), buf, 6, 16)) {		// ':' gets encoded to "%3A" when submitting the form
-			EEPROMAnything.write (EEPROM_MAC_B1_ADDR, buf[0]);
-			EEPROMAnything.write (EEPROM_MAC_B2_ADDR, buf[1]);
-			EEPROMAnything.write (EEPROM_MAC_B3_ADDR, buf[2]);
-			EEPROMAnything.write (EEPROM_MAC_B4_ADDR, buf[3]);
-			EEPROMAnything.write (EEPROM_MAC_B5_ADDR, buf[4]);
-			EEPROMAnything.write (EEPROM_MAC_B6_ADDR, buf[5]);
+			EEPROM.put (EEPROM_MAC_B1_ADDR, buf[0]);
+			EEPROM.put (EEPROM_MAC_B2_ADDR, buf[1]);
+			EEPROM.put (EEPROM_MAC_B3_ADDR, buf[2]);
+			EEPROM.put (EEPROM_MAC_B4_ADDR, buf[3]);
+			EEPROM.put (EEPROM_MAC_B5_ADDR, buf[4]);
+			EEPROM.put (EEPROM_MAC_B6_ADDR, buf[5]);
 		}
 	}
-	
+
 	param = request.get_get_parameter (F("mode"));
 	if (strlen (param) > 0) {
 		if (strcmp_P (param, PSTR ("dhcp")) == 0)
-			EEPROMAnything.write (EEPROM_NETMODE_ADDR, NETMODE_DHCP);
+			EEPROM.put (EEPROM_NETMODE_ADDR, NETMODE_DHCP);
 		else if (strcmp_P (param, PSTR ("static")) == 0)
-			EEPROMAnything.write (EEPROM_NETMODE_ADDR, NETMODE_STATIC);
+			EEPROM.put (EEPROM_NETMODE_ADDR, NETMODE_STATIC);
 	}
 
 	param = request.get_get_parameter (F("ip"));
 	if (strlen (param) > 0 && tokenize (param, PSTR ("."), buf, 4, 10)) {
-		EEPROMAnything.write (EEPROM_IP_B1_ADDR, buf[0]);
-		EEPROMAnything.write (EEPROM_IP_B2_ADDR, buf[1]);
-		EEPROMAnything.write (EEPROM_IP_B3_ADDR, buf[2]);
-		EEPROMAnything.write (EEPROM_IP_B4_ADDR, buf[3]);
+		EEPROM.put (EEPROM_IP_B1_ADDR, buf[0]);
+		EEPROM.put (EEPROM_IP_B2_ADDR, buf[1]);
+		EEPROM.put (EEPROM_IP_B3_ADDR, buf[2]);
+		EEPROM.put (EEPROM_IP_B4_ADDR, buf[3]);
 	}
 
 	param = request.get_get_parameter (F("mask"));
 	if (strlen (param) > 0 && tokenize (param, PSTR ("."), buf, 4, 10)) {
-		EEPROMAnything.write (EEPROM_NETMASK_B1_ADDR, buf[0]);
-		EEPROMAnything.write (EEPROM_NETMASK_B2_ADDR, buf[1]);
-		EEPROMAnything.write (EEPROM_NETMASK_B3_ADDR, buf[2]);
-		EEPROMAnything.write (EEPROM_NETMASK_B4_ADDR, buf[3]);
+		EEPROM.put (EEPROM_NETMASK_B1_ADDR, buf[0]);
+		EEPROM.put (EEPROM_NETMASK_B2_ADDR, buf[1]);
+		EEPROM.put (EEPROM_NETMASK_B3_ADDR, buf[2]);
+		EEPROM.put (EEPROM_NETMASK_B4_ADDR, buf[3]);
 	}
 
 	param = request.get_get_parameter (F("gw"));
 	if (strlen (param) > 0 && tokenize (param, PSTR ("."), buf, 4, 10)) {
-		EEPROMAnything.write (EEPROM_GATEWAY_B1_ADDR, buf[0]);
-		EEPROMAnything.write (EEPROM_GATEWAY_B2_ADDR, buf[1]);
-		EEPROMAnything.write (EEPROM_GATEWAY_B3_ADDR, buf[2]);
-		EEPROMAnything.write (EEPROM_GATEWAY_B4_ADDR, buf[3]);
+		EEPROM.put (EEPROM_GATEWAY_B1_ADDR, buf[0]);
+		EEPROM.put (EEPROM_GATEWAY_B2_ADDR, buf[1]);
+		EEPROM.put (EEPROM_GATEWAY_B3_ADDR, buf[2]);
+		EEPROM.put (EEPROM_GATEWAY_B4_ADDR, buf[3]);
 	}
 
 	DPRINTLN (F("Configuration saved"));
@@ -262,51 +259,51 @@ void sck_func (HTTPRequestParser& request) {
 	if (strlen (param) > 0) {
 		int relayNo = atoi (param);
 		if (relayNo >= 1 && relayNo <= RELAYS_NO) {
-        		/* Save the last selected relay for later. I know this is crap, but...
-        		 * See below.
-        		 */
-        		lastSelectedRelay = relayNo;
-        		
-        		Relay& relay = relays[relayNo - 1];
-        
-        		param = request.get_get_parameter (F("mode"));
-        		if (strlen (param) > 0) {		// Only do something if we got this parameter
-        			if (strcmp_P (param, PSTR ("on")) == 0) {
-        				relay.mode = RELMD_ON;
-        			} else if (strcmp_P (param, PSTR ("off")) == 0) {
-        				relay.mode = RELMD_OFF;
-        			} else if (strcmp_P (param, PSTR ("temp")) == 0) {
-        				param = request.get_get_parameter (F("thres"));
-        				if (strcmp_P (param, PSTR ("gt")) == 0)
-        					relay.mode = RELMD_GT;
-        				else
-        					relay.mode = RELMD_LT;
-        
-        				param = request.get_get_parameter (F("temp"));
-        				relay.threshold = atoi (param);
-        				
-        				param = request.get_get_parameter (F("units"));
-        				if (strcmp_P (param, PSTR ("F")) == 0)
-        					relay.units = TEMP_F;
-        				else
-        					relay.units = TEMP_C;
-        
-        				relayHysteresis[relayNo - 1] = false;
-        			}
-        		}
-                }
+			/* Save the last selected relay for later. I know this is crap, but...
+			 * See below.
+			 */
+			lastSelectedRelay = relayNo;
+
+			Relay& relay = relays[relayNo - 1];
+
+			param = request.get_get_parameter (F("mode"));
+			if (strlen (param) > 0) {		// Only do something if we got this parameter
+				if (strcmp_P (param, PSTR ("on")) == 0) {
+					relay.mode = RELMD_ON;
+				} else if (strcmp_P (param, PSTR ("off")) == 0) {
+					relay.mode = RELMD_OFF;
+				} else if (strcmp_P (param, PSTR ("temp")) == 0) {
+					param = request.get_get_parameter (F("thres"));
+					if (strcmp_P (param, PSTR ("gt")) == 0)
+						relay.mode = RELMD_GT;
+					else
+						relay.mode = RELMD_LT;
+
+					param = request.get_get_parameter (F("temp"));
+					relay.threshold = atoi (param);
+
+					param = request.get_get_parameter (F("units"));
+					if (strcmp_P (param, PSTR ("F")) == 0)
+						relay.units = TEMP_F;
+					else
+						relay.units = TEMP_C;
+
+					relayHysteresis[relayNo - 1] = false;
+				}
+			}
+    }
 	}
 }
 
-static Page aboutPage PROGMEM = {about_html_name, about_html, NULL};
-static Page indexPage PROGMEM = {index_html_name, index_html, NULL};
-static Page leftPage PROGMEM = {left_html_name, left_html, NULL};
-static Page netconfigPage PROGMEM = {network_html_name, network_html, netconfig_func};
-static Page relconfigPage PROGMEM = {relays_html_name, relays_html, relconfig_func};
-static Page sckPage PROGMEM = {sck_html_name, sck_html, sck_func};
-static Page welcomePage PROGMEM = {welcome_html_name, welcome_html, NULL};
+static const Page aboutPage PROGMEM = {about_html_name, about_html, NULL};
+static const Page indexPage PROGMEM = {index_html_name, index_html, NULL};
+static const Page leftPage PROGMEM = {left_html_name, left_html, NULL};
+static const Page netconfigPage PROGMEM = {network_html_name, network_html, netconfig_func};
+static const Page relconfigPage PROGMEM = {relays_html_name, relays_html, relconfig_func};
+static const Page sckPage PROGMEM = {sck_html_name, sck_html, sck_func};
+static const Page welcomePage PROGMEM = {welcome_html_name, welcome_html, NULL};
 
-static Page *pages[] PROGMEM = {
+static const Page * const pages[] PROGMEM = {
 	&aboutPage,
 	&indexPage,
 	&leftPage,
@@ -433,7 +430,7 @@ static char *evaluate_temp_deg (void *data) {
 		floatToString (temp.celsius, replaceBuffer);
 	else
 		strlcpy_P (replaceBuffer, NOT_AVAIL_STR, REP_BUFFER_LEN);
-	
+
 	return replaceBuffer;
 }
 
@@ -443,7 +440,7 @@ static char *evaluate_temp_fahr (void *data) {
 		floatToString (temp.toFahrenheit (), replaceBuffer);
 	else
 		strlcpy_P (replaceBuffer, NOT_AVAIL_STR, REP_BUFFER_LEN);
-	
+
 	return replaceBuffer;
 }
 #endif
@@ -455,7 +452,7 @@ static char *ip2str (const byte *buf) {
 		strcat_P (replaceBuffer, PSTR ("."));
 	}
 	itoa (buf[3], replaceBuffer + strlen (replaceBuffer), DEC);
-	
+
 	return replaceBuffer;
 }
 
@@ -481,37 +478,36 @@ static char int2hex (int i) {
 static char *evaluate_mac_addr (void *data) {
 	byte tmp;
 
-	tmp = EEPROMAnything.read (EEPROM_MAC_B1_ADDR);
+	EEPROM.get (EEPROM_MAC_B1_ADDR, tmp);
 	replaceBuffer[0] = int2hex (tmp / 16);
 	replaceBuffer[1] = int2hex (tmp % 16);
 
 	replaceBuffer[2] = ':';
 
-	tmp = EEPROMAnything.read (EEPROM_MAC_B2_ADDR);
+	EEPROM.get (EEPROM_MAC_B2_ADDR, tmp);
 	replaceBuffer[3] = int2hex (tmp / 16);
 	replaceBuffer[4] = int2hex (tmp % 16);
 
 	replaceBuffer[5] = ':';
 
-	tmp = EEPROMAnything.read (EEPROM_MAC_B3_ADDR);
-	replaceBuffer[6] = int2hex (tmp / 16);
+	EEPROM.get (EEPROM_MAC_B3_ADDR, tmp);
 	replaceBuffer[7] = int2hex (tmp % 16);
 
 	replaceBuffer[8] = ':';
 
-	tmp = EEPROMAnything.read (EEPROM_MAC_B4_ADDR);
+	EEPROM.get (EEPROM_MAC_B4_ADDR, tmp);
 	replaceBuffer[9] = int2hex (tmp / 16);
 	replaceBuffer[10] = int2hex (tmp % 16);
 
 	replaceBuffer[11] = ':';
 
-	tmp = EEPROMAnything.read (EEPROM_MAC_B5_ADDR);
+	EEPROM.get (EEPROM_MAC_B5_ADDR, tmp);
 	replaceBuffer[12] = int2hex (tmp / 16);
 	replaceBuffer[13] = int2hex (tmp % 16);
 
 	replaceBuffer[14] = ':';
 
-	tmp = EEPROMAnything.read (EEPROM_MAC_B6_ADDR);
+	EEPROM.get (EEPROM_MAC_B6_ADDR, tmp);
 	replaceBuffer[15] = int2hex (tmp / 16);
 	replaceBuffer[16] = int2hex (tmp % 16);
 
@@ -525,18 +521,22 @@ const char CHECKED_STRING[] PROGMEM = "checked";
 const char SELECTED_STRING[] PROGMEM = "selected=\"true\"";
 
 static char *evaluate_netmode_dhcp_checked (void *data) {
-	int netmode = EEPROMAnything.read (EEPROM_NETMODE_ADDR);
+	NetworkMode netmode;
+  
+	EEPROM.get (EEPROM_NETMODE_ADDR, netmode);
 
 	if (netmode == NETMODE_DHCP)
 		strlcpy_P (replaceBuffer, CHECKED_STRING, REP_BUFFER_LEN);
 	else
 		replaceBuffer[0] = '\0';
-	
-	return replaceBuffer;	
+
+	return replaceBuffer;
 }
 
 static char *evaluate_netmode_static_checked (void *data) {
-	int netmode = EEPROMAnything.read (EEPROM_NETMODE_ADDR);
+	NetworkMode netmode;
+  
+	EEPROM.get (EEPROM_NETMODE_ADDR, netmode);
 
 	if (netmode == NETMODE_STATIC)
 		strlcpy_P (replaceBuffer, CHECKED_STRING, REP_BUFFER_LEN);
@@ -658,7 +658,7 @@ static char *evaluate_relay_temp_delay (void *data) {
 static char *evaluate_relay_temp_margin (void *data) {
 	// Always use first relay's data
 	itoa (relays[0].hysteresis / 10, replaceBuffer, DEC);
-	
+
 	return replaceBuffer;
 }
 
@@ -670,7 +670,7 @@ static char *evaluate_version (void *data) {
 // FIXME :D
 char *my_itoa (int val, char *s, int base, byte width = 0) {
 	char *ret;
-	
+
 	if (width == 2 && val < 10) {
 		s[0] = '0';
 		itoa (val, s + 1, base);
@@ -725,7 +725,7 @@ static char *evaluate_uptime (void *data) {
 	strcat_P (replaceBuffer, PSTR (":"));
 	my_itoa (s, replaceBuffer + strlen (replaceBuffer), DEC, 2);
 #endif
-	
+
 	return replaceBuffer;
 }
 
@@ -771,37 +771,37 @@ static const char subVerStr[] PROGMEM = "VERSION";
 static const char subUptimeStr[] PROGMEM = "UPTIME";
 static const char subFreeRAMStr[] PROGMEM = "FREERAM";
 
-static var_substitution subDateVarSub PROGMEM = {subDateStr, evaluate_date, NULL};
-static var_substitution subTimeVarSub PROGMEM =	{subTimeStr, evaluate_time, NULL};
-static var_substitution subMacAddrVarSub PROGMEM = {subMacAddrStr, evaluate_mac_addr, NULL};
-static var_substitution subIPAddressVarSub PROGMEM = {subIPAddressStr, evaluate_ip, NULL};
-static var_substitution subNetmaskVarSub PROGMEM = {subNetmaskStr, evaluate_netmask, NULL};
-static var_substitution subGatewayVarSub PROGMEM = {subGatewayStr, evaluate_gw, NULL};
-static var_substitution subNMDHCPVarSub PROGMEM = {subNMDHCPStr, evaluate_netmode_dhcp_checked, NULL};
-static var_substitution subNMStaticVarSub PROGMEM = {subNMStaticStr, evaluate_netmode_static_checked, NULL};
-static var_substitution subRelayOnVarSub PROGMEM = {subRelayOnStr, evaluate_relay_onoff_checked, reinterpret_cast<void *> (RELMD_ON)};
-static var_substitution subRelayOffVarSub PROGMEM = {subRelayOffStr, evaluate_relay_onoff_checked, reinterpret_cast<void *> (RELMD_OFF)};
-static var_substitution subRelay1StatusVarSub PROGMEM = {subRelay1StatusStr, evaluate_relay_status, reinterpret_cast<void *> (1)};
-static var_substitution subRelay2StatusVarSub PROGMEM = {subRelay2StatusStr, evaluate_relay_status, reinterpret_cast<void *> (2)};
-static var_substitution subRelay3StatusVarSub PROGMEM = {subRelay3StatusStr, evaluate_relay_status, reinterpret_cast<void *> (3)};
-static var_substitution subRelay4StatusVarSub PROGMEM = {subRelay4StatusStr, evaluate_relay_status, reinterpret_cast<void *> (4)};
+static const var_substitution subDateVarSub PROGMEM = {subDateStr, evaluate_date, NULL};
+static const var_substitution subTimeVarSub PROGMEM =	{subTimeStr, evaluate_time, NULL};
+static const var_substitution subMacAddrVarSub PROGMEM = {subMacAddrStr, evaluate_mac_addr, NULL};
+static const var_substitution subIPAddressVarSub PROGMEM = {subIPAddressStr, evaluate_ip, NULL};
+static const var_substitution subNetmaskVarSub PROGMEM = {subNetmaskStr, evaluate_netmask, NULL};
+static const var_substitution subGatewayVarSub PROGMEM = {subGatewayStr, evaluate_gw, NULL};
+static const var_substitution subNMDHCPVarSub PROGMEM = {subNMDHCPStr, evaluate_netmode_dhcp_checked, NULL};
+static const var_substitution subNMStaticVarSub PROGMEM = {subNMStaticStr, evaluate_netmode_static_checked, NULL};
+static const var_substitution subRelayOnVarSub PROGMEM = {subRelayOnStr, evaluate_relay_onoff_checked, reinterpret_cast<void *> (RELMD_ON)};
+static const var_substitution subRelayOffVarSub PROGMEM = {subRelayOffStr, evaluate_relay_onoff_checked, reinterpret_cast<void *> (RELMD_OFF)};
+static const var_substitution subRelay1StatusVarSub PROGMEM = {subRelay1StatusStr, evaluate_relay_status, reinterpret_cast<void *> (1)};
+static const var_substitution subRelay2StatusVarSub PROGMEM = {subRelay2StatusStr, evaluate_relay_status, reinterpret_cast<void *> (2)};
+static const var_substitution subRelay3StatusVarSub PROGMEM = {subRelay3StatusStr, evaluate_relay_status, reinterpret_cast<void *> (3)};
+static const var_substitution subRelay4StatusVarSub PROGMEM = {subRelay4StatusStr, evaluate_relay_status, reinterpret_cast<void *> (4)};
 #ifdef ENABLE_THERMOMETER
-static var_substitution subDegCVarSub PROGMEM =	{subDegCStr, evaluate_temp_deg, NULL};
-static var_substitution subDegFVarSub PROGMEM = {subDegFStr, evaluate_temp_fahr, NULL};
-static var_substitution subRelayTempVarSub PROGMEM = {subRelayTempStr, evaluate_relay_temp_checked, NULL};
-static var_substitution subRelayTempGTVarSub PROGMEM = {subRelayTempGTStr, evaluate_relay_temp_gt_checked, NULL};
-static var_substitution subRelayTempLTVarSub PROGMEM = {subRelayTempLTStr, evaluate_relay_temp_lt_checked, NULL};
-static var_substitution subRelayTempThresholdVarSub PROGMEM = {subRelayTempThresholdStr, evaluate_relay_temp_threshold, NULL};
-static var_substitution subRelayTempUnitsCVarSub PROGMEM = {subRelayTempUnitsCStr, evaluate_relay_temp_units_c_checked, NULL};
-static var_substitution subRelayTempUnitsFVarSub PROGMEM = {subRelayTempUnitsFStr, evaluate_relay_temp_units_f_checked, NULL};
-static var_substitution subRelayTempDelayVarSub PROGMEM = {subRelayTempDelayStr, evaluate_relay_temp_delay, NULL};
-static var_substitution subRelayTempMarginVarSub PROGMEM = {subRelayTempMarginStr, evaluate_relay_temp_margin, NULL};
+static const var_substitution subDegCVarSub PROGMEM =	{subDegCStr, evaluate_temp_deg, NULL};
+static const var_substitution subDegFVarSub PROGMEM = {subDegFStr, evaluate_temp_fahr, NULL};
+static const var_substitution subRelayTempVarSub PROGMEM = {subRelayTempStr, evaluate_relay_temp_checked, NULL};
+static const var_substitution subRelayTempGTVarSub PROGMEM = {subRelayTempGTStr, evaluate_relay_temp_gt_checked, NULL};
+static const var_substitution subRelayTempLTVarSub PROGMEM = {subRelayTempLTStr, evaluate_relay_temp_lt_checked, NULL};
+static const var_substitution subRelayTempThresholdVarSub PROGMEM = {subRelayTempThresholdStr, evaluate_relay_temp_threshold, NULL};
+static const var_substitution subRelayTempUnitsCVarSub PROGMEM = {subRelayTempUnitsCStr, evaluate_relay_temp_units_c_checked, NULL};
+static const var_substitution subRelayTempUnitsFVarSub PROGMEM = {subRelayTempUnitsFStr, evaluate_relay_temp_units_f_checked, NULL};
+static const var_substitution subRelayTempDelayVarSub PROGMEM = {subRelayTempDelayStr, evaluate_relay_temp_delay, NULL};
+static const var_substitution subRelayTempMarginVarSub PROGMEM = {subRelayTempMarginStr, evaluate_relay_temp_margin, NULL};
 #endif
-static var_substitution subVerVarSub PROGMEM = {subVerStr, evaluate_version, NULL};
-static var_substitution subUptimeVarSub PROGMEM = {subUptimeStr, evaluate_uptime, NULL};
-static var_substitution subFreeRAMVarSub PROGMEM = {subFreeRAMStr, evaluate_free_ram, NULL};
-	
-static var_substitution *substitutions[] PROGMEM = {
+static const var_substitution subVerVarSub PROGMEM = {subVerStr, evaluate_version, NULL};
+static const var_substitution subUptimeVarSub PROGMEM = {subUptimeStr, evaluate_uptime, NULL};
+static const var_substitution subFreeRAMVarSub PROGMEM = {subFreeRAMStr, evaluate_free_ram, NULL};
+
+static const var_substitution * const substitutions[] PROGMEM = {
 	&subDateVarSub,
 	&subTimeVarSub,
 	&subMacAddrVarSub,
@@ -857,42 +857,44 @@ void setup () {
 	}
 
 	// Get MAC from EEPROMAnything and init network
-	mac[0] = EEPROMAnything.read (EEPROM_MAC_B1_ADDR);
-	mac[1] = EEPROMAnything.read (EEPROM_MAC_B2_ADDR);
-	mac[2] = EEPROMAnything.read (EEPROM_MAC_B3_ADDR);
-	mac[3] = EEPROMAnything.read (EEPROM_MAC_B4_ADDR);
-	mac[4] = EEPROMAnything.read (EEPROM_MAC_B5_ADDR);
-	mac[5] = EEPROMAnything.read (EEPROM_MAC_B6_ADDR);
+	EEPROM.get (EEPROM_MAC_B1_ADDR, mac[0]);
+	EEPROM.get (EEPROM_MAC_B2_ADDR, mac[1]);
+	EEPROM.get (EEPROM_MAC_B3_ADDR, mac[2]);
+	EEPROM.get (EEPROM_MAC_B4_ADDR, mac[3]);
+	EEPROM.get (EEPROM_MAC_B5_ADDR, mac[4]);
+	EEPROM.get (EEPROM_MAC_B6_ADDR, mac[5]);
 
 	webserver.setPages (pages);
 #ifdef ENABLE_TAGS
 	webserver.setSubstitutions (substitutions);
 #endif
 
-	switch (EEPROMAnything.read (EEPROM_NETMODE_ADDR)) {
+  NetworkMode netmode;
+  EEPROM.get (EEPROM_NETMODE_ADDR, netmode);
+	switch (netmode) {
 		case NETMODE_STATIC: {
 			byte ip[4], mask[4], gw[4];
-			
-			ip[0] = EEPROMAnything.read (EEPROM_IP_B1_ADDR);
-			ip[1] = EEPROMAnything.read (EEPROM_IP_B2_ADDR);
-			ip[2] = EEPROMAnything.read (EEPROM_IP_B3_ADDR);
-			ip[3] = EEPROMAnything.read (EEPROM_IP_B4_ADDR);
 
-			mask[0] = EEPROMAnything.read (EEPROM_NETMASK_B1_ADDR);
-			mask[1] = EEPROMAnything.read (EEPROM_NETMASK_B2_ADDR);
-			mask[2] = EEPROMAnything.read (EEPROM_NETMASK_B3_ADDR);
-			mask[3] = EEPROMAnything.read (EEPROM_NETMASK_B4_ADDR);
-			
-			gw[0] = EEPROMAnything.read (EEPROM_GATEWAY_B1_ADDR);
-			gw[1] = EEPROMAnything.read (EEPROM_GATEWAY_B2_ADDR);
-			gw[2] = EEPROMAnything.read (EEPROM_GATEWAY_B3_ADDR);
-			gw[3] = EEPROMAnything.read (EEPROM_GATEWAY_B4_ADDR);
+			EEPROM.get (EEPROM_IP_B1_ADDR, ip[0]);
+			EEPROM.get (EEPROM_IP_B2_ADDR, ip[1]);
+			EEPROM.get (EEPROM_IP_B3_ADDR, ip[2]);
+			EEPROM.get (EEPROM_IP_B4_ADDR, ip[3]);
+
+			EEPROM.get (EEPROM_NETMASK_B1_ADDR, mask[0]);
+			EEPROM.get (EEPROM_NETMASK_B2_ADDR, mask[1]);
+			EEPROM.get (EEPROM_NETMASK_B3_ADDR, mask[2]);
+			EEPROM.get (EEPROM_NETMASK_B4_ADDR, mask[3]);
+
+			EEPROM.get (EEPROM_GATEWAY_B1_ADDR, gw[0]);
+			EEPROM.get (EEPROM_GATEWAY_B2_ADDR, gw[0]);
+			EEPROM.get (EEPROM_GATEWAY_B3_ADDR, gw[0]);
+			EEPROM.get (EEPROM_GATEWAY_B4_ADDR, gw[0]);
 
 			if (!webserver.begin (mac, ip, mask, gw)) {
 				DPRINTLN (F("Failed to set static IP address"));
 			} else {
 				DPRINTLN (F("Static IP setup done"));
-                        }
+			}
 			break;
 		}
 		default:
@@ -916,7 +918,7 @@ void setup () {
 	thermometer.begin (THERMOMETER_PIN);
 #endif
 
-	for (int i = 0; i < RELAYS_NO; i++)
+	for (byte i = 0; i < RELAYS_NO; i++)
 		relayHysteresis[i] = false;			// Start with no hysteresis
 
 // 	DPRINTLN ("setup() complete");
@@ -925,10 +927,10 @@ void setup () {
 void loop () {
 	webserver.processPacket ();
 
-	for (int i = 0; i < RELAYS_NO; i++) {
+	for (byte i = 0; i < RELAYS_NO; i++) {
 		Relay& r = relays[i];
 		bool& hysteresisEnabled = relayHysteresis[i];
-		
+
 		switch (r.mode) {
 			case RELMD_ON:
 				if (r.state != RELAY_ON)
@@ -940,38 +942,39 @@ void loop () {
 				break;
 #ifdef ENABLE_THERMOMETER
 			case RELMD_GT:
-                                if (thermometer.available && (millis () - lastTemperatureRequest > THERMO_READ_INTERVAL)) {
-        				Temperature& temp = thermometer.getTemp ();
-        				if (temp.valid) {
-        					if (((!hysteresisEnabled && temp.celsius > r.threshold) || (hysteresisEnabled && temp.celsius > r.threshold + r.hysteresis / 10.0)) && r.state != RELAY_ON) {
-        						r.switchState (RELAY_ON);
-        						hysteresisEnabled = true;
-        					} else if (temp.celsius <= r.threshold && r.state != RELAY_OFF) {
-        						r.switchState (RELAY_OFF);
-        					}
-        				}
-        
-                                        lastTemperatureRequest = millis ();
-                                }    
+				if (thermometer.available && (millis () - lastTemperatureRequest > THERMO_READ_INTERVAL)) {
+          Temperature& temp = thermometer.getTemp ();
+					if (temp.valid) {
+						if (((!hysteresisEnabled && temp.celsius > r.threshold) || (hysteresisEnabled && temp.celsius > r.threshold + r.hysteresis / 10.0)) && r.state != RELAY_ON) {
+							r.switchState (RELAY_ON);
+							hysteresisEnabled = true;
+						} else if (temp.celsius <= r.threshold && r.state != RELAY_OFF) {
+							r.switchState (RELAY_OFF);
+						}
+          }
+
+					lastTemperatureRequest = millis ();
+				}
 				break;
 			case RELMD_LT:
-                                if (thermometer.available && (millis () - lastTemperatureRequest > THERMO_READ_INTERVAL)) {
-        				Temperature& temp = thermometer.getTemp ();
-        				if (temp.valid) {
-        					if (((!hysteresisEnabled && temp.celsius < r.threshold) || (hysteresisEnabled && temp.celsius < r.threshold - r.hysteresis / 10.0)) && r.state != RELAY_ON) {
-        						r.switchState (RELAY_ON);
-        						hysteresisEnabled = true;
-        					} else if (temp.celsius >= r.threshold && r.state != RELAY_OFF) {
-        						r.switchState (RELAY_OFF);
-        					}
-        				}
-        
-                                        lastTemperatureRequest = millis ();
-                                }
-                                break;
+				if (thermometer.available && (millis () - lastTemperatureRequest > THERMO_READ_INTERVAL)) {
+					Temperature& temp = thermometer.getTemp ();
+					if (temp.valid) {
+						if (((!hysteresisEnabled && temp.celsius < r.threshold) || (hysteresisEnabled && temp.celsius < r.threshold - r.hysteresis / 10.0)) && r.state != RELAY_ON) {
+							r.switchState (RELAY_ON);
+							hysteresisEnabled = true;
+						} else if (temp.celsius >= r.threshold && r.state != RELAY_OFF) {
+							r.switchState (RELAY_OFF);
+						}
+					}
+
+						lastTemperatureRequest = millis ();
+				}
+				break;
 #endif
 			default:
 				break;
 		}
 	}
 }
+
