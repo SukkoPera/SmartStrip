@@ -73,19 +73,14 @@ void checkAndFormatEEPROM () {
 
 	// The casts here are very important
 	EEPROM.get (0, magic);
-
 	if (magic != EEPROM_MAGIC) {
-		// Need to format EEPROMAnything
+		// Need to format EEPROM
 		DPRINT (F("Formatting EEPROM (Wrong Magic: 0x"));
-		DPRINT (magic >> 16, HEX);			// It seems we can't print a long in a single pass
 		DPRINT (magic, HEX);
 		DPRINTLN (F(")"));
 
 		// Magic header
-		EEPROM.put (0, (EEPROM_MAGIC >> 24) & 0xFF);
-		EEPROM.put (1, (EEPROM_MAGIC >> 16) & 0xFF);
-		EEPROM.put (2, (EEPROM_MAGIC >> 8) & 0xFF);
-		EEPROM.put (3, EEPROM_MAGIC & 0xFF);
+		EEPROM.put (0, EEPROM_MAGIC);
 
 		// Relay data
 		for (byte i = 0; i < RELAYS_NO; i++) {
