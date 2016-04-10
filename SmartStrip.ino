@@ -67,6 +67,9 @@ NetworkInterfaceWIZ5100 netint;
 // Instantiate the thermometer
 Thermometer thermometer;
 
+// Current temperature (Start with average ambient temperature)
+float temperature = 25;
+
 // Time the last temperature request was issued
 unsigned long lastTemperatureRequest = 0;
 #endif
@@ -942,8 +945,6 @@ void setup () {
 
 // 	DPRINTLN ("setup() complete");
 }
-
-float temperature;
 
 void loop () {
 	webserver.loop ();
