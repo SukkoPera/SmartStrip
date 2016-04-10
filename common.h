@@ -54,19 +54,19 @@
 #define EEPROM_MAC_B4_ADDR 67
 #define EEPROM_MAC_B5_ADDR 68
 #define EEPROM_MAC_B6_ADDR 69
-#define EEPROM_NETMODE_ADDR 70
-#define EEPROM_IP_B1_ADDR 71
-#define EEPROM_IP_B2_ADDR 72
-#define EEPROM_IP_B3_ADDR 73
-#define EEPROM_IP_B4_ADDR 74
-#define EEPROM_NETMASK_B1_ADDR 75
-#define EEPROM_NETMASK_B2_ADDR 76
-#define EEPROM_NETMASK_B3_ADDR 77
-#define EEPROM_NETMASK_B4_ADDR 78
-#define EEPROM_GATEWAY_B1_ADDR 79
-#define EEPROM_GATEWAY_B2_ADDR 80
-#define EEPROM_GATEWAY_B3_ADDR 81
-#define EEPROM_GATEWAY_B4_ADDR 82
+#define EEPROM_NETMODE_ADDR 70				// This has turned to 2 bytes in some recent version of Arduino
+#define EEPROM_IP_B1_ADDR 72
+#define EEPROM_IP_B2_ADDR 73
+#define EEPROM_IP_B3_ADDR 74
+#define EEPROM_IP_B4_ADDR 75
+#define EEPROM_NETMASK_B1_ADDR 76
+#define EEPROM_NETMASK_B2_ADDR 77
+#define EEPROM_NETMASK_B3_ADDR 78
+#define EEPROM_NETMASK_B4_ADDR 79
+#define EEPROM_GATEWAY_B1_ADDR 80
+#define EEPROM_GATEWAY_B2_ADDR 81
+#define EEPROM_GATEWAY_B3_ADDR 82
+#define EEPROM_GATEWAY_B4_ADDR 83
 
 /* Network parameter defaults: feel free to change these to fit your network
  * setup. Note that these are the DEFAULTS, so they will only be used when your
