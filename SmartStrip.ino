@@ -18,13 +18,6 @@
  ***************************************************************************/
 
 #include <Webbino.h>
-#ifdef USE_ENC28J60
-	#include <EtherCard.h>
-#else
-	#include <SPI.h>
-	#include <Ethernet.h>
-#endif
-
 #include <EEPROM.h>
 #include <avr/pgmspace.h>
 #include "debug.h"
@@ -39,6 +32,27 @@ byte lastSelectedRelay;
 
 // Instantiate the WebServer
 WebServer webserver;
+
+//~ #define USE_ENC28J60
+//~ #include <WebServer_ENC28J60.h>
+//~ NetworkInterfaceENC28J60 netint;
+
+#define USE_WIZ5100
+#include <WebServer_WIZ5100.h>
+NetworkInterfaceWIZ5100 netint;
+
+//~ #define USE_ESP8266
+//~ #include <WebServer_ESP8266.h>
+
+//~ #include <SoftwareSerial.h>
+//~ SoftwareSerial swSerial (7, 8);
+
+//~ // Wi-Fi parameters
+//~ #define WIFI_SSID        "SukkoNet-TO"
+//~ #define WIFI_PASSWORD    "everythingyouknowiswrong"
+
+//~ NetworkInterfaceESP8266 netint;
+
 
 #ifdef ENABLE_THERMOMETER
 
@@ -322,7 +336,7 @@ static char replaceBuffer[REP_BUFFER_LEN];
 const char NOT_AVAIL_STR[] PROGMEM = "N/A";
 
 
-static char *evaluate_date (void *data) {
+static char *evaluate_date (void *data __attribute__ ((unused))) {
 #ifdef USE_ARDUINO_TIME_LIBRARY
 	int x;
 
@@ -352,7 +366,7 @@ static char *evaluate_date (void *data) {
 	return replaceBuffer;
 }
 
-static char *evaluate_time (void *data) {
+static char *evaluate_time (void *data __attribute__ ((unused))) {
 #ifdef USE_ARDUINO_TIME_LIBRARY
 	int x;
 
@@ -419,7 +433,7 @@ char *floatToString (double val, char *outstr) {
 }
 
 #ifdef ENABLE_THERMOMETER
-static char *evaluate_temp_deg (void *data) {
+static char *evaluate_temp_deg (void *data __attribute__ ((unused))) {
 	Temperature& temp = thermometer.getTemp ();
 	if (temp.valid)
 		floatToString (temp.celsius, replaceBuffer);
@@ -429,7 +443,7 @@ static char *evaluate_temp_deg (void *data) {
 	return replaceBuffer;
 }
 
-static char *evaluate_temp_fahr (void *data) {
+static char *evaluate_temp_fahr (void *data __attribute__ ((unused))) {
 	Temperature& temp = thermometer.getTemp ();
 	if (temp.valid)
 		floatToString (temp.toFahrenheit (), replaceBuffer);
@@ -451,16 +465,16 @@ static char *ip2str (const byte *buf) {
 	return replaceBuffer;
 }
 
-static char *evaluate_ip (void *data) {
- 	return ip2str (webserver.getIP ());
+static char *evaluate_ip (void *data __attribute__ ((unused))) {
+ 	return ip2str (netint.getIP ());
 }
 
-static char *evaluate_netmask (void *data) {
-	return ip2str (webserver.getNetmask ());
+static char *evaluate_netmask (void *data __attribute__ ((unused))) {
+	return ip2str (netint.getNetmask ());
 }
 
-static char *evaluate_gw (void *data) {
-	return ip2str (webserver.getGateway ());
+static char *evaluate_gw (void *data __attribute__ ((unused))) {
+	return ip2str (netint.getGateway ());
 }
 
 static char int2hex (int i) {
@@ -470,7 +484,7 @@ static char int2hex (int i) {
 		return i - 10 + 'A';
 }
 
-static char *evaluate_mac_addr (void *data) {
+static char *evaluate_mac_addr (void *data __attribute__ ((unused))) {
 	byte tmp;
 
 	EEPROM.get (EEPROM_MAC_B1_ADDR, tmp);
@@ -486,6 +500,7 @@ static char *evaluate_mac_addr (void *data) {
 	replaceBuffer[5] = ':';
 
 	EEPROM.get (EEPROM_MAC_B3_ADDR, tmp);
+	replaceBuffer[6] = int2hex (tmp / 16);
 	replaceBuffer[7] = int2hex (tmp % 16);
 
 	replaceBuffer[8] = ':';
@@ -515,9 +530,9 @@ static char *evaluate_mac_addr (void *data) {
 const char CHECKED_STRING[] PROGMEM = "checked";
 const char SELECTED_STRING[] PROGMEM = "selected=\"true\"";
 
-static char *evaluate_netmode_dhcp_checked (void *data) {
+static char *evaluate_netmode_dhcp_checked (void *data __attribute__ ((unused))) {
 	NetworkMode netmode;
-  
+
 	EEPROM.get (EEPROM_NETMODE_ADDR, netmode);
 
 	if (netmode == NETMODE_DHCP)
@@ -528,9 +543,9 @@ static char *evaluate_netmode_dhcp_checked (void *data) {
 	return replaceBuffer;
 }
 
-static char *evaluate_netmode_static_checked (void *data) {
+static char *evaluate_netmode_static_checked (void *data __attribute__ ((unused))) {
 	NetworkMode netmode;
-  
+
 	EEPROM.get (EEPROM_NETMODE_ADDR, netmode);
 
 	if (netmode == NETMODE_STATIC)
@@ -567,7 +582,7 @@ static char *evaluate_relay_status (void *data) {
  *
  * PS: lastSelectedRelay is saved in sck_func().
  */
-static char *evaluate_relay_onoff_checked (void *data) {
+static char *evaluate_relay_onoff_checked (void *data __attribute__ ((unused))) {
 	replaceBuffer[0] = '\0';
 
 	if (lastSelectedRelay >= 1 && lastSelectedRelay <= RELAYS_NO) {
@@ -579,7 +594,7 @@ static char *evaluate_relay_onoff_checked (void *data) {
 	return replaceBuffer;
 }
 
-static char *evaluate_relay_temp_checked (void *data) {
+static char *evaluate_relay_temp_checked (void *data __attribute__ ((unused))) {
 	replaceBuffer[0] = '\0';
 
 	if (lastSelectedRelay >= 1 && lastSelectedRelay <= RELAYS_NO) {
@@ -590,7 +605,7 @@ static char *evaluate_relay_temp_checked (void *data) {
 	return replaceBuffer;
 }
 
-static char *evaluate_relay_temp_gt_checked (void *data) {
+static char *evaluate_relay_temp_gt_checked (void *data __attribute__ ((unused))) {
 	replaceBuffer[0] = '\0';
 
 	if (lastSelectedRelay >= 1 && lastSelectedRelay <= RELAYS_NO) {
@@ -601,7 +616,7 @@ static char *evaluate_relay_temp_gt_checked (void *data) {
 	return replaceBuffer;
 }
 
-static char *evaluate_relay_temp_lt_checked (void *data) {
+static char *evaluate_relay_temp_lt_checked (void *data __attribute__ ((unused))) {
 	replaceBuffer[0] = '\0';
 
 	if (lastSelectedRelay >= 1 && lastSelectedRelay <= RELAYS_NO) {
@@ -612,7 +627,7 @@ static char *evaluate_relay_temp_lt_checked (void *data) {
 	return replaceBuffer;
 }
 
-static char *evaluate_relay_temp_threshold (void *data) {
+static char *evaluate_relay_temp_threshold (void *data __attribute__ ((unused))) {
 	replaceBuffer[0] = '\0';
 
 	if (lastSelectedRelay >= 1 && lastSelectedRelay <= RELAYS_NO)
@@ -621,7 +636,7 @@ static char *evaluate_relay_temp_threshold (void *data) {
 	return replaceBuffer;
 }
 
-static char *evaluate_relay_temp_units_c_checked (void *data) {
+static char *evaluate_relay_temp_units_c_checked (void *data __attribute__ ((unused))) {
 	replaceBuffer[0] = '\0';
 
 	if (lastSelectedRelay >= 1 && lastSelectedRelay <= RELAYS_NO) {
@@ -632,7 +647,7 @@ static char *evaluate_relay_temp_units_c_checked (void *data) {
 	return replaceBuffer;
 }
 
-static char *evaluate_relay_temp_units_f_checked (void *data) {
+static char *evaluate_relay_temp_units_f_checked (void *data __attribute__ ((unused))) {
 	replaceBuffer[0] = '\0';
 
 	if (lastSelectedRelay >= 1 && lastSelectedRelay <= RELAYS_NO) {
@@ -643,21 +658,21 @@ static char *evaluate_relay_temp_units_f_checked (void *data) {
 	return replaceBuffer;
 }
 
-static char *evaluate_relay_temp_delay (void *data) {
+static char *evaluate_relay_temp_delay (void *data __attribute__ ((unused))) {
 	// Always use first relay's data
 	itoa (relays[0].delay, replaceBuffer, DEC);
 
 	return replaceBuffer;
 }
 
-static char *evaluate_relay_temp_margin (void *data) {
+static char *evaluate_relay_temp_margin (void *data __attribute__ ((unused))) {
 	// Always use first relay's data
 	itoa (relays[0].hysteresis / 10, replaceBuffer, DEC);
 
 	return replaceBuffer;
 }
 
-static char *evaluate_version (void *data) {
+static char *evaluate_version (void *data __attribute__ ((unused))) {
 	strlcpy (replaceBuffer, PROGRAM_VERSION, REP_BUFFER_LEN);
 	return replaceBuffer;
 }
@@ -680,7 +695,7 @@ char *my_itoa (int val, char *s, int base, byte width = 0) {
 // Wahahahah! Prolly the most advanced function of its kind!
 // FIXME: Save some bytes removing temp vars.
 // FIXME: Check that string does not overflow buffer (which is likely!)
-static char *evaluate_uptime (void *data) {
+static char *evaluate_uptime (void *data __attribute__ ((unused))) {
 	unsigned long uptime = millis () / 1000;
 	byte d, h, m, s;
 
@@ -725,7 +740,7 @@ static char *evaluate_uptime (void *data) {
 }
 
 // See http://playground.arduino.cc/Code/AvailableMemory
-static char *evaluate_free_ram (void *data) {
+static char *evaluate_free_ram (void *data __attribute__ ((unused))) {
 	extern int __heap_start, *__brkval;
 	int v;
 
@@ -843,7 +858,7 @@ void setup () {
 	DSTART ();
 	DPRINTLN (F("SmartStrip " PROGRAM_VERSION));
 
-	// Check and format EEPROMAnything, in case
+	// Check and format EEPROM, in case
 	checkAndFormatEEPROM ();
 
 	for (int i = 0; i < RELAYS_NO; i++) {
@@ -851,7 +866,7 @@ void setup () {
 		relays[i].effectState ();
 	}
 
-	// Get MAC from EEPROMAnything and init network
+	// Get MAC from EEPROM and init network
 	EEPROM.get (EEPROM_MAC_B1_ADDR, mac[0]);
 	EEPROM.get (EEPROM_MAC_B2_ADDR, mac[1]);
 	EEPROM.get (EEPROM_MAC_B3_ADDR, mac[2]);
@@ -859,13 +874,20 @@ void setup () {
 	EEPROM.get (EEPROM_MAC_B5_ADDR, mac[4]);
 	EEPROM.get (EEPROM_MAC_B6_ADDR, mac[5]);
 
+#if defined (USE_ENC28J60) || defined (USE_WIZ5100)
+	netint.begin (mac);
+#elif defined (USE_ESP8266)
+	swSerial.begin (9600);
+	netint.begin (swSerial, WIFI_SSID, WIFI_PASSWORD);
+#endif
+
 	webserver.setPages (pages);
 #ifdef ENABLE_TAGS
 	webserver.setSubstitutions (substitutions);
 #endif
 
-  NetworkMode netmode;
-  EEPROM.get (EEPROM_NETMODE_ADDR, netmode);
+	NetworkMode netmode;
+	EEPROM.get (EEPROM_NETMODE_ADDR, netmode);
 	switch (netmode) {
 		case NETMODE_STATIC: {
 			byte ip[4], mask[4], gw[4];
@@ -885,7 +907,7 @@ void setup () {
 			EEPROM.get (EEPROM_GATEWAY_B3_ADDR, gw[0]);
 			EEPROM.get (EEPROM_GATEWAY_B4_ADDR, gw[0]);
 
-			if (!webserver.begin (mac, ip, mask, gw)) {
+			if (!webserver.begin (netint)) {
 				DPRINTLN (F("Failed to set static IP address"));
 			} else {
 				DPRINTLN (F("Static IP setup done"));
@@ -895,8 +917,10 @@ void setup () {
 		default:
 		case NETMODE_DHCP:
 			DPRINTLN (F("Trying to get an IP address through DHCP"));
-			if (!webserver.begin (mac)) {
+			if (!webserver.begin (netint)) {
 				DPRINTLN (F("Failed to get configuration from DHCP"));
+				while (1)
+					;
 			} else {
 				DPRINTLN (F("DHCP configuration done"));
 #if 0
@@ -919,8 +943,26 @@ void setup () {
 // 	DPRINTLN ("setup() complete");
 }
 
+float temperature;
+
 void loop () {
-	webserver.processPacket ();
+	webserver.loop ();
+
+#ifdef ENABLE_THERMOMETER
+	// Update temperature
+	if (thermometer.available && (millis () - lastTemperatureRequest > THERMO_READ_INTERVAL)) {
+		Temperature& temp = thermometer.getTemp ();
+		if (temp.valid) {
+			temperature = temp.celsius;
+
+			DPRINT (F("Temperature is now: "));
+			DPRINT (temperature);
+			DPRINTLN (F(" *C"));
+
+			lastTemperatureRequest = millis ();
+		}
+	}
+#endif
 
 	for (byte i = 0; i < RELAYS_NO; i++) {
 		Relay& r = relays[i];
@@ -937,33 +979,19 @@ void loop () {
 				break;
 #ifdef ENABLE_THERMOMETER
 			case RELMD_GT:
-				if (thermometer.available && (millis () - lastTemperatureRequest > THERMO_READ_INTERVAL)) {
-          Temperature& temp = thermometer.getTemp ();
-					if (temp.valid) {
-						if (((!hysteresisEnabled && temp.celsius > r.threshold) || (hysteresisEnabled && temp.celsius > r.threshold + r.hysteresis / 10.0)) && r.state != RELAY_ON) {
-							r.switchState (RELAY_ON);
-							hysteresisEnabled = true;
-						} else if (temp.celsius <= r.threshold && r.state != RELAY_OFF) {
-							r.switchState (RELAY_OFF);
-						}
-          }
-
-					lastTemperatureRequest = millis ();
+				if (((!hysteresisEnabled && temperature > r.threshold) || (hysteresisEnabled && temperature > r.threshold + r.hysteresis / 10.0)) && r.state != RELAY_ON) {
+					r.switchState (RELAY_ON);
+					hysteresisEnabled = true;
+				} else if (temperature <= r.threshold && r.state != RELAY_OFF) {
+					r.switchState (RELAY_OFF);
 				}
 				break;
 			case RELMD_LT:
-				if (thermometer.available && (millis () - lastTemperatureRequest > THERMO_READ_INTERVAL)) {
-					Temperature& temp = thermometer.getTemp ();
-					if (temp.valid) {
-						if (((!hysteresisEnabled && temp.celsius < r.threshold) || (hysteresisEnabled && temp.celsius < r.threshold - r.hysteresis / 10.0)) && r.state != RELAY_ON) {
-							r.switchState (RELAY_ON);
-							hysteresisEnabled = true;
-						} else if (temp.celsius >= r.threshold && r.state != RELAY_OFF) {
-							r.switchState (RELAY_OFF);
-						}
-					}
-
-						lastTemperatureRequest = millis ();
+				if (((!hysteresisEnabled && temperature < r.threshold) || (hysteresisEnabled && temperature < r.threshold - r.hysteresis / 10.0)) && r.state != RELAY_ON) {
+					r.switchState (RELAY_ON);
+					hysteresisEnabled = true;
+				} else if (temperature >= r.threshold && r.state != RELAY_OFF) {
+					r.switchState (RELAY_OFF);
 				}
 				break;
 #endif
@@ -972,4 +1000,3 @@ void loop () {
 		}
 	}
 }
-

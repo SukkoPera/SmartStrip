@@ -1,7 +1,7 @@
 /***************************************************************************
  *   This file is part of SmartStrip.                                      *
  *                                                                         *
- *   Copyright (C) 2012-2015 by SukkoPera                                  *
+ *   Copyright (C) 2012-2016 by SukkoPera                                  *
  *                                                                         *
  *   SmartStrip is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by  *
@@ -23,13 +23,13 @@
 #include "common.h"
 
 #ifndef NDEBUG
-        #define DSTART(...) Serial.begin (9600);
+	#define DSTART(...) Serial.begin (9600)
 	#define DPRINT(...) Serial.print(__VA_ARGS__)
 	#define DPRINTLN(...) Serial.println(__VA_ARGS__)
 #else
-        #define DSTART(...) do {} while (0);
-	#define DPRINT(...) do {} while (0);
-	#define DPRINTLN(...) do {} while (0);
+	#define DSTART(...) do {} while (0)
+	#define DPRINT(...) do {} while (0)
+	#define DPRINTLN(...) do {} while (0)
 #endif
 
 #endif
