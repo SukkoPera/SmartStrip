@@ -596,6 +596,9 @@ static char *evaluate_relay_onoff_checked (void *data __attribute__ ((unused))) 
 	return replaceBuffer;
 }
 
+
+#ifdef ENABLE_THERMOMETER
+
 static char *evaluate_relay_temp_checked (void *data __attribute__ ((unused))) {
 	replaceBuffer[0] = '\0';
 
@@ -673,6 +676,8 @@ static char *evaluate_relay_temp_margin (void *data __attribute__ ((unused))) {
 
 	return replaceBuffer;
 }
+
+#endif		// ENABLE_THERMOMETER
 
 static char *evaluate_version (void *data __attribute__ ((unused))) {
 	strlcpy (replaceBuffer, PROGRAM_VERSION, REP_BUFFER_LEN);
@@ -966,7 +971,10 @@ void loop () {
 
 	for (byte i = 0; i < RELAYS_NO; i++) {
 		Relay& r = relays[i];
+
+#ifdef ENABLE_THERMOMETER
 		bool& hysteresisEnabled = relayHysteresis[i];
+#endif
 
 		switch (r.mode) {
 			case RELMD_ON:
