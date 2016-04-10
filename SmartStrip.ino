@@ -33,26 +33,25 @@ byte lastSelectedRelay;
 // Instantiate the WebServer
 WebServer webserver;
 
-//~ #define USE_ENC28J60
-//~ #include <WebServer_ENC28J60.h>
-//~ NetworkInterfaceENC28J60 netint;
+// Instantiate the network interface defined in the Webbino headers
+#if defined (WEBBINO_USE_WIZ5100)
+	#include <WebServer_ENC28J60.h>
+	NetworkInterfaceENC28J60 netint;
+#elif defined (WEBBINO_USE_WIZ5100)
+	#include <WebServer_WIZ5100.h>
+	NetworkInterfaceWIZ5100 netint;
+#elif defined (WEBBINO_USE_ESP8266)
+	#include <WebServer_ESP8266.h>
 
-#define USE_WIZ5100
-#include <WebServer_WIZ5100.h>
-NetworkInterfaceWIZ5100 netint;
+	#include <SoftwareSerial.h>
+	SoftwareSerial swSerial (7, 8);
 
-//~ #define USE_ESP8266
-//~ #include <WebServer_ESP8266.h>
+	// Wi-Fi parameters
+	#define WIFI_SSID        "ssid"
+	#define WIFI_PASSWORD    "password"
 
-//~ #include <SoftwareSerial.h>
-//~ SoftwareSerial swSerial (7, 8);
-
-//~ // Wi-Fi parameters
-//~ #define WIFI_SSID        "SukkoNet-TO"
-//~ #define WIFI_PASSWORD    "everythingyouknowiswrong"
-
-//~ NetworkInterfaceESP8266 netint;
-
+	NetworkInterfaceESP8266 netint;
+#endif
 
 #ifdef ENABLE_THERMOMETER
 
@@ -877,9 +876,9 @@ void setup () {
 	EEPROM.get (EEPROM_MAC_B5_ADDR, mac[4]);
 	EEPROM.get (EEPROM_MAC_B6_ADDR, mac[5]);
 
-#if defined (USE_ENC28J60) || defined (USE_WIZ5100)
+#if defined (WEBBINO_USE_ENC28J60) || defined (WEBBINO_USE_WIZ5100)
 	netint.begin (mac);
-#elif defined (USE_ESP8266)
+#elif defined (WEBBINO_USE_ESP8266)
 	swSerial.begin (9600);
 	netint.begin (swSerial, WIFI_SSID, WIFI_PASSWORD);
 #endif
