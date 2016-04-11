@@ -99,25 +99,25 @@ void checkAndFormatEEPROM () {
 		}
 
 		// Network configuration
-		EEPROM.put (EEPROM_MAC_B1_ADDR, DEFAULT_MAC_ADDRESS_B1);
-		EEPROM.put (EEPROM_MAC_B2_ADDR, DEFAULT_MAC_ADDRESS_B2);
-		EEPROM.put (EEPROM_MAC_B3_ADDR, DEFAULT_MAC_ADDRESS_B3);
-		EEPROM.put (EEPROM_MAC_B4_ADDR, DEFAULT_MAC_ADDRESS_B4);
-		EEPROM.put (EEPROM_MAC_B5_ADDR, DEFAULT_MAC_ADDRESS_B5);
-		EEPROM.put (EEPROM_MAC_B6_ADDR, DEFAULT_MAC_ADDRESS_B6);
+		EEPROM.put (EEPROM_MAC_ADDR, DEFAULT_MAC_ADDRESS_B1);
+		EEPROM.put (EEPROM_MAC_ADDR + 1, DEFAULT_MAC_ADDRESS_B2);
+		EEPROM.put (EEPROM_MAC_ADDR + 2, DEFAULT_MAC_ADDRESS_B3);
+		EEPROM.put (EEPROM_MAC_ADDR + 3, DEFAULT_MAC_ADDRESS_B4);
+		EEPROM.put (EEPROM_MAC_ADDR + 4, DEFAULT_MAC_ADDRESS_B5);
+		EEPROM.put (EEPROM_MAC_ADDR + 5, DEFAULT_MAC_ADDRESS_B6);
 		EEPROM.put (EEPROM_NETMODE_ADDR, DEFAULT_NET_MODE);
-		EEPROM.put (EEPROM_IP_B1_ADDR, DEFAULT_IP_ADDRESS_B1);
-		EEPROM.put (EEPROM_IP_B2_ADDR, DEFAULT_IP_ADDRESS_B2);
-		EEPROM.put (EEPROM_IP_B3_ADDR, DEFAULT_IP_ADDRESS_B3);
-		EEPROM.put (EEPROM_IP_B4_ADDR, DEFAULT_IP_ADDRESS_B4);
-		EEPROM.put (EEPROM_NETMASK_B1_ADDR, DEFAULT_NETMASK_B1);
-		EEPROM.put (EEPROM_NETMASK_B2_ADDR, DEFAULT_NETMASK_B2);
-		EEPROM.put (EEPROM_NETMASK_B3_ADDR, DEFAULT_NETMASK_B3);
-		EEPROM.put (EEPROM_NETMASK_B4_ADDR, DEFAULT_NETMASK_B4);
-		EEPROM.put (EEPROM_GATEWAY_B1_ADDR, DEFAULT_GATEWAY_ADDRESS_B1);
-		EEPROM.put (EEPROM_GATEWAY_B2_ADDR, DEFAULT_GATEWAY_ADDRESS_B2);
-		EEPROM.put (EEPROM_GATEWAY_B3_ADDR, DEFAULT_GATEWAY_ADDRESS_B3);
-		EEPROM.put (EEPROM_GATEWAY_B4_ADDR, DEFAULT_GATEWAY_ADDRESS_B4);
+		EEPROM.put (EEPROM_IP_ADDR, DEFAULT_IP_ADDRESS_B1);
+		EEPROM.put (EEPROM_IP_ADDR + 1, DEFAULT_IP_ADDRESS_B2);
+		EEPROM.put (EEPROM_IP_ADDR + 2, DEFAULT_IP_ADDRESS_B3);
+		EEPROM.put (EEPROM_IP_ADDR + 3, DEFAULT_IP_ADDRESS_B4);
+		EEPROM.put (EEPROM_NETMASK_ADDR, DEFAULT_NETMASK_B1);
+		EEPROM.put (EEPROM_NETMASK_ADDR + 1, DEFAULT_NETMASK_B2);
+		EEPROM.put (EEPROM_NETMASK_ADDR + 2, DEFAULT_NETMASK_B3);
+		EEPROM.put (EEPROM_NETMASK_ADDR + 3, DEFAULT_NETMASK_B4);
+		EEPROM.put (EEPROM_GATEWAY_ADDR, DEFAULT_GATEWAY_ADDRESS_B1);
+		EEPROM.put (EEPROM_GATEWAY_ADDR + 1, DEFAULT_GATEWAY_ADDRESS_B2);
+		EEPROM.put (EEPROM_GATEWAY_ADDR + 2, DEFAULT_GATEWAY_ADDRESS_B3);
+		EEPROM.put (EEPROM_GATEWAY_ADDR + 3, DEFAULT_GATEWAY_ADDRESS_B4);
 
 		DPRINTLN (F("EEPROM Format complete"));
 	} else {
@@ -191,13 +191,13 @@ bool tokenize (const char *str, PGM_P sep, byte *buffer, size_t bufsize, int bas
 
 void netconfig_func (HTTPRequestParser& request) {
 	char *param;
-	byte buf[6], i;
+	byte buf[MAC_SIZE], i;
 
 	param = request.get_get_parameter (F("mac"));
 	if (strlen (param) > 0) {
-		if (tokenize (param, PSTR ("%3A"), buf, 6, 16)) {		// ':' gets encoded to "%3A" when submitting the form
-			for (i = 0; i < 6; i++)
-				EEPROM.put (EEPROM_MAC_B1_ADDR + i, buf[i]);
+		if (tokenize (param, PSTR ("%3A"), buf, MAC_SIZE, 16)) {		// ':' gets encoded to "%3A" when submitting the form
+			for (i = 0; i < MAC_SIZE; i++)
+				EEPROM.put (EEPROM_MAC_ADDR + i, buf[i]);
 		}
 	}
 
@@ -210,21 +210,21 @@ void netconfig_func (HTTPRequestParser& request) {
 	}
 
 	param = request.get_get_parameter (F("ip"));
-	if (strlen (param) > 0 && tokenize (param, PSTR ("."), buf, 4, 10)) {
-		for (i = 0; i < 4; i++)
-			EEPROM.put (EEPROM_IP_B1_ADDR + i, buf[i]);
+	if (strlen (param) > 0 && tokenize (param, PSTR ("."), buf, IP_SIZE, 10)) {
+		for (i = 0; i < IP_SIZE; i++)
+			EEPROM.put (EEPROM_IP_ADDR + i, buf[i]);
 	}
 
 	param = request.get_get_parameter (F("mask"));
-	if (strlen (param) > 0 && tokenize (param, PSTR ("."), buf, 4, 10)) {
-		for (i = 0; i < 4; i++)
-			EEPROM.put (EEPROM_NETMASK_B1_ADDR + i, buf[i]);
+	if (strlen (param) > 0 && tokenize (param, PSTR ("."), buf, IP_SIZE, 10)) {
+		for (i = 0; i < IP_SIZE; i++)
+			EEPROM.put (EEPROM_NETMASK_ADDR + i, buf[i]);
 	}
 
 	param = request.get_get_parameter (F("gw"));
-	if (strlen (param) > 0 && tokenize (param, PSTR ("."), buf, 4, 10)) {
-		for (i = 0; i < 4; i++)
-			EEPROM.put (EEPROM_GATEWAY_B1_ADDR + i, buf[i]);
+	if (strlen (param) > 0 && tokenize (param, PSTR ("."), buf, IP_SIZE, 10)) {
+		for (i = 0; i < IP_SIZE; i++)
+			EEPROM.put (EEPROM_GATEWAY_ADDR + i, buf[i]);
 	}
 
 	DPRINTLN (F("Configuration saved"));
@@ -438,7 +438,7 @@ static char *evaluate_temp_fahr (void *data __attribute__ ((unused))) {
 
 static char *ip2str (const byte *buf) {
 	replaceBuffer[0] = '\0';
-	for (int i = 0; i < 4; i++) {
+	for (int i = 0; i < IP_SIZE; i++) {
 		itoa (buf[i], replaceBuffer + strlen (replaceBuffer), DEC);
 		strcat_P (replaceBuffer, PSTR ("."));
 	}
@@ -469,8 +469,8 @@ static char int2hex (int i) {
 static char *evaluate_mac_addr (void *data __attribute__ ((unused))) {
 	byte tmp;
 
-	for (int i = 0; i < 6; i++) {
-		EEPROM.get (EEPROM_MAC_B1_ADDR + i, tmp);
+	for (int i = 0; i < MAC_SIZE; i++) {
+		EEPROM.get (EEPROM_MAC_ADDR + i, tmp);
 		replaceBuffer[i * 3] = int2hex (tmp / 16);
 		replaceBuffer[i * 3 + 1] = int2hex (tmp % 16);
 		replaceBuffer[i * 3 + 2] = ':';
@@ -823,22 +823,22 @@ void setup () {
 
 #if defined (WEBBINO_USE_ENC28J60) || defined (WEBBINO_USE_WIZ5100)
 	// Get MAC from EEPROM and init network interface
-	byte mac[6];
+	byte mac[MAC_SIZE];
 
-	for (i = 0; i < 6; i++)
-		EEPROM.get (EEPROM_MAC_B1_ADDR + i, mac[i]);
+	for (i = 0; i < MAC_SIZE; i++)
+		EEPROM.get (EEPROM_MAC_ADDR + i, mac[i]);
 #endif
 
 	NetworkMode netmode;
 	EEPROM.get (EEPROM_NETMODE_ADDR, netmode);
 	switch (netmode) {
 		case NETMODE_STATIC: {
-			byte ip[4], mask[4], gw[4];
+			byte ip[IP_SIZE], mask[IP_SIZE], gw[IP_SIZE];
 
-			for (i = 0; i < 4; i++) {
-				EEPROM.get (EEPROM_IP_B1_ADDR + i, ip[i]);
-				EEPROM.get (EEPROM_NETMASK_B1_ADDR + i, mask[i]);
-				EEPROM.get (EEPROM_GATEWAY_B1_ADDR + i, gw[i]);
+			for (i = 0; i < IP_SIZE; i++) {
+				EEPROM.get (EEPROM_IP_ADDR + i, ip[i]);
+				EEPROM.get (EEPROM_NETMASK_ADDR + i, mask[i]);
+				EEPROM.get (EEPROM_GATEWAY_ADDR + i, gw[i]);
 			}
 
 #if defined (WEBBINO_USE_ENC28J60) || defined (WEBBINO_USE_WIZ5100)
@@ -929,28 +929,36 @@ void loop () {
 
 		switch (r.mode) {
 			case RELMD_ON:
-				if (r.state != RELAY_ON)
+				if (r.state != RELAY_ON) {
 					r.switchState (RELAY_ON);
+					r.writeOptions ();
+				}
 				break;
 			case RELMD_OFF:
-				if (r.state != RELAY_OFF)
+				if (r.state != RELAY_OFF) {
 					r.switchState (RELAY_OFF);
+					r.writeOptions ();
+				}
 				break;
 #ifdef ENABLE_THERMOMETER
 			case RELMD_GT:
 				if (((!hysteresisEnabled && temperature > r.threshold) || (hysteresisEnabled && temperature > r.threshold + r.hysteresis / 10.0)) && r.state != RELAY_ON) {
 					r.switchState (RELAY_ON);
+					r.writeOptions ();
 					hysteresisEnabled = true;
 				} else if (temperature <= r.threshold && r.state != RELAY_OFF) {
 					r.switchState (RELAY_OFF);
+					r.writeOptions ();
 				}
 				break;
 			case RELMD_LT:
 				if (((!hysteresisEnabled && temperature < r.threshold) || (hysteresisEnabled && temperature < r.threshold - r.hysteresis / 10.0)) && r.state != RELAY_ON) {
 					r.switchState (RELAY_ON);
+					r.writeOptions ();
 					hysteresisEnabled = true;
 				} else if (temperature >= r.threshold && r.state != RELAY_OFF) {
 					r.switchState (RELAY_OFF);
+					r.writeOptions ();
 				}
 				break;
 #endif

@@ -39,19 +39,22 @@ Relay::Relay (byte _id, byte _pin): id (_id), pin (_pin) {
 void Relay::readOptions () {
 	EEPROM.get (optionAddress[id - 1], dynamic_cast<RelayOptions&> (*this));
 
-/*	DPRINT ("sizeof (RelayOptions) = ");
+	DPRINT (F("sizeof (RelayOptions) = "));
 	DPRINTLN (sizeof (RelayOptions));
-	DPRINT ("Relay ");
+	DPRINT (F("Relay "));
 	DPRINT (id);
-	DPRINT (" mode is ");
+	DPRINT (F(" mode is "));
 	DPRINT (mode);
-	DPRINT (" and state is ");
+	DPRINT (F(" and state is "));
 	DPRINT (state);
-	DPRINT (" and delay is ");
-	DPRINTLN (delay);*/
+	DPRINT (F(" and delay is "));
+	DPRINTLN (delay);
 }
 
 void Relay::writeOptions () {
+	DPRINT (F("Saving options for relay "));
+	DPRINTLN (id);
+
 	EEPROM.put (optionAddress[id - 1], dynamic_cast<RelayOptions&> (*this));
 }
 
@@ -76,4 +79,3 @@ void Relay::switchState (RelayState newState) {
 void Relay::effectState () {
 	digitalWrite (pin, state);
 }
-

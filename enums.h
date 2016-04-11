@@ -46,8 +46,8 @@ enum NetworkMode {
 struct RelayOptions {
 	RelayMode mode;
 	RelayState state;
-	byte threshold;
 	TemperatureUnits units;
+	byte threshold;
 	byte hysteresis;
 	byte delay;
 };

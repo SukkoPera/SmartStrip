@@ -20,9 +20,8 @@
 #ifndef COMMON_H_
 #define COMMON_H_
 
+// Define this to disable debug messages
 #define NDEBUG
-
-//#define USE_ARDUINO_TIME_LIBRARY
 
 #define RELAYS_NO 4
 #define RELAY1_PIN 8
@@ -39,34 +38,31 @@
 // DS18B20's data resolution
 #define THERMOMETER_RESOLUTION 9
 
-//Delay between temperature readings
+// Delay between temperature readings
 #define THERMO_READ_INTERVAL (5 * 1000U)
 
+// Totally useless at this time ;)
+//#define USE_ARDUINO_TIME_LIBRARY
 
+// Size of a MAC address (bytes)
+#define MAC_SIZE 6
+
+// Size of an IP address (bytes)
+#define IP_SIZE 4
+
+// EEPROM offsets
 #define EEPROM_MAGIC 0x50545353UL			// "SSTP"
 #define EEPROM_R1_PARAM_ADDR 4
 #define EEPROM_R2_PARAM_ADDR 20
 #define EEPROM_R3_PARAM_ADDR 36
 #define EEPROM_R4_PARAM_ADDR 52
-#define EEPROM_MAC_B1_ADDR 64
-#define EEPROM_MAC_B2_ADDR 65
-#define EEPROM_MAC_B3_ADDR 66
-#define EEPROM_MAC_B4_ADDR 67
-#define EEPROM_MAC_B5_ADDR 68
-#define EEPROM_MAC_B6_ADDR 69
+#define EEPROM_MAC_ADDR 64
 #define EEPROM_NETMODE_ADDR 70				// This has turned to 2 bytes in some recent version of Arduino
-#define EEPROM_IP_B1_ADDR 72
-#define EEPROM_IP_B2_ADDR 73
-#define EEPROM_IP_B3_ADDR 74
-#define EEPROM_IP_B4_ADDR 75
-#define EEPROM_NETMASK_B1_ADDR 76
-#define EEPROM_NETMASK_B2_ADDR 77
-#define EEPROM_NETMASK_B3_ADDR 78
-#define EEPROM_NETMASK_B4_ADDR 79
-#define EEPROM_GATEWAY_B1_ADDR 80
-#define EEPROM_GATEWAY_B2_ADDR 81
-#define EEPROM_GATEWAY_B3_ADDR 82
-#define EEPROM_GATEWAY_B4_ADDR 83
+#define EEPROM_IP_ADDR 72
+#define EEPROM_NETMASK_ADDR 76
+#define EEPROM_GATEWAY_ADDR 80
+
+
 
 /* Network parameter defaults: feel free to change these to fit your network
  * setup. Note that these are the DEFAULTS, so they will only be used when your
@@ -97,8 +93,8 @@
 #define DEFAULT_IP_ADDRESS_B3 1
 #define DEFAULT_IP_ADDRESS_B4 42
 #define DEFAULT_NETMASK_B1 255
-#define DEFAULT_NETMASK_B2 0
-#define DEFAULT_NETMASK_B3 0
+#define DEFAULT_NETMASK_B2 255
+#define DEFAULT_NETMASK_B3 255
 #define DEFAULT_NETMASK_B4 0
 #define DEFAULT_GATEWAY_ADDRESS_B1 192
 #define DEFAULT_GATEWAY_ADDRESS_B2 168
@@ -106,7 +102,7 @@
 #define DEFAULT_GATEWAY_ADDRESS_B4 254
 
 
-#define PROGRAM_VERSION "0.5git"
+#define PROGRAM_VERSION "0.6git"
 
 #endif
 
