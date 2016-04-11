@@ -56,12 +56,6 @@ WebServer webserver;
 #ifdef ENABLE_THERMOMETER
 
 #include <Thermometer.h>
-#ifdef USE_DALLAS_THERMO
-	#include <OneWire.h>
-	#include <DallasTemperature.h>
-#elif defined USE_DHT_THERMO
-	#include <DHT.h>
-#endif
 
 // Instantiate the thermometer
 Thermometer thermometer;
@@ -197,50 +191,40 @@ bool tokenize (const char *str, PGM_P sep, byte *buffer, size_t bufsize, int bas
 
 void netconfig_func (HTTPRequestParser& request) {
 	char *param;
-	byte buf[6];
+	byte buf[6], i;
 
 	param = request.get_get_parameter (F("mac"));
 	if (strlen (param) > 0) {
 		if (tokenize (param, PSTR ("%3A"), buf, 6, 16)) {		// ':' gets encoded to "%3A" when submitting the form
-			EEPROM.put (EEPROM_MAC_B1_ADDR, buf[0]);
-			EEPROM.put (EEPROM_MAC_B2_ADDR, buf[1]);
-			EEPROM.put (EEPROM_MAC_B3_ADDR, buf[2]);
-			EEPROM.put (EEPROM_MAC_B4_ADDR, buf[3]);
-			EEPROM.put (EEPROM_MAC_B5_ADDR, buf[4]);
-			EEPROM.put (EEPROM_MAC_B6_ADDR, buf[5]);
+			for (i = 0; i < 6; i++)
+				EEPROM.put (EEPROM_MAC_B1_ADDR + i, buf[i]);
 		}
 	}
 
 	param = request.get_get_parameter (F("mode"));
 	if (strlen (param) > 0) {
-		if (strcmp_P (param, PSTR ("dhcp")) == 0)
-			EEPROM.put (EEPROM_NETMODE_ADDR, NETMODE_DHCP);
-		else if (strcmp_P (param, PSTR ("static")) == 0)
+		if (strcmp_P (param, PSTR ("static")) == 0)
 			EEPROM.put (EEPROM_NETMODE_ADDR, NETMODE_STATIC);
+		else
+			EEPROM.put (EEPROM_NETMODE_ADDR, NETMODE_DHCP);
 	}
 
 	param = request.get_get_parameter (F("ip"));
 	if (strlen (param) > 0 && tokenize (param, PSTR ("."), buf, 4, 10)) {
-		EEPROM.put (EEPROM_IP_B1_ADDR, buf[0]);
-		EEPROM.put (EEPROM_IP_B2_ADDR, buf[1]);
-		EEPROM.put (EEPROM_IP_B3_ADDR, buf[2]);
-		EEPROM.put (EEPROM_IP_B4_ADDR, buf[3]);
+		for (i = 0; i < 4; i++)
+			EEPROM.put (EEPROM_IP_B1_ADDR + i, buf[i]);
 	}
 
 	param = request.get_get_parameter (F("mask"));
 	if (strlen (param) > 0 && tokenize (param, PSTR ("."), buf, 4, 10)) {
-		EEPROM.put (EEPROM_NETMASK_B1_ADDR, buf[0]);
-		EEPROM.put (EEPROM_NETMASK_B2_ADDR, buf[1]);
-		EEPROM.put (EEPROM_NETMASK_B3_ADDR, buf[2]);
-		EEPROM.put (EEPROM_NETMASK_B4_ADDR, buf[3]);
+		for (i = 0; i < 4; i++)
+			EEPROM.put (EEPROM_NETMASK_B1_ADDR + i, buf[i]);
 	}
 
 	param = request.get_get_parameter (F("gw"));
 	if (strlen (param) > 0 && tokenize (param, PSTR ("."), buf, 4, 10)) {
-		EEPROM.put (EEPROM_GATEWAY_B1_ADDR, buf[0]);
-		EEPROM.put (EEPROM_GATEWAY_B2_ADDR, buf[1]);
-		EEPROM.put (EEPROM_GATEWAY_B3_ADDR, buf[2]);
-		EEPROM.put (EEPROM_GATEWAY_B4_ADDR, buf[3]);
+		for (i = 0; i < 4; i++)
+			EEPROM.put (EEPROM_GATEWAY_B1_ADDR + i, buf[i]);
 	}
 
 	DPRINTLN (F("Configuration saved"));
@@ -337,9 +321,9 @@ static char replaceBuffer[REP_BUFFER_LEN];
 
 const char NOT_AVAIL_STR[] PROGMEM = "N/A";
 
+#ifdef USE_ARDUINO_TIME_LIBRARY
 
 static char *evaluate_date (void *data __attribute__ ((unused))) {
-#ifdef USE_ARDUINO_TIME_LIBRARY
 	int x;
 
 	time_t t = now ();
@@ -361,15 +345,11 @@ static char *evaluate_date (void *data __attribute__ ((unused))) {
 	replaceBuffer[7] = (x / 10) + '0';
 
 	replaceBuffer[8] = '\0';
-#else
-	strlcpy_P (replaceBuffer, NOT_AVAIL_STR, REP_BUFFER_LEN);
-#endif
 
 	return replaceBuffer;
 }
 
 static char *evaluate_time (void *data __attribute__ ((unused))) {
-#ifdef USE_ARDUINO_TIME_LIBRARY
 	int x;
 
 	time_t t = now ();
@@ -393,12 +373,12 @@ static char *evaluate_time (void *data __attribute__ ((unused))) {
 	replaceBuffer[9] = (x % 10) + '0';
 
 	replaceBuffer[10] = '\0';
-#else
-	strlcpy_P (replaceBuffer, NOT_AVAIL_STR, REP_BUFFER_LEN);
-#endif
 
 	return replaceBuffer;
 }
+
+#endif	// USE_ARDUINO_TIME_LIBRARY
+
 
 /* This is a modified version of the floatToString posted by the Arduino forums
  * user "zitron" at http://www.arduino.cc/cgi-bin/yabb2/YaBB.pl?num=1205038401.
@@ -458,11 +438,11 @@ static char *evaluate_temp_fahr (void *data __attribute__ ((unused))) {
 
 static char *ip2str (const byte *buf) {
 	replaceBuffer[0] = '\0';
-	for (int i = 0; i < 3; i++) {
+	for (int i = 0; i < 4; i++) {
 		itoa (buf[i], replaceBuffer + strlen (replaceBuffer), DEC);
 		strcat_P (replaceBuffer, PSTR ("."));
 	}
-	itoa (buf[3], replaceBuffer + strlen (replaceBuffer), DEC);
+	replaceBuffer[strlen (replaceBuffer) - 1] = '\0';
 
 	return replaceBuffer;
 }
@@ -489,39 +469,12 @@ static char int2hex (int i) {
 static char *evaluate_mac_addr (void *data __attribute__ ((unused))) {
 	byte tmp;
 
-	EEPROM.get (EEPROM_MAC_B1_ADDR, tmp);
-	replaceBuffer[0] = int2hex (tmp / 16);
-	replaceBuffer[1] = int2hex (tmp % 16);
-
-	replaceBuffer[2] = ':';
-
-	EEPROM.get (EEPROM_MAC_B2_ADDR, tmp);
-	replaceBuffer[3] = int2hex (tmp / 16);
-	replaceBuffer[4] = int2hex (tmp % 16);
-
-	replaceBuffer[5] = ':';
-
-	EEPROM.get (EEPROM_MAC_B3_ADDR, tmp);
-	replaceBuffer[6] = int2hex (tmp / 16);
-	replaceBuffer[7] = int2hex (tmp % 16);
-
-	replaceBuffer[8] = ':';
-
-	EEPROM.get (EEPROM_MAC_B4_ADDR, tmp);
-	replaceBuffer[9] = int2hex (tmp / 16);
-	replaceBuffer[10] = int2hex (tmp % 16);
-
-	replaceBuffer[11] = ':';
-
-	EEPROM.get (EEPROM_MAC_B5_ADDR, tmp);
-	replaceBuffer[12] = int2hex (tmp / 16);
-	replaceBuffer[13] = int2hex (tmp % 16);
-
-	replaceBuffer[14] = ':';
-
-	EEPROM.get (EEPROM_MAC_B6_ADDR, tmp);
-	replaceBuffer[15] = int2hex (tmp / 16);
-	replaceBuffer[16] = int2hex (tmp % 16);
+	for (int i = 0; i < 6; i++) {
+		EEPROM.get (EEPROM_MAC_B1_ADDR + i, tmp);
+		replaceBuffer[i * 3] = int2hex (tmp / 16);
+		replaceBuffer[i * 3 + 1] = int2hex (tmp % 16);
+		replaceBuffer[i * 3 + 2] = ':';
+	}
 
 	replaceBuffer[17] = '\0';
 
@@ -532,25 +485,13 @@ static char *evaluate_mac_addr (void *data __attribute__ ((unused))) {
 const char CHECKED_STRING[] PROGMEM = "checked";
 const char SELECTED_STRING[] PROGMEM = "selected=\"true\"";
 
-static char *evaluate_netmode_dhcp_checked (void *data __attribute__ ((unused))) {
+static char *evaluate_netmode (void *data) {
 	NetworkMode netmode;
+	int checkedMode = reinterpret_cast<int> (data);
 
 	EEPROM.get (EEPROM_NETMODE_ADDR, netmode);
 
-	if (netmode == NETMODE_DHCP)
-		strlcpy_P (replaceBuffer, CHECKED_STRING, REP_BUFFER_LEN);
-	else
-		replaceBuffer[0] = '\0';
-
-	return replaceBuffer;
-}
-
-static char *evaluate_netmode_static_checked (void *data __attribute__ ((unused))) {
-	NetworkMode netmode;
-
-	EEPROM.get (EEPROM_NETMODE_ADDR, netmode);
-
-	if (netmode == NETMODE_STATIC)
+	if (netmode == checkedMode)
 		strlcpy_P (replaceBuffer, CHECKED_STRING, REP_BUFFER_LEN);
 	else
 		replaceBuffer[0] = '\0';
@@ -758,8 +699,10 @@ static char *evaluate_free_ram (void *data __attribute__ ((unused))) {
 
 
 // Max length of these is MAX_TAG_LEN (24)
+#ifdef USE_ARDUINO_TIME_LIBRARY
 static const char subDateStr[] PROGMEM = "DATE";
 static const char subTimeStr[] PROGMEM = "TIME";
+#endif
 static const char subMacAddrStr[] PROGMEM = "MACADDR";
 static const char subIPAddressStr[] PROGMEM = "NET_IP";
 static const char subNetmaskStr[] PROGMEM = "NET_MASK";
@@ -788,14 +731,16 @@ static const char subVerStr[] PROGMEM = "VERSION";
 static const char subUptimeStr[] PROGMEM = "UPTIME";
 static const char subFreeRAMStr[] PROGMEM = "FREERAM";
 
+#ifdef USE_ARDUINO_TIME_LIBRARY
 static const var_substitution subDateVarSub PROGMEM = {subDateStr, evaluate_date, NULL};
 static const var_substitution subTimeVarSub PROGMEM =	{subTimeStr, evaluate_time, NULL};
+#endif
 static const var_substitution subMacAddrVarSub PROGMEM = {subMacAddrStr, evaluate_mac_addr, NULL};
 static const var_substitution subIPAddressVarSub PROGMEM = {subIPAddressStr, evaluate_ip, NULL};
 static const var_substitution subNetmaskVarSub PROGMEM = {subNetmaskStr, evaluate_netmask, NULL};
 static const var_substitution subGatewayVarSub PROGMEM = {subGatewayStr, evaluate_gw, NULL};
-static const var_substitution subNMDHCPVarSub PROGMEM = {subNMDHCPStr, evaluate_netmode_dhcp_checked, NULL};
-static const var_substitution subNMStaticVarSub PROGMEM = {subNMStaticStr, evaluate_netmode_static_checked, NULL};
+static const var_substitution subNMDHCPVarSub PROGMEM = {subNMDHCPStr, evaluate_netmode, reinterpret_cast<void *> (NETMODE_DHCP)};
+static const var_substitution subNMStaticVarSub PROGMEM = {subNMStaticStr, evaluate_netmode, reinterpret_cast<void *> (NETMODE_STATIC)};
 static const var_substitution subRelayOnVarSub PROGMEM = {subRelayOnStr, evaluate_relay_onoff_checked, reinterpret_cast<void *> (RELMD_ON)};
 static const var_substitution subRelayOffVarSub PROGMEM = {subRelayOffStr, evaluate_relay_onoff_checked, reinterpret_cast<void *> (RELMD_OFF)};
 static const var_substitution subRelay1StatusVarSub PROGMEM = {subRelay1StatusStr, evaluate_relay_status, reinterpret_cast<void *> (1)};
@@ -819,8 +764,10 @@ static const var_substitution subUptimeVarSub PROGMEM = {subUptimeStr, evaluate_
 static const var_substitution subFreeRAMVarSub PROGMEM = {subFreeRAMStr, evaluate_free_ram, NULL};
 
 static const var_substitution * const substitutions[] PROGMEM = {
+#ifdef USE_ARDUINO_TIME_LIBRARY
 	&subDateVarSub,
 	&subTimeVarSub,
+#endif
 	&subMacAddrVarSub,
 	&subIPAddressVarSub,
 	&subNetmaskVarSub,
@@ -860,13 +807,15 @@ static const var_substitution * const substitutions[] PROGMEM = {
 
 
 void setup () {
+	byte i;
+
 	DSTART ();
 	DPRINTLN (F("SmartStrip " PROGRAM_VERSION));
 
 	// Check and format EEPROM, in case
 	checkAndFormatEEPROM ();
 
-	for (int i = 0; i < RELAYS_NO; i++) {
+	for (i = 0; i < RELAYS_NO; i++) {
 		relays[i].readOptions ();
 		relays[i].effectState ();
 		relayHysteresis[i] = false;     // Start with no hysteresis
@@ -876,12 +825,8 @@ void setup () {
 	// Get MAC from EEPROM and init network interface
 	byte mac[6];
 
-	EEPROM.get (EEPROM_MAC_B1_ADDR, mac[0]);
-	EEPROM.get (EEPROM_MAC_B2_ADDR, mac[1]);
-	EEPROM.get (EEPROM_MAC_B3_ADDR, mac[2]);
-	EEPROM.get (EEPROM_MAC_B4_ADDR, mac[3]);
-	EEPROM.get (EEPROM_MAC_B5_ADDR, mac[4]);
-	EEPROM.get (EEPROM_MAC_B6_ADDR, mac[5]);
+	for (i = 0; i < 6; i++)
+		EEPROM.get (EEPROM_MAC_B1_ADDR + i, mac[i]);
 #endif
 
 	NetworkMode netmode;
@@ -890,20 +835,11 @@ void setup () {
 		case NETMODE_STATIC: {
 			byte ip[4], mask[4], gw[4];
 
-			EEPROM.get (EEPROM_IP_B1_ADDR, ip[0]);
-			EEPROM.get (EEPROM_IP_B2_ADDR, ip[1]);
-			EEPROM.get (EEPROM_IP_B3_ADDR, ip[2]);
-			EEPROM.get (EEPROM_IP_B4_ADDR, ip[3]);
-
-			EEPROM.get (EEPROM_NETMASK_B1_ADDR, mask[0]);
-			EEPROM.get (EEPROM_NETMASK_B2_ADDR, mask[1]);
-			EEPROM.get (EEPROM_NETMASK_B3_ADDR, mask[2]);
-			EEPROM.get (EEPROM_NETMASK_B4_ADDR, mask[3]);
-
-			EEPROM.get (EEPROM_GATEWAY_B1_ADDR, gw[0]);
-			EEPROM.get (EEPROM_GATEWAY_B2_ADDR, gw[1]);
-			EEPROM.get (EEPROM_GATEWAY_B3_ADDR, gw[2]);
-			EEPROM.get (EEPROM_GATEWAY_B4_ADDR, gw[3]);
+			for (i = 0; i < 4; i++) {
+				EEPROM.get (EEPROM_IP_B1_ADDR + i, ip[i]);
+				EEPROM.get (EEPROM_NETMASK_B1_ADDR + i, mask[i]);
+				EEPROM.get (EEPROM_GATEWAY_B1_ADDR + i, gw[i]);
+			}
 
 #if defined (WEBBINO_USE_ENC28J60) || defined (WEBBINO_USE_WIZ5100)
 			bool ok = netint.begin (mac, ip, mask, gw);
@@ -921,6 +857,8 @@ void setup () {
 			break;
 		}
 		default:
+			DPRINTLN (F("Unknown netmode, defaulting to DHCP"));
+			// No break here
 		case NETMODE_DHCP:
 			DPRINTLN (F("Trying to get an IP address through DHCP"));
 #if defined (WEBBINO_USE_ENC28J60) || defined (WEBBINO_USE_WIZ5100)
@@ -939,12 +877,12 @@ void setup () {
 			break;
 	}
 
-	DPRINT (F("- IP: "));
-	DPRINTLN (netint.getIP ());
-	DPRINT (F("- Netmask: "));
-	DPRINTLN (netint.getNetmask ());
-	DPRINT (F("- Default Gateway: "));
-	DPRINTLN (netint.getGateway ());
+	//~ DPRINT (F("- IP: "));
+	//~ DPRINTLN (netint.getIP ());
+	//~ DPRINT (F("- Netmask: "));
+	//~ DPRINTLN (netint.getNetmask ());
+	//~ DPRINT (F("- Default Gateway: "));
+	//~ DPRINTLN (netint.getGateway ());
 
 	// Init webserver
 	webserver.setPages (pages);
