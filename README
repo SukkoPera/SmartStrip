@@ -14,11 +14,11 @@ I chose this board since it has everything I need for my purposes, so it is the
 only platform which should work "out of the box". Other boards/configurations
 can probably be supported with minor changes in the code. As SmartStrip uses
 the Webbino library for its webserver part, it is both compatible with the
-official Ethernet Shield and ENC28J60-based shields. Unfortunately when W5100
-support is enabled the resulting binary is too big to fit an Atmega328, so you
-will either need to use an Arduino Mega or disable some features. Features can
-be enabled and disabled in the "common.h" file. The used I/O pins can also be
-changed there.
+official Ethernet Shield and ENC28J60-based shields. Experimental support is
+also available for ESP8266-based wireless shields.
+
+Some features can be enabled and disabled in the "common.h" file. The used I/O
+pins can also be changed there.
 
 As mentioned, SmartStrip uses the Webbino libraries, and actually depends upon
 other libraries that are part of my Sukkino collection, so you will need to
