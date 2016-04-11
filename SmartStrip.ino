@@ -302,7 +302,7 @@ void sck_func (HTTPRequestParser& request) {
 					relayHysteresis[relayNo - 1] = false;
 				}
 			}
-    }
+		}
 	}
 }
 
@@ -869,13 +869,13 @@ void setup () {
 	for (int i = 0; i < RELAYS_NO; i++) {
 		relays[i].readOptions ();
 		relays[i].effectState ();
-    relayHysteresis[i] = false;     // Start with no hysteresis
+		relayHysteresis[i] = false;     // Start with no hysteresis
 	}
 
 #if defined (WEBBINO_USE_ENC28J60) || defined (WEBBINO_USE_WIZ5100)
 	// Get MAC from EEPROM and init network interface
-  byte mac[6];
-  
+	byte mac[6];
+
 	EEPROM.get (EEPROM_MAC_B1_ADDR, mac[0]);
 	EEPROM.get (EEPROM_MAC_B2_ADDR, mac[1]);
 	EEPROM.get (EEPROM_MAC_B3_ADDR, mac[2]);
@@ -884,77 +884,77 @@ void setup () {
 	EEPROM.get (EEPROM_MAC_B6_ADDR, mac[5]);
 #endif
 
-  NetworkMode netmode;
-  EEPROM.get (EEPROM_NETMODE_ADDR, netmode);
-  switch (netmode) {
-    case NETMODE_STATIC: {
-      byte ip[4], mask[4], gw[4];
+	NetworkMode netmode;
+	EEPROM.get (EEPROM_NETMODE_ADDR, netmode);
+	switch (netmode) {
+		case NETMODE_STATIC: {
+			byte ip[4], mask[4], gw[4];
 
-      EEPROM.get (EEPROM_IP_B1_ADDR, ip[0]);
-      EEPROM.get (EEPROM_IP_B2_ADDR, ip[1]);
-      EEPROM.get (EEPROM_IP_B3_ADDR, ip[2]);
-      EEPROM.get (EEPROM_IP_B4_ADDR, ip[3]);
+			EEPROM.get (EEPROM_IP_B1_ADDR, ip[0]);
+			EEPROM.get (EEPROM_IP_B2_ADDR, ip[1]);
+			EEPROM.get (EEPROM_IP_B3_ADDR, ip[2]);
+			EEPROM.get (EEPROM_IP_B4_ADDR, ip[3]);
 
-      EEPROM.get (EEPROM_NETMASK_B1_ADDR, mask[0]);
-      EEPROM.get (EEPROM_NETMASK_B2_ADDR, mask[1]);
-      EEPROM.get (EEPROM_NETMASK_B3_ADDR, mask[2]);
-      EEPROM.get (EEPROM_NETMASK_B4_ADDR, mask[3]);
+			EEPROM.get (EEPROM_NETMASK_B1_ADDR, mask[0]);
+			EEPROM.get (EEPROM_NETMASK_B2_ADDR, mask[1]);
+			EEPROM.get (EEPROM_NETMASK_B3_ADDR, mask[2]);
+			EEPROM.get (EEPROM_NETMASK_B4_ADDR, mask[3]);
 
-      EEPROM.get (EEPROM_GATEWAY_B1_ADDR, gw[0]);
-      EEPROM.get (EEPROM_GATEWAY_B2_ADDR, gw[1]);
-      EEPROM.get (EEPROM_GATEWAY_B3_ADDR, gw[2]);
-      EEPROM.get (EEPROM_GATEWAY_B4_ADDR, gw[3]);
+			EEPROM.get (EEPROM_GATEWAY_B1_ADDR, gw[0]);
+			EEPROM.get (EEPROM_GATEWAY_B2_ADDR, gw[1]);
+			EEPROM.get (EEPROM_GATEWAY_B3_ADDR, gw[2]);
+			EEPROM.get (EEPROM_GATEWAY_B4_ADDR, gw[3]);
 
 #if defined (WEBBINO_USE_ENC28J60) || defined (WEBBINO_USE_WIZ5100)
-      bool ok = netint.begin (mac, ip, mask, gw);
+			bool ok = netint.begin (mac, ip, mask, gw);
 #elif defined (WEBBINO_USE_ESP8266)
-      swSerial.begin (9600);
-      bool ok = netint.begin (FIXME);
+			swSerial.begin (9600);
+			bool ok = netint.begin (FIXME);
 #endif
-      if (!ok) {
-        DPRINTLN (F("Failed to set static IP address"));
-        while (1)
-          ;
-      } else {
-        DPRINTLN (F("Static IP setup done"));
-      }
-      break;
-    }
-    default:
-    case NETMODE_DHCP:
-      DPRINTLN (F("Trying to get an IP address through DHCP"));
+			if (!ok) {
+				DPRINTLN (F("Failed to set static IP address"));
+				while (1)
+					;
+			} else {
+				DPRINTLN (F("Static IP setup done"));
+			}
+			break;
+		}
+		default:
+		case NETMODE_DHCP:
+			DPRINTLN (F("Trying to get an IP address through DHCP"));
 #if defined (WEBBINO_USE_ENC28J60) || defined (WEBBINO_USE_WIZ5100)
-      bool ok = netint.begin (mac);
+			bool ok = netint.begin (mac);
 #elif defined (WEBBINO_USE_ESP8266)
-      swSerial.begin (9600);
-      bool ok = netint.begin (swSerial, WIFI_SSID, WIFI_PASSWORD);
+			swSerial.begin (9600);
+			bool ok = netint.begin (swSerial, WIFI_SSID, WIFI_PASSWORD);
 #endif
-      if (!ok) {
-        DPRINTLN (F("Failed to get configuration from DHCP"));
-        while (1)
-          ;
-      } else {
-        DPRINTLN (F("DHCP configuration done:"));
-      }
-      break;
-  }
+			if (!ok) {
+				DPRINTLN (F("Failed to get configuration from DHCP"));
+				while (1)
+					;
+			} else {
+				DPRINTLN (F("DHCP configuration done:"));
+			}
+			break;
+	}
 
-  DPRINT (F("- IP: "));
-  DPRINTLN (netint.getIP ());
-  DPRINT (F("- Netmask: "));
-  DPRINTLN (netint.getNetmask ());
-  DPRINT (F("- Default Gateway: "));
-  DPRINTLN (netint.getGateway ());
+	DPRINT (F("- IP: "));
+	DPRINTLN (netint.getIP ());
+	DPRINT (F("- Netmask: "));
+	DPRINTLN (netint.getNetmask ());
+	DPRINT (F("- Default Gateway: "));
+	DPRINTLN (netint.getGateway ());
 
-  // Init webserver
+	// Init webserver
 	webserver.setPages (pages);
 #ifdef ENABLE_TAGS
 	webserver.setSubstitutions (substitutions);
 #endif
 
-  if (!webserver.begin (netint)) {
-    DPRINTLN (F("Cannot start webserver"));
-  }
+	if (!webserver.begin (netint)) {
+		DPRINTLN (F("Cannot start webserver"));
+	}
 
 #ifdef ENABLE_THERMOMETER
 	thermometer.begin (THERMOMETER_PIN);
