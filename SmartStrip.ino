@@ -844,8 +844,10 @@ void setup () {
 #if defined (WEBBINO_USE_ENC28J60) || defined (WEBBINO_USE_WIZ5100)
 			bool ok = netint.begin (mac, ip, mask, gw);
 #elif defined (WEBBINO_USE_ESP8266)
-			swSerial.begin (9600);
-			bool ok = netint.begin (FIXME);
+			// This is incredibly not possible at the moment!
+			//~ swSerial.begin (9600);
+			//~ bool ok = netint.begin (FIXME);
+			bool ok = false;		// Always fail
 #endif
 			if (!ok) {
 				DPRINTLN (F("Failed to set static IP address"));
