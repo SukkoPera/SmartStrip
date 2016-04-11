@@ -910,9 +910,9 @@ void setup () {
 			EEPROM.get (EEPROM_NETMASK_B4_ADDR, mask[3]);
 
 			EEPROM.get (EEPROM_GATEWAY_B1_ADDR, gw[0]);
-			EEPROM.get (EEPROM_GATEWAY_B2_ADDR, gw[0]);
-			EEPROM.get (EEPROM_GATEWAY_B3_ADDR, gw[0]);
-			EEPROM.get (EEPROM_GATEWAY_B4_ADDR, gw[0]);
+			EEPROM.get (EEPROM_GATEWAY_B2_ADDR, gw[1]);
+			EEPROM.get (EEPROM_GATEWAY_B3_ADDR, gw[2]);
+			EEPROM.get (EEPROM_GATEWAY_B4_ADDR, gw[3]);
 
 			if (!webserver.begin (netint)) {
 				DPRINTLN (F("Failed to set static IP address"));
