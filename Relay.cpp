@@ -23,7 +23,7 @@
 #include "debug.h"
 #include "Relay.h"
 
-
+// FIXME: This can be put to flash only?
 const int Relay::optionAddress[RELAYS_NO] = {
 	EEPROM_R1_PARAM_ADDR,
 	EEPROM_R2_PARAM_ADDR,
@@ -37,7 +37,7 @@ Relay::Relay (byte _id, byte _pin): id (_id), pin (_pin) {
 }
 
 void Relay::readOptions () {
-	EEPROM.get (optionAddress[id - 1], dynamic_cast<RelayOptions&> (*this));
+	EEPROM.get (optionAddress[id - 1], static_cast<RelayOptions&> (*this));
 
 	DPRINT (F("sizeof (RelayOptions) = "));
 	DPRINTLN (sizeof (RelayOptions));
@@ -55,7 +55,7 @@ void Relay::writeOptions () {
 	DPRINT (F("Saving options for relay "));
 	DPRINTLN (id);
 
-	EEPROM.put (optionAddress[id - 1], dynamic_cast<RelayOptions&> (*this));
+	EEPROM.put (optionAddress[id - 1], static_cast<RelayOptions&> (*this));
 }
 
 void Relay::setDefaults () {
