@@ -26,10 +26,6 @@
 #include "common.h"
 #include "html.h"
 
-// Other stuff
-byte lastSelectedRelay;
-
-
 // Instantiate the WebServer
 WebServer webserver;
 
@@ -67,6 +63,8 @@ float temperature = 25;
 unsigned long lastTemperatureRequest = 0;
 #endif
 
+// Other stuff
+byte lastSelectedRelay;
 
 Relay relays[RELAYS_NO] = {
 	Relay (1, RELAY1_PIN),
@@ -76,6 +74,11 @@ Relay relays[RELAYS_NO] = {
 };
 
 static bool relayHysteresis[RELAYS_NO];
+
+
+#define PSTR_TO_F(s) reinterpret_cast<const __FlashStringHelper *> (s)
+//~ #define F_TO_PSTR(s) reinterpret_cast<PGM_P> (s)
+//~ #define FlashString const __FlashStringHelper *
 
 
 void checkAndFormatEEPROM () {
@@ -179,7 +182,7 @@ bool tokenize (const char *str, PGM_P sep, byte *buffer, size_t bufsize, int bas
 		DPRINTLN (str);
 		ret = false;
 	} else {
-		for (size_t i = 0; i < bufsize; ++i) {
+		for (byte i = 0; i < bufsize; ++i) {
 			buffer[i] = my_strtoi (str, base);
 			str = strstr_P (str, sep) + 1;
 		}
@@ -193,7 +196,7 @@ void netconfig_func (HTTPRequestParser& request) {
 	char *param;
 	byte buf[MAC_SIZE], i;
 
-	param = request.get_get_parameter (F("mac"));
+	param = request.get_parameter (F("mac"));
 	if (strlen (param) > 0) {
 		if (tokenize (param, PSTR ("%3A"), buf, MAC_SIZE, 16)) {		// ':' gets encoded to "%3A" when submitting the form
 			for (i = 0; i < MAC_SIZE; i++)
@@ -201,7 +204,7 @@ void netconfig_func (HTTPRequestParser& request) {
 		}
 	}
 
-	param = request.get_get_parameter (F("mode"));
+	param = request.get_parameter (F("mode"));
 	if (strlen (param) > 0) {
 		if (strcmp_P (param, PSTR ("static")) == 0)
 			EEPROM.put (EEPROM_NETMODE_ADDR, NETMODE_STATIC);
@@ -209,19 +212,19 @@ void netconfig_func (HTTPRequestParser& request) {
 			EEPROM.put (EEPROM_NETMODE_ADDR, NETMODE_DHCP);
 	}
 
-	param = request.get_get_parameter (F("ip"));
+	param = request.get_parameter (F("ip"));
 	if (strlen (param) > 0 && tokenize (param, PSTR ("."), buf, IP_SIZE, 10)) {
 		for (i = 0; i < IP_SIZE; i++)
 			EEPROM.put (EEPROM_IP_ADDR + i, buf[i]);
 	}
 
-	param = request.get_get_parameter (F("mask"));
+	param = request.get_parameter (F("mask"));
 	if (strlen (param) > 0 && tokenize (param, PSTR ("."), buf, IP_SIZE, 10)) {
 		for (i = 0; i < IP_SIZE; i++)
 			EEPROM.put (EEPROM_NETMASK_ADDR + i, buf[i]);
 	}
 
-	param = request.get_get_parameter (F("gw"));
+	param = request.get_parameter (F("gw"));
 	if (strlen (param) > 0 && tokenize (param, PSTR ("."), buf, IP_SIZE, 10)) {
 		for (i = 0; i < IP_SIZE; i++)
 			EEPROM.put (EEPROM_GATEWAY_ADDR + i, buf[i]);
@@ -233,14 +236,14 @@ void netconfig_func (HTTPRequestParser& request) {
 void relconfig_func (HTTPRequestParser& request) {
 	char *param;
 
-	param = request.get_get_parameter (F("delay"));
+	param = request.get_parameter (F("delay"));
 	if (strlen (param) > 0) {
 		for (byte i = 0; i < RELAYS_NO; i++) {
 			Relay& relay = relays[i];
 
 			relay.delay = atoi (param);
 
-			param = request.get_get_parameter (F("hyst"));
+			param = request.get_parameter (F("hyst"));
 			if (strlen (param) > 0)
 				relay.hysteresis = atoi (param) * 10;
 		}
@@ -250,7 +253,7 @@ void relconfig_func (HTTPRequestParser& request) {
 void sck_func (HTTPRequestParser& request) {
 	char *param;
 
-	param = request.get_get_parameter (F("rel"));
+	param = request.get_parameter (F("rel"));
 	if (strlen (param) > 0) {
 		int relayNo = atoi (param);
 		if (relayNo >= 1 && relayNo <= RELAYS_NO) {
@@ -261,23 +264,23 @@ void sck_func (HTTPRequestParser& request) {
 
 			Relay& relay = relays[relayNo - 1];
 
-			param = request.get_get_parameter (F("mode"));
+			param = request.get_parameter (F("mode"));
 			if (strlen (param) > 0) {		// Only do something if we got this parameter
 				if (strcmp_P (param, PSTR ("on")) == 0) {
 					relay.mode = RELMD_ON;
 				} else if (strcmp_P (param, PSTR ("off")) == 0) {
 					relay.mode = RELMD_OFF;
 				} else if (strcmp_P (param, PSTR ("temp")) == 0) {
-					param = request.get_get_parameter (F("thres"));
+					param = request.get_parameter (F("thres"));
 					if (strcmp_P (param, PSTR ("gt")) == 0)
 						relay.mode = RELMD_GT;
 					else
 						relay.mode = RELMD_LT;
 
-					param = request.get_get_parameter (F("temp"));
+					param = request.get_parameter (F("temp"));
 					relay.threshold = atoi (param);
 
-					param = request.get_get_parameter (F("units"));
+					param = request.get_parameter (F("units"));
 					if (strcmp_P (param, PSTR ("F")) == 0)
 						relay.units = TEMP_F;
 					else
@@ -293,12 +296,12 @@ void sck_func (HTTPRequestParser& request) {
 static const Page aboutPage PROGMEM = {about_html_name, about_html, NULL};
 static const Page indexPage PROGMEM = {index_html_name, index_html, NULL};
 static const Page leftPage PROGMEM = {left_html_name, left_html, NULL};
-static const Page netconfigPage PROGMEM = {network_html_name, network_html, netconfig_func};
+static const Page netconfigPage PROGMEM = {net_html_name, net_html, netconfig_func};
 static const Page relconfigPage PROGMEM = {relays_html_name, relays_html, relconfig_func};
 static const Page sckPage PROGMEM = {sck_html_name, sck_html, sck_func};
-static const Page welcomePage PROGMEM = {welcome_html_name, welcome_html, NULL};
+static const Page welcomePage PROGMEM = {main_html_name, main_html, NULL};
 
-static const Page * const pages[] PROGMEM = {
+static const Page* const pages[] PROGMEM = {
 	&aboutPage,
 	&indexPage,
 	&leftPage,
@@ -318,63 +321,64 @@ static const Page * const pages[] PROGMEM = {
 
 #define REP_BUFFER_LEN 32
 static char replaceBuffer[REP_BUFFER_LEN];
+PString pBuffer (replaceBuffer, REP_BUFFER_LEN);
 
 const char NOT_AVAIL_STR[] PROGMEM = "N/A";
 
 #ifdef USE_ARDUINO_TIME_LIBRARY
 
-static char *evaluate_date (void *data __attribute__ ((unused))) {
+static PString& evaluate_time (void *data __attribute__ ((unused))) {
 	int x;
 
 	time_t t = now ();
 
 	x = hour (t);
-	replaceBuffer[0] = (x % 10) + '0';
-	replaceBuffer[1] = (x / 10) + '0';
-
-	replaceBuffer[2] = ':';
+	if (x < 10)
+		pBuffer.print ('0');
+	pBuffer.print (x);
+	pBuffer.print (':');
 
 	x = minute (t);
-	replaceBuffer[3] = (x % 10) + '0';
-	replaceBuffer[4] = (x / 10) + '0';
-
-	replaceBuffer[5] = ':';
+	if (x < 10)
+		pBuffer.print ('0');
+	pBuffer.print (x);
+	pBuffer.print (':');
 
 	x = second (t);
-	replaceBuffer[6] = (x % 10) + '0';
-	replaceBuffer[7] = (x / 10) + '0';
+	if (x < 10)
+		pBuffer.print ('0');
+	pBuffer.print (x);
 
-	replaceBuffer[8] = '\0';
-
-	return replaceBuffer;
+	return pBuffer;
 }
 
-static char *evaluate_time (void *data __attribute__ ((unused))) {
+// FIXME
+static PString& evaluate_date (void *data __attribute__ ((unused))) {
 	int x;
 
 	time_t t = now ();
 
 	x = day (t);
-	replaceBuffer[0] = (x / 10) + '0';
-	replaceBuffer[1] = (x % 10) + '0';
+	pBuffer[0] = (x / 10) + '0';
+	pBuffer[1] = (x % 10) + '0';
 
-	replaceBuffer[2] = '/';
+	pBuffer[2] = '/';
 
 	x = month (t);
-	replaceBuffer[3] = (x / 10) + '0';
-	replaceBuffer[4] = (x % 10) + '0';
+	pBuffer[3] = (x / 10) + '0';
+	pBuffer[4] = (x % 10) + '0';
 
-	replaceBuffer[5] = '/';
+	pBuffer[5] = '/';
 
 	x = year (t);
-	replaceBuffer[6] = (x / 1000) + '0';
-	replaceBuffer[7] = ((x % 1000) / 100) + '0';
-	replaceBuffer[8] = ((x % 100) / 10) + '0';
-	replaceBuffer[9] = (x % 10) + '0';
+	pBuffer[6] = (x / 1000) + '0';
+	pBuffer[7] = ((x % 1000) / 100) + '0';
+	pBuffer[8] = ((x % 100) / 10) + '0';
+	pBuffer[9] = (x % 10) + '0';
 
-	replaceBuffer[10] = '\0';
+	pBuffer[10] = '\0';
 
-	return replaceBuffer;
+	return pBuffer;
 }
 
 #endif	// USE_ARDUINO_TIME_LIBRARY
@@ -387,136 +391,121 @@ static char *evaluate_time (void *data __attribute__ ((unused))) {
  *
  * NOTE: Precision is fixed to two digits, which is just what we need.
  */
-char *floatToString (double val, char *outstr) {
-	char temp[8];
-	unsigned long frac;
+//~ char *floatToString (double val, char *outstr) {
+	//~ char temp[8];
+	//~ unsigned long frac;
 
-	temp[0] = '\0';
-	outstr[0] = '\0';
+	//~ temp[0] = '\0';
+	//~ outstr[0] = '\0';
 
-	if (val < 0.0){
-		strcpy (outstr, "-\0");  //print "-" sign
-		val *= -1;
-	}
+	//~ if (val < 0.0){
+		//~ strcpy (outstr, "-\0");  //print "-" sign
+		//~ val *= -1;
+	//~ }
 
-	val += 0.005;		// Round
+	//~ val += 0.005;		// Round
 
-	strcat (outstr, itoa ((int) val, temp, 10));  //prints the integer part without rounding
-	strcat (outstr, ".\0");		// print the decimal point
+	//~ strcat (outstr, itoa ((int) val, temp, 10));  //prints the integer part without rounding
+	//~ strcat (outstr, ".\0");		// print the decimal point
 
-	frac = (val - (int) val) * 100;
+	//~ frac = (val - (int) val) * 100;
 
-	if (frac < 10)
-		strcat (outstr, "0\0");    // print padding zeros
+	//~ if (frac < 10)
+		//~ strcat (outstr, "0\0");    // print padding zeros
 
-	strcat (outstr, itoa (frac, temp, 10));  // print fraction part
+	//~ strcat (outstr, itoa (frac, temp, 10));  // print fraction part
 
-	return outstr;
-}
+	//~ return outstr;
+//~ }
 
 #ifdef ENABLE_THERMOMETER
-static char *evaluate_temp_deg (void *data __attribute__ ((unused))) {
+static PString& evaluate_temp_deg (void *data __attribute__ ((unused))) {
 	Temperature& temp = thermometer.getTemp ();
 	if (temp.valid)
-		floatToString (temp.celsius, replaceBuffer);
+		pBuffer.print (temp.celsius, 2);
 	else
-		strlcpy_P (replaceBuffer, NOT_AVAIL_STR, REP_BUFFER_LEN);
+		pBuffer.print (PSTR_TO_F (NOT_AVAIL_STR));
 
-	return replaceBuffer;
+	return pBuffer;
 }
 
-static char *evaluate_temp_fahr (void *data __attribute__ ((unused))) {
+static PString& evaluate_temp_fahr (void *data __attribute__ ((unused))) {
 	Temperature& temp = thermometer.getTemp ();
 	if (temp.valid)
-		floatToString (temp.toFahrenheit (), replaceBuffer);
+		pBuffer.print (temp.toFahrenheit (), 2);
 	else
-		strlcpy_P (replaceBuffer, NOT_AVAIL_STR, REP_BUFFER_LEN);
+		pBuffer.print (PSTR_TO_F (NOT_AVAIL_STR));
 
-	return replaceBuffer;
+	return pBuffer;
 }
 #endif
 
-static char *ip2str (const byte *buf) {
-	replaceBuffer[0] = '\0';
-	for (int i = 0; i < IP_SIZE; i++) {
-		itoa (buf[i], replaceBuffer + strlen (replaceBuffer), DEC);
-		strcat_P (replaceBuffer, PSTR ("."));
-	}
-	replaceBuffer[strlen (replaceBuffer) - 1] = '\0';
+// 31938
+static PString& evaluate_ip (void *data __attribute__ ((unused))) {
+ 	pBuffer.print (netint.getIP ());
 
-	return replaceBuffer;
+ 	return pBuffer;
 }
 
-static char *evaluate_ip (void *data __attribute__ ((unused))) {
- 	return ip2str (netint.getIP ());
+static PString& evaluate_netmask (void *data __attribute__ ((unused))) {
+	pBuffer.print (netint.getNetmask ());
+
+ 	return pBuffer;
 }
 
-static char *evaluate_netmask (void *data __attribute__ ((unused))) {
-	return ip2str (netint.getNetmask ());
+static PString& evaluate_gw (void *data __attribute__ ((unused))) {
+	pBuffer.print (netint.getGateway ());
+
+ 	return pBuffer;
 }
 
-static char *evaluate_gw (void *data __attribute__ ((unused))) {
-	return ip2str (netint.getGateway ());
-}
+static PString& evaluate_mac_addr (void *data __attribute__ ((unused))) {
+	const byte *buf = netint.getMAC ();
 
-static char int2hex (int i) {
-	if (i < 10)
-		return i + '0';
-	else
-		return i - 10 + 'A';
-}
+	for (byte i = 0; i < 6; i++) {
+		if (buf[i] < 16)
+			pBuffer.print ('0');
+		pBuffer.print (buf[i], HEX);
 
-static char *evaluate_mac_addr (void *data __attribute__ ((unused))) {
-	byte tmp;
-
-	for (int i = 0; i < MAC_SIZE; i++) {
-		EEPROM.get (EEPROM_MAC_ADDR + i, tmp);
-		replaceBuffer[i * 3] = int2hex (tmp / 16);
-		replaceBuffer[i * 3 + 1] = int2hex (tmp % 16);
-		replaceBuffer[i * 3 + 2] = ':';
+		if (i < 5)
+			pBuffer.print (':');
 	}
 
-	replaceBuffer[17] = '\0';
-
-	return replaceBuffer;
+	return pBuffer;
 }
 
 
 const char CHECKED_STRING[] PROGMEM = "checked";
 const char SELECTED_STRING[] PROGMEM = "selected=\"true\"";
 
-static char *evaluate_netmode (void *data) {
+static PString& evaluate_netmode (void *data) {
 	NetworkMode netmode;
 	int checkedMode = reinterpret_cast<int> (data);
 
 	EEPROM.get (EEPROM_NETMODE_ADDR, netmode);
 
 	if (netmode == checkedMode)
-		strlcpy_P (replaceBuffer, CHECKED_STRING, REP_BUFFER_LEN);
-	else
-		replaceBuffer[0] = '\0';
+		pBuffer.print (PSTR_TO_F (CHECKED_STRING));
 
-	return replaceBuffer;
+	return pBuffer;
 }
 
-static char *evaluate_relay_status (void *data) {
-	replaceBuffer[0] = '\0';
+static PString& evaluate_relay_status (void *data) {
 	int relayNo = reinterpret_cast<int> (data);
-
 	if (relayNo >= 1 && relayNo <= RELAYS_NO) {
 		switch (relays[relayNo - 1].state) {
 			case RELAY_ON:
-				strlcpy_P (replaceBuffer, PSTR ("ON"), REP_BUFFER_LEN);
+				pBuffer.print (F("ON"));
 				break;
 			case RELAY_OFF:
-				strlcpy_P (replaceBuffer, PSTR ("OFF"), REP_BUFFER_LEN);
+				pBuffer.print (F("OFF"));
 				break;
 			default:
 				break;
 		}
 	}
 
-	return replaceBuffer;
+	return pBuffer;
 }
 
 /* OK, this works in a quite crap way, but it's going to work as long as a
@@ -525,125 +514,111 @@ static char *evaluate_relay_status (void *data) {
  *
  * PS: lastSelectedRelay is saved in sck_func().
  */
-static char *evaluate_relay_onoff_checked (void *data __attribute__ ((unused))) {
-	replaceBuffer[0] = '\0';
-
+static PString& evaluate_relay_onoff_checked (void *data __attribute__ ((unused))) {
 	if (lastSelectedRelay >= 1 && lastSelectedRelay <= RELAYS_NO) {
 		int md = reinterpret_cast<int> (data);			// If we cast to RelayMode it won't compile, nevermind!
 		if (relays[lastSelectedRelay - 1].mode == md)
-			strlcpy_P (replaceBuffer, CHECKED_STRING, REP_BUFFER_LEN);
+			pBuffer.print (PSTR_TO_F (CHECKED_STRING));
 	}
 
-	return replaceBuffer;
+	return pBuffer;
 }
 
 
 #ifdef ENABLE_THERMOMETER
 
-static char *evaluate_relay_temp_checked (void *data __attribute__ ((unused))) {
-	replaceBuffer[0] = '\0';
-
+static PString& evaluate_relay_temp_checked (void *data __attribute__ ((unused))) {
 	if (lastSelectedRelay >= 1 && lastSelectedRelay <= RELAYS_NO) {
 		if (relays[lastSelectedRelay - 1].mode == RELMD_GT || relays[lastSelectedRelay - 1].mode == RELMD_LT)
-			strlcpy_P (replaceBuffer, CHECKED_STRING, REP_BUFFER_LEN);
+			pBuffer.print (PSTR_TO_F (CHECKED_STRING));
 	}
 
-	return replaceBuffer;
+	return pBuffer;
 }
 
-static char *evaluate_relay_temp_gt_checked (void *data __attribute__ ((unused))) {
-	replaceBuffer[0] = '\0';
-
+static PString& evaluate_relay_temp_gt_checked (void *data __attribute__ ((unused))) {
 	if (lastSelectedRelay >= 1 && lastSelectedRelay <= RELAYS_NO) {
 		if (relays[lastSelectedRelay - 1].mode == RELMD_GT)
-			strlcpy_P (replaceBuffer, SELECTED_STRING, REP_BUFFER_LEN);
+			pBuffer.print (PSTR_TO_F (CHECKED_STRING));
 	}
 
-	return replaceBuffer;
+	return pBuffer;
 }
 
-static char *evaluate_relay_temp_lt_checked (void *data __attribute__ ((unused))) {
-	replaceBuffer[0] = '\0';
-
+static PString& evaluate_relay_temp_lt_checked (void *data __attribute__ ((unused))) {
 	if (lastSelectedRelay >= 1 && lastSelectedRelay <= RELAYS_NO) {
 		if (relays[lastSelectedRelay - 1].mode == RELMD_LT)
-			strlcpy_P (replaceBuffer, SELECTED_STRING, REP_BUFFER_LEN);
+			pBuffer.print (PSTR_TO_F (CHECKED_STRING));
 	}
 
-	return replaceBuffer;
+	return pBuffer;
 }
 
-static char *evaluate_relay_temp_threshold (void *data __attribute__ ((unused))) {
-	replaceBuffer[0] = '\0';
-
+static PString& evaluate_relay_temp_threshold (void *data __attribute__ ((unused))) {
 	if (lastSelectedRelay >= 1 && lastSelectedRelay <= RELAYS_NO)
-		itoa (relays[lastSelectedRelay - 1].threshold, replaceBuffer, DEC);
+		pBuffer.print (relays[lastSelectedRelay - 1].threshold);
 
-	return replaceBuffer;
+	return pBuffer;
 }
 
-static char *evaluate_relay_temp_units_c_checked (void *data __attribute__ ((unused))) {
-	replaceBuffer[0] = '\0';
-
+static PString& evaluate_relay_temp_units_c_checked (void *data __attribute__ ((unused))) {
 	if (lastSelectedRelay >= 1 && lastSelectedRelay <= RELAYS_NO) {
 		if (relays[lastSelectedRelay - 1].units == TEMP_C)
-			strlcpy_P (replaceBuffer, SELECTED_STRING, REP_BUFFER_LEN);
+			pBuffer.print (PSTR_TO_F (SELECTED_STRING));
 	}
 
-	return replaceBuffer;
+	return pBuffer;
 }
 
-static char *evaluate_relay_temp_units_f_checked (void *data __attribute__ ((unused))) {
-	replaceBuffer[0] = '\0';
-
+static PString& evaluate_relay_temp_units_f_checked (void *data __attribute__ ((unused))) {
 	if (lastSelectedRelay >= 1 && lastSelectedRelay <= RELAYS_NO) {
 		if (relays[lastSelectedRelay - 1].units == TEMP_F)
-			strlcpy_P (replaceBuffer, SELECTED_STRING, REP_BUFFER_LEN);
+			pBuffer.print (PSTR_TO_F (SELECTED_STRING));
 	}
 
-	return replaceBuffer;
+	return pBuffer;
 }
 
-static char *evaluate_relay_temp_delay (void *data __attribute__ ((unused))) {
+static PString& evaluate_relay_temp_delay (void *data __attribute__ ((unused))) {
 	// Always use first relay's data
-	itoa (relays[0].delay, replaceBuffer, DEC);
+	pBuffer.print (relays[0].delay);
 
-	return replaceBuffer;
+	return pBuffer;
 }
 
-static char *evaluate_relay_temp_margin (void *data __attribute__ ((unused))) {
+static PString& evaluate_relay_temp_margin (void *data __attribute__ ((unused))) {
 	// Always use first relay's data
-	itoa (relays[0].hysteresis / 10, replaceBuffer, DEC);
+	pBuffer.print (relays[0].hysteresis / 10);
 
-	return replaceBuffer;
+	return pBuffer;
 }
 
 #endif		// ENABLE_THERMOMETER
 
-static char *evaluate_version (void *data __attribute__ ((unused))) {
-	strlcpy (replaceBuffer, PROGRAM_VERSION, REP_BUFFER_LEN);
-	return replaceBuffer;
+static PString& evaluate_version (void *data __attribute__ ((unused))) {
+	pBuffer.print (PROGRAM_VERSION);
+	return pBuffer;
 }
 
-// FIXME :D
-char *my_itoa (int val, char *s, int base, byte width = 0) {
-	char *ret;
+//~ // FIXME :D
+//~ char *my_itoa (int val, char *s, int base, byte width = 0) {
+	//~ char *ret;
 
-	if (width == 2 && val < 10) {
-		s[0] = '0';
-		itoa (val, s + 1, base);
-		ret = s;
-	} else {
-		ret = itoa (val, s, base);
-	}
+	//~ if (width == 2 && val < 10) {
+		//~ s[0] = '0';
+		//~ itoa (val, s + 1, base);
+		//~ ret = s;
+	//~ } else {
+		//~ ret = itoa (val, s, base);
+	//~ }
 
-	return ret;
-}
+	//~ return ret;
+//~ }
 
 // Wahahahah! Prolly the most advanced function of its kind!
 // FIXME: Save some bytes removing temp vars.
 // FIXME: Check that string does not overflow buffer (which is likely!)
-static char *evaluate_uptime (void *data __attribute__ ((unused))) {
+static PString& evaluate_uptime (void *data __attribute__ ((unused))) {
 	unsigned long uptime = millis () / 1000;
 	byte d, h, m, s;
 
@@ -655,46 +630,50 @@ static char *evaluate_uptime (void *data __attribute__ ((unused))) {
 	uptime %= 60;
 	s = uptime;
 
-	replaceBuffer[0] = '\0';
-
 	if (d > 0) {
-		itoa (d, replaceBuffer, DEC);
-		strcat_P (replaceBuffer, d == 1 ? PSTR (" day, ") : PSTR (" days, "));
+		pBuffer.print (d);
+		pBuffer.print (d == 1 ? F(" day, ") : F(" days, "));
 	}
 #if 0
 	if (h > 0) {
-		itoa (h, replaceBuffer + strlen (replaceBuffer), DEC);
-		strcat_P (replaceBuffer, h == 1 ? PSTR (" hour, ") : PSTR (" hours, "));
+		pBuffer.print (h);
+		pBuffer.print (h == 1 ? F(" hour, ") : F(" hours, "));
 	}
 
 	if (m > 0) {
-		itoa (m, replaceBuffer + strlen (replaceBuffer), DEC);
-		strcat_P (replaceBuffer, m == 1 ? PSTR (" minute, ") : PSTR (" minutes, "));
+		pBuffer.print (m);
+		pBuffer.print (m == 1 ? F(" minute, ") : F(" minutes, "));
 	}
 
 	// We always have seconds Maybe we could avoid them if h > 1 or so.
-	itoa (s, replaceBuffer + strlen (replaceBuffer), DEC);
-	strcat_P (replaceBuffer, s == 1 ? PSTR (" second") : PSTR (" seconds"));
+	pBuffer.print (s);
+	pBuffer.print (s == 1 ? F(" second") : F(" seconds"));
 #else
-	// Shorter format: "2 days, 4:12:22", saves 70 bytes and doesn't overflow :D
-	my_itoa (h, replaceBuffer + strlen (replaceBuffer), DEC, 2);
-	strcat_P (replaceBuffer, PSTR (":"));
-	my_itoa (m, replaceBuffer + strlen (replaceBuffer), DEC, 2);
-	strcat_P (replaceBuffer, PSTR (":"));
-	my_itoa (s, replaceBuffer + strlen (replaceBuffer), DEC, 2);
+	// Shorter format: "2 days, 4:12:22"
+	if (h < 10)
+		pBuffer.print ('0');
+	pBuffer.print (h);
+	pBuffer.print (':');
+	if (m < 10)
+		pBuffer.print ('0');
+	pBuffer.print (m);
+	pBuffer.print (':');
+	if (s < 10)
+		pBuffer.print ('0');
+	pBuffer.print (s);
 #endif
 
-	return replaceBuffer;
+	return pBuffer;
 }
 
 // See http://playground.arduino.cc/Code/AvailableMemory
-static char *evaluate_free_ram (void *data __attribute__ ((unused))) {
+static PString& evaluate_free_ram (void *data __attribute__ ((unused))) {
 	extern int __heap_start, *__brkval;
 	int v;
 
-	itoa ((int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval), replaceBuffer, DEC);
+	pBuffer.print ((int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval));
 
-	return replaceBuffer;
+	return pBuffer;
 }
 
 
@@ -887,12 +866,7 @@ void setup () {
 	//~ DPRINTLN (netint.getGateway ());
 
 	// Init webserver
-	webserver.setPages (pages);
-#ifdef ENABLE_TAGS
-	webserver.setSubstitutions (substitutions);
-#endif
-
-	if (!webserver.begin (netint)) {
+	if (!webserver.begin (netint, pages, substitutions)) {
 		DPRINTLN (F("Cannot start webserver"));
 	}
 
