@@ -440,7 +440,6 @@ static PString& evaluate_temp_fahr (void *data __attribute__ ((unused))) {
 }
 #endif
 
-// 31938
 static PString& evaluate_ip (void *data __attribute__ ((unused))) {
  	pBuffer.print (netint.getIP ());
 
@@ -600,24 +599,6 @@ static PString& evaluate_version (void *data __attribute__ ((unused))) {
 	return pBuffer;
 }
 
-//~ // FIXME :D
-//~ char *my_itoa (int val, char *s, int base, byte width = 0) {
-	//~ char *ret;
-
-	//~ if (width == 2 && val < 10) {
-		//~ s[0] = '0';
-		//~ itoa (val, s + 1, base);
-		//~ ret = s;
-	//~ } else {
-		//~ ret = itoa (val, s, base);
-	//~ }
-
-	//~ return ret;
-//~ }
-
-// Wahahahah! Prolly the most advanced function of its kind!
-// FIXME: Save some bytes removing temp vars.
-// FIXME: Check that string does not overflow buffer (which is likely!)
 static PString& evaluate_uptime (void *data __attribute__ ((unused))) {
 	unsigned long uptime = millis () / 1000;
 	byte d, h, m, s;
@@ -634,22 +615,7 @@ static PString& evaluate_uptime (void *data __attribute__ ((unused))) {
 		pBuffer.print (d);
 		pBuffer.print (d == 1 ? F(" day, ") : F(" days, "));
 	}
-#if 0
-	if (h > 0) {
-		pBuffer.print (h);
-		pBuffer.print (h == 1 ? F(" hour, ") : F(" hours, "));
-	}
 
-	if (m > 0) {
-		pBuffer.print (m);
-		pBuffer.print (m == 1 ? F(" minute, ") : F(" minutes, "));
-	}
-
-	// We always have seconds Maybe we could avoid them if h > 1 or so.
-	pBuffer.print (s);
-	pBuffer.print (s == 1 ? F(" second") : F(" seconds"));
-#else
-	// Shorter format: "2 days, 4:12:22"
 	if (h < 10)
 		pBuffer.print ('0');
 	pBuffer.print (h);
@@ -661,7 +627,6 @@ static PString& evaluate_uptime (void *data __attribute__ ((unused))) {
 	if (s < 10)
 		pBuffer.print ('0');
 	pBuffer.print (s);
-#endif
 
 	return pBuffer;
 }
@@ -790,6 +755,7 @@ void setup () {
 
 	DSTART ();
 	DPRINTLN (F("SmartStrip " PROGRAM_VERSION));
+	DPRINTLN (F("Using Webbino " WEBBINO_VERSION));
 
 	// Check and format EEPROM, in case
 	checkAndFormatEEPROM ();
