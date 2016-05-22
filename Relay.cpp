@@ -73,9 +73,14 @@ void Relay::switchState (RelayState newState) {
 	DPRINT (F(" relay "));
 	DPRINTLN (id, DEC);
 
-	digitalWrite (pin, state = newState);
+	state = newState;
+	effectState ();
 }
 
 void Relay::effectState () {
+#ifdef RELAYS_ACTIVE_LOW
+	digitalWrite (pin, !state);
+#else
 	digitalWrite (pin, state);
+#endif
 }

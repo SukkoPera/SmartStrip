@@ -29,6 +29,12 @@
 #define RELAY3_PIN 6
 #define RELAY4_PIN 5
 
+/* Define this if your relays are activated setting their input pin LOW.
+ * Note that this applies to all relays, you can't currently have mixed active-
+ * high and active-low relays.
+ */
+//#define RELAYS_ACTIVE_LOW
+
 // Define to enable temperature-controlled relays
 #define ENABLE_THERMOMETER
 
@@ -105,4 +111,3 @@
 #define PROGRAM_VERSION "0.6git"
 
 #endif
-

@@ -23,14 +23,14 @@
 #include "enums.h"
 #include "common.h"
 
-	
+
 class Relay: public RelayOptions {
 	static const int optionAddress[RELAYS_NO];
 
-public:	
+public:
 	byte id;
 	byte pin;
-	
+
 	Relay (byte _id, byte _pin);
 
 	void readOptions ();
@@ -40,5 +40,5 @@ public:
 	void switchState (RelayState newState);
 	void effectState ();
 };
-	
+
 #endif
