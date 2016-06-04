@@ -19,7 +19,6 @@
 
 #include <Webbino.h>
 #include <EEPROM.h>
-#include <avr/pgmspace.h>
 #include "debug.h"
 #include "Relay.h"
 #include "enums.h"
@@ -47,6 +46,9 @@ WebServer webserver;
 	#define WIFI_PASSWORD    "password"
 
 	NetworkInterfaceESP8266 netint;
+#elif defined (WEBBINO_USE_DIGIFI)
+	#include <WebServer_DigiFi.h>
+	NetworkInterfaceDigiFi netint;
 #endif
 
 #ifdef ENABLE_THERMOMETER
@@ -668,10 +670,15 @@ static PString& evaluate_uptime (void *data __attribute__ ((unused))) {
 
 // See http://playground.arduino.cc/Code/AvailableMemory
 static PString& evaluate_free_ram (void *data __attribute__ ((unused))) {
+#ifdef __arm__
+	// We haven't found a reliable way for this on the Due, yet
+	pBuffer.print (F("Unknown"));
+#else
 	extern int __heap_start, *__brkval;
 	int v;
 
 	pBuffer.print ((int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval));
+#endif
 
 	return pBuffer;
 }
@@ -822,7 +829,7 @@ void setup () {
 
 #if defined (WEBBINO_USE_ENC28J60) || defined (WEBBINO_USE_WIZ5100)
 			bool ok = netint.begin (mac, ip, mask, gw);
-#elif defined (WEBBINO_USE_ESP8266)
+#elif defined (WEBBINO_USE_ESP8266) || defined (WEBBINO_USE_DIGIFI)
 			// This is incredibly not possible at the moment!
 			//~ swSerial.begin (9600);
 			//~ bool ok = netint.begin (FIXME);
@@ -847,6 +854,8 @@ void setup () {
 #elif defined (WEBBINO_USE_ESP8266)
 			swSerial.begin (9600);
 			bool ok = netint.begin (swSerial, WIFI_SSID, WIFI_PASSWORD);
+#elif defined (WEBBINO_USE_DIGIFI)
+			bool ok = netint.begin ();
 #endif
 			if (!ok) {
 				DPRINTLN (F("Failed to get configuration from DHCP"));
@@ -854,16 +863,15 @@ void setup () {
 					;
 			} else {
 				DPRINTLN (F("DHCP configuration done:"));
+				DPRINT (F("- IP: "));
+				DPRINTLN (netint.getIP ());
+				DPRINT (F("- Netmask: "));
+				DPRINTLN (netint.getNetmask ());
+				DPRINT (F("- Default Gateway: "));
+				DPRINTLN (netint.getGateway ());
 			}
 			break;
 	}
-
-	//~ DPRINT (F("- IP: "));
-	//~ DPRINTLN (netint.getIP ());
-	//~ DPRINT (F("- Netmask: "));
-	//~ DPRINTLN (netint.getNetmask ());
-	//~ DPRINT (F("- Default Gateway: "));
-	//~ DPRINTLN (netint.getGateway ());
 
 	// Init webserver
 	if (!webserver.begin (netint, pages, substitutions)) {
@@ -874,7 +882,19 @@ void setup () {
 	thermometer.begin (THERMOMETER_PIN);
 #endif
 
+	// Signal we're ready!
  	DPRINTLN (F("SmartStrip is ready!"));
+
+	/* Note that this might intrfere with Ethernet boards that use SPI,
+	 * since pin 13 is SCK.
+	 */
+	pinMode (LED_BUILTIN, OUTPUT);
+	for (int i = 0; i < 3; i++) {
+		digitalWrite (LED_BUILTIN, HIGH);
+		delay (100);
+		digitalWrite (LED_BUILTIN, LOW);
+		delay (100);
+	}
 }
 
 void loop () {
