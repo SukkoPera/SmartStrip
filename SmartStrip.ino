@@ -787,7 +787,7 @@ void setup () {
 			}
 
 #if defined (WEBBINO_USE_ENC28J60) || defined (WEBBINO_USE_WIZ5100)
-			bool ok = netint.begin (mac, ip, mask, gw);
+			bool ok = netint.begin (mac, ip, gw, gw /* FIXME: DNS */, mask);
 #elif defined (WEBBINO_USE_ESP8266)
 			// This is incredibly not possible at the moment!
 			//~ swSerial.begin (9600);
@@ -820,21 +820,18 @@ void setup () {
 					;
 			} else {
 				DPRINTLN (F("DHCP configuration done:"));
+				DPRINT (F("- IP: "));
+				DPRINTLN (netint.getIP ());
+				DPRINT (F("- Netmask: "));
+				DPRINTLN (netint.getNetmask ());
+				DPRINT (F("- Default Gateway: "));
+				DPRINTLN (netint.getGateway ());
 			}
 			break;
 	}
 
-	//~ DPRINT (F("- IP: "));
-	//~ DPRINTLN (netint.getIP ());
-	//~ DPRINT (F("- Netmask: "));
-	//~ DPRINTLN (netint.getNetmask ());
-	//~ DPRINT (F("- Default Gateway: "));
-	//~ DPRINTLN (netint.getGateway ());
-
 	// Init webserver
-	if (!webserver.begin (netint, pages, substitutions)) {
-		DPRINTLN (F("Cannot start webserver"));
-	}
+	webserver.begin (netint, pages, substitutions);
 
 #ifdef ENABLE_THERMOMETER
 	thermometer.begin (THERMOMETER_PIN);
