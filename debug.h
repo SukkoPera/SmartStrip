@@ -23,7 +23,7 @@
 #include "common.h"
 
 #ifndef NDEBUG
-	#define DSTART(...) Serial.begin (9600)
+	#define DSTART(...) do {Serial.begin (9600); while (!Serial);} while (0)
 	#define DPRINT(...) Serial.print(__VA_ARGS__)
 	#define DPRINTLN(...) Serial.println(__VA_ARGS__)
 #else
