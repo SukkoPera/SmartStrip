@@ -535,21 +535,12 @@ static PString& evaluate_relay_temp_checked (void *data __attribute__ ((unused))
 	return pBuffer;
 }
 
-static PString& evaluate_relay_temp_gt_checked (void *data __attribute__ ((unused))) {
+static PString& evaluate_relay_temp_gtlt_checked (void *data) {
 	if (lastSelectedRelay >= 1 && lastSelectedRelay <= RELAYS_NO) {
-		if (relays[lastSelectedRelay - 1].mode == RELMD_GT)
+		int md = static_cast<RelayMode> (reinterpret_cast<int> (data));		// ;)
+		if (relays[lastSelectedRelay - 1].mode == md)
 			pBuffer.print (PSTR_TO_F (CHECKED_STRING));
 	}
-
-	return pBuffer;
-}
-
-static PString& evaluate_relay_temp_lt_checked (void *data __attribute__ ((unused))) {
-	if (lastSelectedRelay >= 1 && lastSelectedRelay <= RELAYS_NO) {
-		if (relays[lastSelectedRelay - 1].mode == RELMD_LT)
-			pBuffer.print (PSTR_TO_F (CHECKED_STRING));
-	}
-
 	return pBuffer;
 }
 
@@ -692,11 +683,11 @@ static const var_substitution subRelay2StatusVarSub PROGMEM = {subRelay2StatusSt
 static const var_substitution subRelay3StatusVarSub PROGMEM = {subRelay3StatusStr, evaluate_relay_status, reinterpret_cast<void *> (3)};
 static const var_substitution subRelay4StatusVarSub PROGMEM = {subRelay4StatusStr, evaluate_relay_status, reinterpret_cast<void *> (4)};
 #ifdef ENABLE_THERMOMETER
-static const var_substitution subDegCVarSub PROGMEM =	{subDegCStr, evaluate_temp_deg, NULL};
+static const var_substitution subDegCVarSub PROGMEM = {subDegCStr, evaluate_temp_deg, NULL};
 static const var_substitution subDegFVarSub PROGMEM = {subDegFStr, evaluate_temp_fahr, NULL};
 static const var_substitution subRelayTempVarSub PROGMEM = {subRelayTempStr, evaluate_relay_temp_checked, NULL};
-static const var_substitution subRelayTempGTVarSub PROGMEM = {subRelayTempGTStr, evaluate_relay_temp_gt_checked, NULL};
-static const var_substitution subRelayTempLTVarSub PROGMEM = {subRelayTempLTStr, evaluate_relay_temp_lt_checked, NULL};
+static const var_substitution subRelayTempGTVarSub PROGMEM = {subRelayTempGTStr, evaluate_relay_temp_gtlt_checked, reinterpret_cast<void *> (RELMD_GT)};
+static const var_substitution subRelayTempLTVarSub PROGMEM = {subRelayTempLTStr, evaluate_relay_temp_gtlt_checked, reinterpret_cast<void *> (RELMD_LT)};
 static const var_substitution subRelayTempThresholdVarSub PROGMEM = {subRelayTempThresholdStr, evaluate_relay_temp_threshold, NULL};
 static const var_substitution subRelayTempUnitsCVarSub PROGMEM = {subRelayTempUnitsCStr, evaluate_relay_temp_units_c_checked, NULL};
 static const var_substitution subRelayTempUnitsFVarSub PROGMEM = {subRelayTempUnitsFStr, evaluate_relay_temp_units_f_checked, NULL};
