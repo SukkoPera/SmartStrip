@@ -674,38 +674,38 @@ static const char subUptimeStr[] PROGMEM = "UPTIME";
 static const char subFreeRAMStr[] PROGMEM = "FREERAM";
 
 #ifdef USE_ARDUINO_TIME_LIBRARY
-static const var_substitution subDateVarSub PROGMEM = {subDateStr, evaluate_date, NULL};
-static const var_substitution subTimeVarSub PROGMEM =	{subTimeStr, evaluate_time, NULL};
+static const ReplacementTag subDateVarSub PROGMEM = {subDateStr, evaluate_date, NULL};
+static const ReplacementTag subTimeVarSub PROGMEM =	{subTimeStr, evaluate_time, NULL};
 #endif
-static const var_substitution subMacAddrVarSub PROGMEM = {subMacAddrStr, evaluate_mac_addr, NULL};
-static const var_substitution subIPAddressVarSub PROGMEM = {subIPAddressStr, evaluate_ip, NULL};
-static const var_substitution subNetmaskVarSub PROGMEM = {subNetmaskStr, evaluate_netmask, NULL};
-static const var_substitution subGatewayVarSub PROGMEM = {subGatewayStr, evaluate_gw, NULL};
-static const var_substitution subNMDHCPVarSub PROGMEM = {subNMDHCPStr, evaluate_netmode, reinterpret_cast<void *> (NETMODE_DHCP)};
-static const var_substitution subNMStaticVarSub PROGMEM = {subNMStaticStr, evaluate_netmode, reinterpret_cast<void *> (NETMODE_STATIC)};
-static const var_substitution subRelayOnVarSub PROGMEM = {subRelayOnStr, evaluate_relay_onoff_checked, reinterpret_cast<void *> (RELMD_ON)};
-static const var_substitution subRelayOffVarSub PROGMEM = {subRelayOffStr, evaluate_relay_onoff_checked, reinterpret_cast<void *> (RELMD_OFF)};
-static const var_substitution subRelay1StatusVarSub PROGMEM = {subRelay1StatusStr, evaluate_relay_status, reinterpret_cast<void *> (1)};
-static const var_substitution subRelay2StatusVarSub PROGMEM = {subRelay2StatusStr, evaluate_relay_status, reinterpret_cast<void *> (2)};
-static const var_substitution subRelay3StatusVarSub PROGMEM = {subRelay3StatusStr, evaluate_relay_status, reinterpret_cast<void *> (3)};
-static const var_substitution subRelay4StatusVarSub PROGMEM = {subRelay4StatusStr, evaluate_relay_status, reinterpret_cast<void *> (4)};
+static const ReplacementTag subMacAddrVarSub PROGMEM = {subMacAddrStr, evaluate_mac_addr, NULL};
+static const ReplacementTag subIPAddressVarSub PROGMEM = {subIPAddressStr, evaluate_ip, NULL};
+static const ReplacementTag subNetmaskVarSub PROGMEM = {subNetmaskStr, evaluate_netmask, NULL};
+static const ReplacementTag subGatewayVarSub PROGMEM = {subGatewayStr, evaluate_gw, NULL};
+static const ReplacementTag subNMDHCPVarSub PROGMEM = {subNMDHCPStr, evaluate_netmode, reinterpret_cast<void *> (NETMODE_DHCP)};
+static const ReplacementTag subNMStaticVarSub PROGMEM = {subNMStaticStr, evaluate_netmode, reinterpret_cast<void *> (NETMODE_STATIC)};
+static const ReplacementTag subRelayOnVarSub PROGMEM = {subRelayOnStr, evaluate_relay_onoff_checked, reinterpret_cast<void *> (RELMD_ON)};
+static const ReplacementTag subRelayOffVarSub PROGMEM = {subRelayOffStr, evaluate_relay_onoff_checked, reinterpret_cast<void *> (RELMD_OFF)};
+static const ReplacementTag subRelay1StatusVarSub PROGMEM = {subRelay1StatusStr, evaluate_relay_status, reinterpret_cast<void *> (1)};
+static const ReplacementTag subRelay2StatusVarSub PROGMEM = {subRelay2StatusStr, evaluate_relay_status, reinterpret_cast<void *> (2)};
+static const ReplacementTag subRelay3StatusVarSub PROGMEM = {subRelay3StatusStr, evaluate_relay_status, reinterpret_cast<void *> (3)};
+static const ReplacementTag subRelay4StatusVarSub PROGMEM = {subRelay4StatusStr, evaluate_relay_status, reinterpret_cast<void *> (4)};
 #ifdef ENABLE_THERMOMETER
-static const var_substitution subDegCVarSub PROGMEM = {subDegCStr, evaluate_temp_deg, NULL};
-static const var_substitution subDegFVarSub PROGMEM = {subDegFStr, evaluate_temp_fahr, NULL};
-static const var_substitution subRelayTempVarSub PROGMEM = {subRelayTempStr, evaluate_relay_temp_checked, NULL};
-static const var_substitution subRelayTempGTVarSub PROGMEM = {subRelayTempGTStr, evaluate_relay_temp_gtlt_checked, reinterpret_cast<void *> (RELMD_GT)};
-static const var_substitution subRelayTempLTVarSub PROGMEM = {subRelayTempLTStr, evaluate_relay_temp_gtlt_checked, reinterpret_cast<void *> (RELMD_LT)};
-static const var_substitution subRelayTempThresholdVarSub PROGMEM = {subRelayTempThresholdStr, evaluate_relay_temp_threshold, NULL};
-static const var_substitution subRelayTempUnitsCVarSub PROGMEM = {subRelayTempUnitsCStr, evaluate_relay_temp_units_c_checked, NULL};
-static const var_substitution subRelayTempUnitsFVarSub PROGMEM = {subRelayTempUnitsFStr, evaluate_relay_temp_units_f_checked, NULL};
-static const var_substitution subRelayTempDelayVarSub PROGMEM = {subRelayTempDelayStr, evaluate_relay_temp_delay, NULL};
-static const var_substitution subRelayTempMarginVarSub PROGMEM = {subRelayTempMarginStr, evaluate_relay_temp_margin, NULL};
+static const ReplacementTag subDegCVarSub PROGMEM = {subDegCStr, evaluate_temp_deg, NULL};
+static const ReplacementTag subDegFVarSub PROGMEM = {subDegFStr, evaluate_temp_fahr, NULL};
+static const ReplacementTag subRelayTempVarSub PROGMEM = {subRelayTempStr, evaluate_relay_temp_checked, NULL};
+static const ReplacementTag subRelayTempGTVarSub PROGMEM = {subRelayTempGTStr, evaluate_relay_temp_gtlt_checked, reinterpret_cast<void *> (RELMD_GT)};
+static const ReplacementTag subRelayTempLTVarSub PROGMEM = {subRelayTempLTStr, evaluate_relay_temp_gtlt_checked, reinterpret_cast<void *> (RELMD_LT)};
+static const ReplacementTag subRelayTempThresholdVarSub PROGMEM = {subRelayTempThresholdStr, evaluate_relay_temp_threshold, NULL};
+static const ReplacementTag subRelayTempUnitsCVarSub PROGMEM = {subRelayTempUnitsCStr, evaluate_relay_temp_units_c_checked, NULL};
+static const ReplacementTag subRelayTempUnitsFVarSub PROGMEM = {subRelayTempUnitsFStr, evaluate_relay_temp_units_f_checked, NULL};
+static const ReplacementTag subRelayTempDelayVarSub PROGMEM = {subRelayTempDelayStr, evaluate_relay_temp_delay, NULL};
+static const ReplacementTag subRelayTempMarginVarSub PROGMEM = {subRelayTempMarginStr, evaluate_relay_temp_margin, NULL};
 #endif
-static const var_substitution subVerVarSub PROGMEM = {subVerStr, evaluate_version, NULL};
-static const var_substitution subUptimeVarSub PROGMEM = {subUptimeStr, evaluate_uptime, NULL};
-static const var_substitution subFreeRAMVarSub PROGMEM = {subFreeRAMStr, evaluate_free_ram, NULL};
+static const ReplacementTag subVerVarSub PROGMEM = {subVerStr, evaluate_version, NULL};
+static const ReplacementTag subUptimeVarSub PROGMEM = {subUptimeStr, evaluate_uptime, NULL};
+static const ReplacementTag subFreeRAMVarSub PROGMEM = {subFreeRAMStr, evaluate_free_ram, NULL};
 
-static const var_substitution * const substitutions[] PROGMEM = {
+static const ReplacementTag * const substitutions[] PROGMEM = {
 #ifdef USE_ARDUINO_TIME_LIBRARY
 	&subDateVarSub,
 	&subTimeVarSub,
