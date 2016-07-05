@@ -154,8 +154,8 @@ int my_strtoi (const char *nptr, int base) {
 	for (acc = 0, c = *nptr; c; c = *++nptr) {
 		if (isdigit(c))
 			c -= '0';
-		else if (isalpha(c))
-			c -= isupper(c) ? 'A' - 10 : 'a' - 10;
+		else if (isalpha (c))
+			c -= isupper (c) ? 'A' - 10 : 'a' - 10;
 		else
 			break;
 
