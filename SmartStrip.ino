@@ -902,6 +902,8 @@ void loop () {
 				break;
 #endif
 			default:
+				DPRINT (F("Bad relay mode: "));
+				DPRINTLN (r.mode);
 				break;
 		}
 	}
