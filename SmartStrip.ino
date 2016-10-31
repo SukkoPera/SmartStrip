@@ -32,9 +32,9 @@ WebServer webserver;
 #if defined (WEBBINO_USE_ENC28J60)
 	#include <WebbinoInterfaces/ENC28J60.h>
 	NetworkInterfaceENC28J60 netint;
-#elif defined (WEBBINO_USE_WIZ5100)
-	#include <WebbinoInterfaces/WIZ5100.h>
-	NetworkInterfaceWIZ5100 netint;
+#elif defined (WEBBINO_USE_WIZ5100) || defined (WEBBINO_USE_WIZ5500)
+	#include <WebbinoInterfaces/WIZ5x00.h>
+	NetworkInterfaceWIZ5x00 netint;
 #elif defined (WEBBINO_USE_ESP8266)
 	#include <WebbinoInterfaces/ESP8266.h>
 
@@ -46,6 +46,14 @@ WebServer webserver;
 	#define WIFI_PASSWORD    "password"
 
 	NetworkInterfaceESP8266 netint;
+#elif defined (WEBBINO_USE_WIFI101)
+	#include <WebbinoInterfaces/WiFi.h>
+
+	// Wi-Fi parameters
+	#define WIFI_SSID        "ssid"
+	#define WIFI_PASSWORD    "password"
+
+	NetworkInterfaceWiFi netint;
 #elif defined (WEBBINO_USE_DIGIFI)
 	#include <WebServer_DigiFi.h>
 	NetworkInterfaceDigiFi netint;
