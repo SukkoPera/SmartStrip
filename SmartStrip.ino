@@ -83,7 +83,7 @@ Relay relays[RELAYS_NO] = {
 	Relay (4, RELAY4_PIN)
 };
 
-static bool relayHysteresis[RELAYS_NO];
+bool relayHysteresis[RELAYS_NO];
 
 
 #define PSTR_TO_F(s) reinterpret_cast<const __FlashStringHelper *> (s)
@@ -303,15 +303,15 @@ void sck_func (HTTPRequestParser& request) {
 	}
 }
 
-static const Page aboutPage PROGMEM = {about_html_name, about_html, NULL};
-static const Page indexPage PROGMEM = {index_html_name, index_html, NULL};
-static const Page leftPage PROGMEM = {left_html_name, left_html, NULL};
-static const Page netconfigPage PROGMEM = {net_html_name, net_html, netconfig_func};
-static const Page relconfigPage PROGMEM = {relays_html_name, relays_html, relconfig_func};
-static const Page sckPage PROGMEM = {sck_html_name, sck_html, sck_func};
-static const Page welcomePage PROGMEM = {main_html_name, main_html, NULL};
+const Page aboutPage PROGMEM = {about_html_name, about_html, NULL};
+const Page indexPage PROGMEM = {index_html_name, index_html, NULL};
+const Page leftPage PROGMEM = {left_html_name, left_html, NULL};
+const Page netconfigPage PROGMEM = {net_html_name, net_html, netconfig_func};
+const Page relconfigPage PROGMEM = {relays_html_name, relays_html, relconfig_func};
+const Page sckPage PROGMEM = {sck_html_name, sck_html, sck_func};
+const Page welcomePage PROGMEM = {main_html_name, main_html, NULL};
 
-static const Page* const pages[] PROGMEM = {
+const Page* const pages[] PROGMEM = {
 	&aboutPage,
 	&indexPage,
 	&leftPage,
@@ -330,14 +330,14 @@ static const Page* const pages[] PROGMEM = {
 #ifdef ENABLE_TAGS
 
 #define REP_BUFFER_LEN 32
-static char replaceBuffer[REP_BUFFER_LEN];
+char replaceBuffer[REP_BUFFER_LEN];
 PString pBuffer (replaceBuffer, REP_BUFFER_LEN);
 
 const char NOT_AVAIL_STR[] PROGMEM = "N/A";
 
 #ifdef USE_ARDUINO_TIME_LIBRARY
 
-static PString& evaluate_time (void *data __attribute__ ((unused))) {
+PString& evaluate_time (void *data __attribute__ ((unused))) {
 	int x;
 
 	time_t t = now ();
@@ -363,7 +363,7 @@ static PString& evaluate_time (void *data __attribute__ ((unused))) {
 }
 
 // FIXME
-static PString& evaluate_date (void *data __attribute__ ((unused))) {
+PString& evaluate_date (void *data __attribute__ ((unused))) {
 	int x;
 
 	time_t t = now ();
@@ -429,7 +429,7 @@ static PString& evaluate_date (void *data __attribute__ ((unused))) {
 //~ }
 
 #ifdef ENABLE_THERMOMETER
-static PString& evaluate_temp_deg (void *data __attribute__ ((unused))) {
+PString& evaluate_temp_deg (void *data __attribute__ ((unused))) {
 	Temperature& temp = thermometer.getTemp ();
 	if (temp.valid)
 		pBuffer.print (temp.celsius, 2);
@@ -439,7 +439,7 @@ static PString& evaluate_temp_deg (void *data __attribute__ ((unused))) {
 	return pBuffer;
 }
 
-static PString& evaluate_temp_fahr (void *data __attribute__ ((unused))) {
+PString& evaluate_temp_fahr (void *data __attribute__ ((unused))) {
 	Temperature& temp = thermometer.getTemp ();
 	if (temp.valid)
 		pBuffer.print (temp.toFahrenheit (), 2);
@@ -450,25 +450,25 @@ static PString& evaluate_temp_fahr (void *data __attribute__ ((unused))) {
 }
 #endif
 
-static PString& evaluate_ip (void *data __attribute__ ((unused))) {
+PString& evaluate_ip (void *data __attribute__ ((unused))) {
  	pBuffer.print (netint.getIP ());
 
  	return pBuffer;
 }
 
-static PString& evaluate_netmask (void *data __attribute__ ((unused))) {
+PString& evaluate_netmask (void *data __attribute__ ((unused))) {
 	pBuffer.print (netint.getNetmask ());
 
  	return pBuffer;
 }
 
-static PString& evaluate_gw (void *data __attribute__ ((unused))) {
+PString& evaluate_gw (void *data __attribute__ ((unused))) {
 	pBuffer.print (netint.getGateway ());
 
  	return pBuffer;
 }
 
-static PString& evaluate_mac_addr (void *data __attribute__ ((unused))) {
+PString& evaluate_mac_addr (void *data __attribute__ ((unused))) {
 	const byte *buf = netint.getMAC ();
 
 	for (byte i = 0; i < 6; i++) {
@@ -487,7 +487,7 @@ static PString& evaluate_mac_addr (void *data __attribute__ ((unused))) {
 const char CHECKED_STRING[] PROGMEM = "checked";
 const char SELECTED_STRING[] PROGMEM = "selected=\"true\"";
 
-static PString& evaluate_netmode (void *data) {
+PString& evaluate_netmode (void *data) {
 	NetworkMode netmode;
 	int checkedMode = reinterpret_cast<int> (data);
 
@@ -499,7 +499,7 @@ static PString& evaluate_netmode (void *data) {
 	return pBuffer;
 }
 
-static PString& evaluate_relay_status (void *data) {
+PString& evaluate_relay_status (void *data) {
 	int relayNo = reinterpret_cast<int> (data);
 	if (relayNo >= 1 && relayNo <= RELAYS_NO) {
 		switch (relays[relayNo - 1].state) {
@@ -523,7 +523,7 @@ static PString& evaluate_relay_status (void *data) {
  *
  * PS: lastSelectedRelay is saved in sck_func().
  */
-static PString& evaluate_relay_onoff_checked (void *data __attribute__ ((unused))) {
+PString& evaluate_relay_onoff_checked (void *data __attribute__ ((unused))) {
 	if (lastSelectedRelay >= 1 && lastSelectedRelay <= RELAYS_NO) {
 		int md = reinterpret_cast<int> (data);			// If we cast to RelayMode it won't compile, nevermind!
 		if (relays[lastSelectedRelay - 1].mode == md)
@@ -536,7 +536,7 @@ static PString& evaluate_relay_onoff_checked (void *data __attribute__ ((unused)
 
 #ifdef ENABLE_THERMOMETER
 
-static PString& evaluate_relay_temp_checked (void *data __attribute__ ((unused))) {
+PString& evaluate_relay_temp_checked (void *data __attribute__ ((unused))) {
 	if (lastSelectedRelay >= 1 && lastSelectedRelay <= RELAYS_NO) {
 		if (relays[lastSelectedRelay - 1].mode == RELMD_GT || relays[lastSelectedRelay - 1].mode == RELMD_LT)
 			pBuffer.print (PSTR_TO_F (CHECKED_STRING));
@@ -545,7 +545,7 @@ static PString& evaluate_relay_temp_checked (void *data __attribute__ ((unused))
 	return pBuffer;
 }
 
-static PString& evaluate_relay_temp_gtlt_checked (void *data) {
+PString& evaluate_relay_temp_gtlt_checked (void *data) {
 	if (lastSelectedRelay >= 1 && lastSelectedRelay <= RELAYS_NO) {
 		int md = static_cast<RelayMode> (reinterpret_cast<int> (data));		// ;)
 		if (relays[lastSelectedRelay - 1].mode == md)
@@ -554,14 +554,14 @@ static PString& evaluate_relay_temp_gtlt_checked (void *data) {
 	return pBuffer;
 }
 
-static PString& evaluate_relay_temp_threshold (void *data __attribute__ ((unused))) {
+PString& evaluate_relay_temp_threshold (void *data __attribute__ ((unused))) {
 	if (lastSelectedRelay >= 1 && lastSelectedRelay <= RELAYS_NO)
 		pBuffer.print (relays[lastSelectedRelay - 1].threshold);
 
 	return pBuffer;
 }
 
-static PString& evaluate_relay_temp_units_c_checked (void *data __attribute__ ((unused))) {
+PString& evaluate_relay_temp_units_c_checked (void *data __attribute__ ((unused))) {
 	if (lastSelectedRelay >= 1 && lastSelectedRelay <= RELAYS_NO) {
 		if (relays[lastSelectedRelay - 1].units == TEMP_C)
 			pBuffer.print (PSTR_TO_F (SELECTED_STRING));
@@ -570,7 +570,7 @@ static PString& evaluate_relay_temp_units_c_checked (void *data __attribute__ ((
 	return pBuffer;
 }
 
-static PString& evaluate_relay_temp_units_f_checked (void *data __attribute__ ((unused))) {
+PString& evaluate_relay_temp_units_f_checked (void *data __attribute__ ((unused))) {
 	if (lastSelectedRelay >= 1 && lastSelectedRelay <= RELAYS_NO) {
 		if (relays[lastSelectedRelay - 1].units == TEMP_F)
 			pBuffer.print (PSTR_TO_F (SELECTED_STRING));
@@ -579,14 +579,14 @@ static PString& evaluate_relay_temp_units_f_checked (void *data __attribute__ ((
 	return pBuffer;
 }
 
-static PString& evaluate_relay_temp_delay (void *data __attribute__ ((unused))) {
+PString& evaluate_relay_temp_delay (void *data __attribute__ ((unused))) {
 	// Always use first relay's data
 	pBuffer.print (relays[0].delay);
 
 	return pBuffer;
 }
 
-static PString& evaluate_relay_temp_margin (void *data __attribute__ ((unused))) {
+PString& evaluate_relay_temp_margin (void *data __attribute__ ((unused))) {
 	// Always use first relay's data
 	pBuffer.print (relays[0].hysteresis / 10);
 
@@ -595,12 +595,12 @@ static PString& evaluate_relay_temp_margin (void *data __attribute__ ((unused)))
 
 #endif		// ENABLE_THERMOMETER
 
-static PString& evaluate_version (void *data __attribute__ ((unused))) {
+PString& evaluate_version (void *data __attribute__ ((unused))) {
 	pBuffer.print (PROGRAM_VERSION);
 	return pBuffer;
 }
 
-static PString& evaluate_uptime (void *data __attribute__ ((unused))) {
+PString& evaluate_uptime (void *data __attribute__ ((unused))) {
 	unsigned long uptime = millis () / 1000;
 	byte d, h, m, s;
 
@@ -633,7 +633,7 @@ static PString& evaluate_uptime (void *data __attribute__ ((unused))) {
 }
 
 // See http://playground.arduino.cc/Code/AvailableMemory
-static PString& evaluate_free_ram (void *data __attribute__ ((unused))) {
+PString& evaluate_free_ram (void *data __attribute__ ((unused))) {
 #ifdef __arm__
 	// We haven't found a reliable way for this on the Due, yet
 	pBuffer.print (F("Unknown"));
@@ -650,70 +650,70 @@ static PString& evaluate_free_ram (void *data __attribute__ ((unused))) {
 
 // Max length of these is MAX_TAG_LEN (24)
 #ifdef USE_ARDUINO_TIME_LIBRARY
-static const char subDateStr[] PROGMEM = "DATE";
-static const char subTimeStr[] PROGMEM = "TIME";
+const char subDateStr[] PROGMEM = "DATE";
+const char subTimeStr[] PROGMEM = "TIME";
 #endif
-static const char subMacAddrStr[] PROGMEM = "MACADDR";
-static const char subIPAddressStr[] PROGMEM = "NET_IP";
-static const char subNetmaskStr[] PROGMEM = "NET_MASK";
-static const char subGatewayStr[] PROGMEM = "NET_GW";
-static const char subNMDHCPStr[] PROGMEM = "NETMODE_DHCP_CHK";
-static const char subNMStaticStr[] PROGMEM = "NETMODE_STATIC_CHK";
-static const char subRelayOnStr[] PROGMEM = "RELAY_ON_CHK";
-static const char subRelayOffStr[] PROGMEM = "RELAY_OFF_CHK";
-static const char subRelay1StatusStr[] PROGMEM = "RELAY1_ST";
-static const char subRelay2StatusStr[] PROGMEM = "RELAY2_ST";
-static const char subRelay3StatusStr[] PROGMEM = "RELAY3_ST";
-static const char subRelay4StatusStr[] PROGMEM = "RELAY4_ST";
+const char subMacAddrStr[] PROGMEM = "MACADDR";
+const char subIPAddressStr[] PROGMEM = "NET_IP";
+const char subNetmaskStr[] PROGMEM = "NET_MASK";
+const char subGatewayStr[] PROGMEM = "NET_GW";
+const char subNMDHCPStr[] PROGMEM = "NETMODE_DHCP_CHK";
+const char subNMStaticStr[] PROGMEM = "NETMODE_STATIC_CHK";
+const char subRelayOnStr[] PROGMEM = "RELAY_ON_CHK";
+const char subRelayOffStr[] PROGMEM = "RELAY_OFF_CHK";
+const char subRelay1StatusStr[] PROGMEM = "RELAY1_ST";
+const char subRelay2StatusStr[] PROGMEM = "RELAY2_ST";
+const char subRelay3StatusStr[] PROGMEM = "RELAY3_ST";
+const char subRelay4StatusStr[] PROGMEM = "RELAY4_ST";
 #ifdef ENABLE_THERMOMETER
-static const char subDegCStr[] PROGMEM = "DEGC";
-static const char subDegFStr[] PROGMEM = "DEGF";
-static const char subRelayTempStr[] PROGMEM = "RELAY_TEMP_CHK";
-static const char subRelayTempGTStr[] PROGMEM = "RELAY_TGT_CHK";
-static const char subRelayTempLTStr[] PROGMEM = "RELAY_TLT_CHK";
-static const char subRelayTempThresholdStr[] PROGMEM = "RELAY_THRES";
-static const char subRelayTempUnitsCStr[] PROGMEM = "RELAY_TEMPC_CHK";
-static const char subRelayTempUnitsFStr[] PROGMEM = "RELAY_TEMPF_CHK";
-static const char subRelayTempDelayStr[] PROGMEM = "RELAY_DELAY";
-static const char subRelayTempMarginStr[] PROGMEM = "RELAY_MARGIN";
+const char subDegCStr[] PROGMEM = "DEGC";
+const char subDegFStr[] PROGMEM = "DEGF";
+const char subRelayTempStr[] PROGMEM = "RELAY_TEMP_CHK";
+const char subRelayTempGTStr[] PROGMEM = "RELAY_TGT_CHK";
+const char subRelayTempLTStr[] PROGMEM = "RELAY_TLT_CHK";
+const char subRelayTempThresholdStr[] PROGMEM = "RELAY_THRES";
+const char subRelayTempUnitsCStr[] PROGMEM = "RELAY_TEMPC_CHK";
+const char subRelayTempUnitsFStr[] PROGMEM = "RELAY_TEMPF_CHK";
+const char subRelayTempDelayStr[] PROGMEM = "RELAY_DELAY";
+const char subRelayTempMarginStr[] PROGMEM = "RELAY_MARGIN";
 #endif
-static const char subVerStr[] PROGMEM = "VERSION";
-static const char subUptimeStr[] PROGMEM = "UPTIME";
-static const char subFreeRAMStr[] PROGMEM = "FREERAM";
+const char subVerStr[] PROGMEM = "VERSION";
+const char subUptimeStr[] PROGMEM = "UPTIME";
+const char subFreeRAMStr[] PROGMEM = "FREERAM";
 
 #ifdef USE_ARDUINO_TIME_LIBRARY
-static const ReplacementTag subDateVarSub PROGMEM = {subDateStr, evaluate_date, NULL};
-static const ReplacementTag subTimeVarSub PROGMEM =	{subTimeStr, evaluate_time, NULL};
+const ReplacementTag subDateVarSub PROGMEM = {subDateStr, evaluate_date, NULL};
+const ReplacementTag subTimeVarSub PROGMEM =	{subTimeStr, evaluate_time, NULL};
 #endif
-static const ReplacementTag subMacAddrVarSub PROGMEM = {subMacAddrStr, evaluate_mac_addr, NULL};
-static const ReplacementTag subIPAddressVarSub PROGMEM = {subIPAddressStr, evaluate_ip, NULL};
-static const ReplacementTag subNetmaskVarSub PROGMEM = {subNetmaskStr, evaluate_netmask, NULL};
-static const ReplacementTag subGatewayVarSub PROGMEM = {subGatewayStr, evaluate_gw, NULL};
-static const ReplacementTag subNMDHCPVarSub PROGMEM = {subNMDHCPStr, evaluate_netmode, reinterpret_cast<void *> (NETMODE_DHCP)};
-static const ReplacementTag subNMStaticVarSub PROGMEM = {subNMStaticStr, evaluate_netmode, reinterpret_cast<void *> (NETMODE_STATIC)};
-static const ReplacementTag subRelayOnVarSub PROGMEM = {subRelayOnStr, evaluate_relay_onoff_checked, reinterpret_cast<void *> (RELMD_ON)};
-static const ReplacementTag subRelayOffVarSub PROGMEM = {subRelayOffStr, evaluate_relay_onoff_checked, reinterpret_cast<void *> (RELMD_OFF)};
-static const ReplacementTag subRelay1StatusVarSub PROGMEM = {subRelay1StatusStr, evaluate_relay_status, reinterpret_cast<void *> (1)};
-static const ReplacementTag subRelay2StatusVarSub PROGMEM = {subRelay2StatusStr, evaluate_relay_status, reinterpret_cast<void *> (2)};
-static const ReplacementTag subRelay3StatusVarSub PROGMEM = {subRelay3StatusStr, evaluate_relay_status, reinterpret_cast<void *> (3)};
-static const ReplacementTag subRelay4StatusVarSub PROGMEM = {subRelay4StatusStr, evaluate_relay_status, reinterpret_cast<void *> (4)};
+const ReplacementTag subMacAddrVarSub PROGMEM = {subMacAddrStr, evaluate_mac_addr, NULL};
+const ReplacementTag subIPAddressVarSub PROGMEM = {subIPAddressStr, evaluate_ip, NULL};
+const ReplacementTag subNetmaskVarSub PROGMEM = {subNetmaskStr, evaluate_netmask, NULL};
+const ReplacementTag subGatewayVarSub PROGMEM = {subGatewayStr, evaluate_gw, NULL};
+const ReplacementTag subNMDHCPVarSub PROGMEM = {subNMDHCPStr, evaluate_netmode, reinterpret_cast<void *> (NETMODE_DHCP)};
+const ReplacementTag subNMStaticVarSub PROGMEM = {subNMStaticStr, evaluate_netmode, reinterpret_cast<void *> (NETMODE_STATIC)};
+const ReplacementTag subRelayOnVarSub PROGMEM = {subRelayOnStr, evaluate_relay_onoff_checked, reinterpret_cast<void *> (RELMD_ON)};
+const ReplacementTag subRelayOffVarSub PROGMEM = {subRelayOffStr, evaluate_relay_onoff_checked, reinterpret_cast<void *> (RELMD_OFF)};
+const ReplacementTag subRelay1StatusVarSub PROGMEM = {subRelay1StatusStr, evaluate_relay_status, reinterpret_cast<void *> (1)};
+const ReplacementTag subRelay2StatusVarSub PROGMEM = {subRelay2StatusStr, evaluate_relay_status, reinterpret_cast<void *> (2)};
+const ReplacementTag subRelay3StatusVarSub PROGMEM = {subRelay3StatusStr, evaluate_relay_status, reinterpret_cast<void *> (3)};
+const ReplacementTag subRelay4StatusVarSub PROGMEM = {subRelay4StatusStr, evaluate_relay_status, reinterpret_cast<void *> (4)};
 #ifdef ENABLE_THERMOMETER
-static const ReplacementTag subDegCVarSub PROGMEM = {subDegCStr, evaluate_temp_deg, NULL};
-static const ReplacementTag subDegFVarSub PROGMEM = {subDegFStr, evaluate_temp_fahr, NULL};
-static const ReplacementTag subRelayTempVarSub PROGMEM = {subRelayTempStr, evaluate_relay_temp_checked, NULL};
-static const ReplacementTag subRelayTempGTVarSub PROGMEM = {subRelayTempGTStr, evaluate_relay_temp_gtlt_checked, reinterpret_cast<void *> (RELMD_GT)};
-static const ReplacementTag subRelayTempLTVarSub PROGMEM = {subRelayTempLTStr, evaluate_relay_temp_gtlt_checked, reinterpret_cast<void *> (RELMD_LT)};
-static const ReplacementTag subRelayTempThresholdVarSub PROGMEM = {subRelayTempThresholdStr, evaluate_relay_temp_threshold, NULL};
-static const ReplacementTag subRelayTempUnitsCVarSub PROGMEM = {subRelayTempUnitsCStr, evaluate_relay_temp_units_c_checked, NULL};
-static const ReplacementTag subRelayTempUnitsFVarSub PROGMEM = {subRelayTempUnitsFStr, evaluate_relay_temp_units_f_checked, NULL};
-static const ReplacementTag subRelayTempDelayVarSub PROGMEM = {subRelayTempDelayStr, evaluate_relay_temp_delay, NULL};
-static const ReplacementTag subRelayTempMarginVarSub PROGMEM = {subRelayTempMarginStr, evaluate_relay_temp_margin, NULL};
+const ReplacementTag subDegCVarSub PROGMEM = {subDegCStr, evaluate_temp_deg, NULL};
+const ReplacementTag subDegFVarSub PROGMEM = {subDegFStr, evaluate_temp_fahr, NULL};
+const ReplacementTag subRelayTempVarSub PROGMEM = {subRelayTempStr, evaluate_relay_temp_checked, NULL};
+const ReplacementTag subRelayTempGTVarSub PROGMEM = {subRelayTempGTStr, evaluate_relay_temp_gtlt_checked, reinterpret_cast<void *> (RELMD_GT)};
+const ReplacementTag subRelayTempLTVarSub PROGMEM = {subRelayTempLTStr, evaluate_relay_temp_gtlt_checked, reinterpret_cast<void *> (RELMD_LT)};
+const ReplacementTag subRelayTempThresholdVarSub PROGMEM = {subRelayTempThresholdStr, evaluate_relay_temp_threshold, NULL};
+const ReplacementTag subRelayTempUnitsCVarSub PROGMEM = {subRelayTempUnitsCStr, evaluate_relay_temp_units_c_checked, NULL};
+const ReplacementTag subRelayTempUnitsFVarSub PROGMEM = {subRelayTempUnitsFStr, evaluate_relay_temp_units_f_checked, NULL};
+const ReplacementTag subRelayTempDelayVarSub PROGMEM = {subRelayTempDelayStr, evaluate_relay_temp_delay, NULL};
+const ReplacementTag subRelayTempMarginVarSub PROGMEM = {subRelayTempMarginStr, evaluate_relay_temp_margin, NULL};
 #endif
-static const ReplacementTag subVerVarSub PROGMEM = {subVerStr, evaluate_version, NULL};
-static const ReplacementTag subUptimeVarSub PROGMEM = {subUptimeStr, evaluate_uptime, NULL};
-static const ReplacementTag subFreeRAMVarSub PROGMEM = {subFreeRAMStr, evaluate_free_ram, NULL};
+const ReplacementTag subVerVarSub PROGMEM = {subVerStr, evaluate_version, NULL};
+const ReplacementTag subUptimeVarSub PROGMEM = {subUptimeStr, evaluate_uptime, NULL};
+const ReplacementTag subFreeRAMVarSub PROGMEM = {subFreeRAMStr, evaluate_free_ram, NULL};
 
-static const ReplacementTag * const substitutions[] PROGMEM = {
+const ReplacementTag * const substitutions[] PROGMEM = {
 #ifdef USE_ARDUINO_TIME_LIBRARY
 	&subDateVarSub,
 	&subTimeVarSub,
