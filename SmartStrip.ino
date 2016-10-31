@@ -243,7 +243,7 @@ void netconfig_func (HTTPRequestParser& request) {
 	DPRINTLN (F("Configuration saved"));
 }
 
-void relconfig_func (HTTPRequestParser& request) {
+void opts_func (HTTPRequestParser& request) {
 	char *param;
 
 	param = request.get_parameter (F("delay"));
@@ -307,7 +307,7 @@ const Page aboutPage PROGMEM = {about_html_name, about_html, NULL};
 const Page indexPage PROGMEM = {index_html_name, index_html, NULL};
 const Page leftPage PROGMEM = {left_html_name, left_html, NULL};
 const Page netconfigPage PROGMEM = {net_html_name, net_html, netconfig_func};
-const Page relconfigPage PROGMEM = {relays_html_name, relays_html, relconfig_func};
+const Page optsPage PROGMEM = {opts_html_name, opts_html, opts_func};
 const Page sckPage PROGMEM = {sck_html_name, sck_html, sck_func};
 const Page welcomePage PROGMEM = {main_html_name, main_html, NULL};
 
@@ -316,7 +316,7 @@ const Page* const pages[] PROGMEM = {
 	&indexPage,
 	&leftPage,
 	&netconfigPage,
-	&relconfigPage,
+	&optsPage,
 	&sckPage,
 	&welcomePage,
  	NULL
