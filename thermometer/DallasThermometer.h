@@ -43,16 +43,75 @@ private:
 	DeviceAddress thermometerAddress;
 
 	// function to print a device address
-	static void printAddress (DeviceAddress deviceAddress);
+	void printAddress (DeviceAddress deviceAddress) {
+		for (uint8_t i = 0; i < 8; i++) {
+			if (deviceAddress[i] < 16)
+				DPRINT (F("0"));
+			DPRINT (deviceAddress[i], HEX);
+		}
+	}
 
-	bool refreshTemperature ();
+	bool refreshTemperature () {
+		if (available) {
+			/* Call sensors.requestTemperatures() to issue a global temperature
+			* request to all devices on the bus.
+			*/
+			DPRINT (F("Requesting temperatures..."));
+			sensors.requestTemperatures ();
+			currentTemp.celsius = sensors.getTempC (thermometerAddress);
+			currentTemp.valid = true;
+			DPRINTLN (F(" Done"));
+		}
+
+		return currentTemp.valid;
+	}
 
 public:
-	DallasThermometer ();
+	DallasThermometer (): oneWire (2), sensors (&oneWire) {
+	}
 
 
 
-	void begin (byte busPin);
+	void begin (byte busPin) {
+		// locate devices on the bus
+		DPRINT (F("Scanning for temperature sensors on pin "));
+		DPRINT (busPin);
+		DPRINTLN ();
+		oneWire = OneWire (busPin);
+		sensors.begin ();
+
+		// Report parasite power requirements
+		DPRINT (F("Parasite power is: "));
+		DPRINTLN (sensors.isParasitePowerMode () ? F("ON") : F("OFF"));
+
+		if (sensors.getDeviceCount () > 0) {
+			DPRINT (F("Found "));
+			DPRINT (sensors.getDeviceCount (), DEC);
+			DPRINTLN (F(" device(s)"));
+
+			if (!sensors.getAddress (thermometerAddress, 0)) {
+				DPRINTLN (F("Unable to find address for Device 0"));
+				available = false;
+			} else {
+				// show the addresses we found on the bus
+				DPRINT (F("Using device with address: "));
+				printAddress (thermometerAddress);
+				DPRINTLN ();
+
+				// set the resolution
+				sensors.setResolution (thermometerAddress, THERMOMETER_RESOLUTION);
+				DPRINT (F("Device Resolution: "));
+				DPRINT (sensors.getResolution (thermometerAddress), DEC);
+				DPRINTLN ();
+
+				available = true;
+			}
+		} else {
+			DPRINTLN (F("No sensors found"));
+			available = false;
+		}
+	}
+
 };
 
 class Thermometer: public DallasThermometer {

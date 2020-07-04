@@ -23,9 +23,10 @@
 // Define this to disable debug messages
 //~ #define NDEBUG
 
-#define RELAYS_NO 3
+#define RELAYS_NO 4
 
 #ifdef ARDUINO_ARCH_AVR
+// These pins drive the relays on the KMTronic DINo
 #define RELAY1_PIN 8
 #define RELAY2_PIN 7
 #define RELAY3_PIN 6
@@ -49,7 +50,7 @@
 // Define to enable temperature-controlled relays
 #define ENABLE_THERMOMETER
 
-// Thermometer's data wire is connected to pin 5
+// Thermometer's data wire is connected to pin 2
 #define THERMOMETER_PIN 2
 
 // DS18B20's data resolution
