@@ -21,13 +21,24 @@
 #define COMMON_H_
 
 // Define this to disable debug messages
-#define NDEBUG
+//~ #define NDEBUG
 
-#define RELAYS_NO 4
+#define RELAYS_NO 3
+
+#ifdef ARDUINO_ARCH_AVR
 #define RELAY1_PIN 8
 #define RELAY2_PIN 7
 #define RELAY3_PIN 6
 #define RELAY4_PIN 5
+#elif defined (ARDUINO_ARCH_ESP32)
+// If using the above AVR pins on ESP32, it will crash at startup!
+#define RELAY1_PIN 12
+#define RELAY2_PIN 13
+#define RELAY3_PIN 14
+#define RELAY4_PIN 15
+#else
+#error "Please define relay pins for this board"
+#endif
 
 /* Define this if your relays are activated setting their input pin LOW.
  * Note that this applies to all relays, you can't currently have mixed active-
@@ -45,7 +56,7 @@
 #define THERMOMETER_RESOLUTION 9
 
 // Delay between temperature readings
-#define THERMO_READ_INTERVAL (5 * 1000U)
+#define THERMO_READ_INTERVAL (60 * 1000UL)
 
 // Totally useless at this time ;)
 //#define USE_ARDUINO_TIME_LIBRARY
@@ -56,17 +67,17 @@
 // Size of an IP address (bytes)
 #define IP_SIZE 4
 
-// EEPROM offsets
+// EEPROM offsets: Align this on 4 bytes for 32-bit platforms
 #define EEPROM_MAGIC 0x50545353UL			// "SSTP"
 #define EEPROM_R1_PARAM_ADDR 4
 #define EEPROM_R2_PARAM_ADDR 20
 #define EEPROM_R3_PARAM_ADDR 36
 #define EEPROM_R4_PARAM_ADDR 52
-#define EEPROM_MAC_ADDR 64
-#define EEPROM_NETMODE_ADDR 70				// This has turned to 2 bytes in some recent version of Arduino
-#define EEPROM_IP_ADDR 72
-#define EEPROM_NETMASK_ADDR 76
-#define EEPROM_GATEWAY_ADDR 80
+#define EEPROM_MAC_ADDR 68
+#define EEPROM_NETMODE_ADDR 74
+#define EEPROM_IP_ADDR 78
+#define EEPROM_NETMASK_ADDR 82
+#define EEPROM_GATEWAY_ADDR 86
 
 
 

@@ -25,8 +25,9 @@
 #include "common.h"
 #include "html.h"
 
-// Instantiate the WebServer
+// Instantiate the WebServer and page storage
 WebServer webserver;
+FlashStorage flashStorage;
 
 // Instantiate the network interface defined in the Webbino headers
 #if defined (WEBBINO_USE_ENC28J60)
@@ -36,32 +37,42 @@ WebServer webserver;
 	#include <WebbinoInterfaces/WIZ5x00.h>
 	NetworkInterfaceWIZ5x00 netint;
 #elif defined (WEBBINO_USE_ESP8266)
-	#include <WebbinoInterfaces/ESP8266.h>
+	#include <WebbinoInterfaces/AllWiFi.h>
 
 	#include <SoftwareSerial.h>
-	SoftwareSerial swSerial (7, 8);
-
-	// Wi-Fi parameters
-	#define WIFI_SSID        "ssid"
-	#define WIFI_PASSWORD    "password"
-
-	NetworkInterfaceESP8266 netint;
-#elif defined (WEBBINO_USE_WIFI101)
-	#include <WebbinoInterfaces/WiFi.h>
+	SoftwareSerial swSerial (6, 7);
 
 	// Wi-Fi parameters
 	#define WIFI_SSID        "ssid"
 	#define WIFI_PASSWORD    "password"
 
 	NetworkInterfaceWiFi netint;
+#elif defined (WEBBINO_USE_WIFI) || defined (WEBBINO_USE_WIFI101) || \
+	  defined (WEBBINO_USE_ESP8266_STANDALONE)
+	#include <WebbinoInterfaces/AllWiFi.h>
+
+	// Wi-Fi parameters
+	#define WIFI_SSID        "SukkoNet-TO"
+	#define WIFI_PASSWORD    "everythingyouknowiswrong"
+
+	NetworkInterfaceWiFi netint;
+#elif defined (WEBBINO_USE_FISHINO)
+	#include <WebbinoInterfaces/FishinoIntf.h>
+
+	// Wi-Fi parameters
+	#define WIFI_SSID        "ssid"
+	#define WIFI_PASSWORD    "password"
+
+	FishinoInterface netint;
 #elif defined (WEBBINO_USE_DIGIFI)
-	#include <WebServer_DigiFi.h>
+	#include <WebbinoInterfaces/DigiFi.h>
 	NetworkInterfaceDigiFi netint;
 #endif
 
+
 #ifdef ENABLE_THERMOMETER
 
-#include <Thermometer.h>
+#include "thermometer/Thermometer.h"
 
 // Instantiate the thermometer
 Thermometer thermometer;
@@ -80,13 +91,16 @@ Relay relays[RELAYS_NO] = {
 	Relay (1, RELAY1_PIN),
 	Relay (2, RELAY2_PIN),
 	Relay (3, RELAY3_PIN),
+#if RELAYS_NO == 4
 	Relay (4, RELAY4_PIN)
+#endif
 };
 
 bool relayHysteresis[RELAYS_NO];
 
-
+#ifndef PSTR_TO_F
 #define PSTR_TO_F(s) reinterpret_cast<const __FlashStringHelper *> (s)
+#endif
 //~ #define F_TO_PSTR(s) reinterpret_cast<PGM_P> (s)
 //~ #define FlashString const __FlashStringHelper *
 
@@ -94,13 +108,17 @@ bool relayHysteresis[RELAYS_NO];
 void checkAndFormatEEPROM () {
 	unsigned long magic;
 
+#ifdef ARDUINO_ARCH_ESP32
+	EEPROM.begin (2048);
+#endif
+
 	// The casts here are very important
 	EEPROM.get (0, magic);
 	if (magic != EEPROM_MAGIC) {
 		// Need to format EEPROM
-		DPRINT (F("Formatting EEPROM (Wrong Magic: 0x"));
-		DPRINT (magic, HEX);
-		DPRINTLN (F(")"));
+		WDPRINT (F("Formatting EEPROM (Wrong Magic: 0x"));
+		WDPRINT (magic, HEX);
+		WDPRINTLN (F(")"));
 
 		// Magic header
 		EEPROM.put (0, EEPROM_MAGIC);
@@ -132,9 +150,13 @@ void checkAndFormatEEPROM () {
 		EEPROM.put (EEPROM_GATEWAY_ADDR + 2, DEFAULT_GATEWAY_ADDRESS_B3);
 		EEPROM.put (EEPROM_GATEWAY_ADDR + 3, DEFAULT_GATEWAY_ADDRESS_B4);
 
-		DPRINTLN (F("EEPROM Format complete"));
+#ifdef ARDUINO_ARCH_ESP32
+		EEPROM.commit ();
+#endif
+
+		WDPRINTLN (F("EEPROM Format complete"));
 	} else {
-		DPRINTLN (F("EEPROM OK"));
+		WDPRINTLN (F("EEPROM OK"));
 	}
 }
 
@@ -142,6 +164,43 @@ void checkAndFormatEEPROM () {
 /******************************************************************************
  * DEFINITION OF PAGES                                                        *
  ******************************************************************************/
+
+const Page page01 PROGMEM = {about_html_name, about_html, about_html_len};
+const Page page02 PROGMEM = {index_html_name, index_html, index_html_len};
+#if RELAYS_NO == 3
+const Page page03 PROGMEM = {left_html_name, left_3r_html, left_3r_html_len};
+const Page page04 PROGMEM = {main_html_name, main_3r_html, main_3r_html_len};
+#elif RELAYS_NO == 4
+const Page page03 PROGMEM = {left_html_name, left_html, left_html_len};
+const Page page04 PROGMEM = {main_html_name, main_html, main_html_len};
+#else
+#error "This number of relays is unsupported"
+#endif
+const Page page05 PROGMEM = {net_html_name, net_html, net_html_len};
+const Page page06 PROGMEM = {opts_html_name, opts_html, opts_html_len};
+const Page page07 PROGMEM = {sck_html_name, sck_html, sck_html_len};
+
+
+const Page* const pages[] PROGMEM = {
+	&page01,
+	&page02,
+	&page03,
+	&page04,
+	&page05,
+	&page06,
+	&page07,
+	NULL
+};
+
+
+/******************************************************************************
+ * PAGE FUNCTIONS                                                             *
+ ******************************************************************************/
+
+#ifndef ENABLE_PAGE_FUNCTIONS
+#error "Please define ENABLE_PAGE_FUNCTIONS in webbino_config.h"
+#endif
+
 
 /* This is out own stripped-down, nothing-compliant version of strtol(). It
  * converts a string to an integer (not to a long!) in an arbitrary (< 37) base
@@ -188,8 +247,8 @@ bool tokenize (const char *str, PGM_P sep, byte *buffer, size_t bufsize, int bas
 		++count;
 
 	if (count != bufsize - 1) {
-		DPRINT (F("Cannot tokenize string: "));
-		DPRINTLN (str);
+		WDPRINT (F("Cannot tokenize string: "));
+		WDPRINTLN (str);
 		ret = false;
 	} else {
 		for (byte i = 0; i < bufsize; ++i) {
@@ -240,23 +299,30 @@ void netconfig_func (HTTPRequestParser& request) {
 			EEPROM.put (EEPROM_GATEWAY_ADDR + i, buf[i]);
 	}
 
-	DPRINTLN (F("Configuration saved"));
+#ifdef ARDUINO_ARCH_ESP32
+	EEPROM.commit ();
+#endif
+
+	WDPRINTLN (F("Configuration saved"));
 }
 
 void opts_func (HTTPRequestParser& request) {
 	char *param;
 
-	param = request.get_parameter (F("delay"));
-	if (strlen (param) > 0) {
-		for (byte i = 0; i < RELAYS_NO; i++) {
-			Relay& relay = relays[i];
+	for (byte i = 0; i < RELAYS_NO; i++) {
+		Relay& relay = relays[i];
 
+		param = request.get_parameter (F("delay"));
+		if (strlen (param) > 0) {
 			relay.delay = atoi (param);
-
-			param = request.get_parameter (F("hyst"));
-			if (strlen (param) > 0)
-				relay.hysteresis = atoi (param) * 10;
 		}
+
+		param = request.get_parameter (F("hyst"));
+		if (strlen (param) > 0) {
+			relay.hysteresis = atoi (param) * 10;
+		}
+
+		relay.writeOptions ();
 	}
 }
 
@@ -303,23 +369,16 @@ void sck_func (HTTPRequestParser& request) {
 	}
 }
 
-const Page aboutPage PROGMEM = {about_html_name, about_html, NULL};
-const Page indexPage PROGMEM = {index_html_name, index_html, NULL};
-const Page leftPage PROGMEM = {left_html_name, left_html, NULL};
-const Page netconfigPage PROGMEM = {net_html_name, net_html, netconfig_func};
-const Page optsPage PROGMEM = {opts_html_name, opts_html, opts_func};
-const Page sckPage PROGMEM = {sck_html_name, sck_html, sck_func};
-const Page welcomePage PROGMEM = {main_html_name, main_html, NULL};
 
-const Page* const pages[] PROGMEM = {
-	&aboutPage,
-	&indexPage,
-	&leftPage,
-	&netconfigPage,
-	&optsPage,
-	&sckPage,
-	&welcomePage,
- 	NULL
+FileFuncAssoc (netAss, "/net.html", netconfig_func);
+FileFuncAssoc (relaysAss, "/opts.html", opts_func);
+FileFuncAssoc (sckAss, "/sck.html", sck_func);
+
+FileFuncAssociationArray associations[] PROGMEM = {
+	&netAss,
+	&relaysAss,
+	&sckAss,
+	NULL
 };
 
 
@@ -327,7 +386,9 @@ const Page* const pages[] PROGMEM = {
  * DEFINITION OF TAGS                                                         *
  ******************************************************************************/
 
-#ifdef ENABLE_TAGS
+#ifndef ENABLE_TAGS
+#error "Replacement Tags must be enabled in Webbino"
+#endif
 
 #define REP_BUFFER_LEN 32
 char replaceBuffer[REP_BUFFER_LEN];
@@ -429,22 +490,30 @@ PString& evaluate_date (void *data __attribute__ ((unused))) {
 //~ }
 
 #ifdef ENABLE_THERMOMETER
-PString& evaluate_temp_deg (void *data __attribute__ ((unused))) {
-	Temperature& temp = thermometer.getTemp ();
-	if (temp.valid)
-		pBuffer.print (temp.celsius, 2);
-	else
+static PString& evaluate_temp_deg (void *data __attribute__ ((unused))) {
+	if (thermometer.available) {
+		Temperature& temp = thermometer.getTemp ();
+		if (temp.valid)
+			pBuffer.print (temp.celsius, 2);
+		else
+			pBuffer.print (PSTR_TO_F (NOT_AVAIL_STR));
+	} else {
 		pBuffer.print (PSTR_TO_F (NOT_AVAIL_STR));
+	}
 
 	return pBuffer;
 }
 
-PString& evaluate_temp_fahr (void *data __attribute__ ((unused))) {
-	Temperature& temp = thermometer.getTemp ();
-	if (temp.valid)
-		pBuffer.print (temp.toFahrenheit (), 2);
-	else
+static PString& evaluate_temp_fahr (void *data __attribute__ ((unused))) {
+	if (thermometer.available) {
+		Temperature& temp = thermometer.getTemp ();
+		if (temp.valid)
+			pBuffer.print (temp.toFahrenheit (), 2);
+		else
+			pBuffer.print (PSTR_TO_F (NOT_AVAIL_STR));
+	} else {
 		pBuffer.print (PSTR_TO_F (NOT_AVAIL_STR));
+	}
 
 	return pBuffer;
 }
@@ -492,7 +561,6 @@ PString& evaluate_netmode (void *data) {
 	int checkedMode = reinterpret_cast<int> (data);
 
 	EEPROM.get (EEPROM_NETMODE_ADDR, netmode);
-
 	if (netmode == checkedMode)
 		pBuffer.print (PSTR_TO_F (CHECKED_STRING));
 
@@ -523,7 +591,7 @@ PString& evaluate_relay_status (void *data) {
  *
  * PS: lastSelectedRelay is saved in sck_func().
  */
-PString& evaluate_relay_onoff_checked (void *data __attribute__ ((unused))) {
+static PString& evaluate_relay_onoff_checked (void *data) {
 	if (lastSelectedRelay >= 1 && lastSelectedRelay <= RELAYS_NO) {
 		int md = reinterpret_cast<int> (data);			// If we cast to RelayMode it won't compile, nevermind!
 		if (relays[lastSelectedRelay - 1].mode == md)
@@ -632,16 +700,23 @@ PString& evaluate_uptime (void *data __attribute__ ((unused))) {
 	return pBuffer;
 }
 
-// See http://playground.arduino.cc/Code/AvailableMemory
-PString& evaluate_free_ram (void *data __attribute__ ((unused))) {
+static PString& evaluate_free_ram (void *data __attribute__ ((unused))) {
 #ifdef __arm__
-	// We haven't found a reliable way for this on the Due, yet
-	pBuffer.print (F("Unknown"));
-#else
+	// http://forum.arduino.cc/index.php?topic=404908
+	struct mallinfo mi = mallinfo ();
+	char* heapend = (char*) sbrk (0);
+	register char* stack_ptr asm ("sp");
+	pBuffer.print (stack_ptr - heapend + mi.fordblks);
+#elif defined (ARDUINO_ARCH_ESP32)
+	pBuffer.print (ESP.getFreeHeap ());
+#elif defined (ARDUINO_ARCH_AVR)
+	// http://playground.arduino.cc/Code/AvailableMemory
 	extern int __heap_start, *__brkval;
 	int v;
 
 	pBuffer.print ((int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval));
+#else
+	pBuffer.print (NOT_AVAIL_STR);
 #endif
 
 	return pBuffer;
@@ -653,115 +728,105 @@ PString& evaluate_free_ram (void *data __attribute__ ((unused))) {
 const char subDateStr[] PROGMEM = "DATE";
 const char subTimeStr[] PROGMEM = "TIME";
 #endif
-const char subMacAddrStr[] PROGMEM = "MACADDR";
-const char subIPAddressStr[] PROGMEM = "NET_IP";
-const char subNetmaskStr[] PROGMEM = "NET_MASK";
-const char subGatewayStr[] PROGMEM = "NET_GW";
-const char subNMDHCPStr[] PROGMEM = "NETMODE_DHCP_CHK";
-const char subNMStaticStr[] PROGMEM = "NETMODE_STATIC_CHK";
-const char subRelayOnStr[] PROGMEM = "RELAY_ON_CHK";
-const char subRelayOffStr[] PROGMEM = "RELAY_OFF_CHK";
-const char subRelay1StatusStr[] PROGMEM = "RELAY1_ST";
-const char subRelay2StatusStr[] PROGMEM = "RELAY2_ST";
-const char subRelay3StatusStr[] PROGMEM = "RELAY3_ST";
-const char subRelay4StatusStr[] PROGMEM = "RELAY4_ST";
-#ifdef ENABLE_THERMOMETER
-const char subDegCStr[] PROGMEM = "DEGC";
-const char subDegFStr[] PROGMEM = "DEGF";
-const char subRelayTempStr[] PROGMEM = "RELAY_TEMP_CHK";
-const char subRelayTempGTStr[] PROGMEM = "RELAY_TGT_CHK";
-const char subRelayTempLTStr[] PROGMEM = "RELAY_TLT_CHK";
-const char subRelayTempThresholdStr[] PROGMEM = "RELAY_THRES";
-const char subRelayTempUnitsCStr[] PROGMEM = "RELAY_TEMPC_CHK";
-const char subRelayTempUnitsFStr[] PROGMEM = "RELAY_TEMPF_CHK";
-const char subRelayTempDelayStr[] PROGMEM = "RELAY_DELAY";
-const char subRelayTempMarginStr[] PROGMEM = "RELAY_MARGIN";
-#endif
-const char subVerStr[] PROGMEM = "VERSION";
-const char subUptimeStr[] PROGMEM = "UPTIME";
-const char subFreeRAMStr[] PROGMEM = "FREERAM";
 
 #ifdef USE_ARDUINO_TIME_LIBRARY
 const ReplacementTag subDateVarSub PROGMEM = {subDateStr, evaluate_date, NULL};
 const ReplacementTag subTimeVarSub PROGMEM =	{subTimeStr, evaluate_time, NULL};
 #endif
-const ReplacementTag subMacAddrVarSub PROGMEM = {subMacAddrStr, evaluate_mac_addr, NULL};
-const ReplacementTag subIPAddressVarSub PROGMEM = {subIPAddressStr, evaluate_ip, NULL};
-const ReplacementTag subNetmaskVarSub PROGMEM = {subNetmaskStr, evaluate_netmask, NULL};
-const ReplacementTag subGatewayVarSub PROGMEM = {subGatewayStr, evaluate_gw, NULL};
-const ReplacementTag subNMDHCPVarSub PROGMEM = {subNMDHCPStr, evaluate_netmode, reinterpret_cast<void *> (NETMODE_DHCP)};
-const ReplacementTag subNMStaticVarSub PROGMEM = {subNMStaticStr, evaluate_netmode, reinterpret_cast<void *> (NETMODE_STATIC)};
-const ReplacementTag subRelayOnVarSub PROGMEM = {subRelayOnStr, evaluate_relay_onoff_checked, reinterpret_cast<void *> (RELMD_ON)};
-const ReplacementTag subRelayOffVarSub PROGMEM = {subRelayOffStr, evaluate_relay_onoff_checked, reinterpret_cast<void *> (RELMD_OFF)};
-const ReplacementTag subRelay1StatusVarSub PROGMEM = {subRelay1StatusStr, evaluate_relay_status, reinterpret_cast<void *> (1)};
-const ReplacementTag subRelay2StatusVarSub PROGMEM = {subRelay2StatusStr, evaluate_relay_status, reinterpret_cast<void *> (2)};
-const ReplacementTag subRelay3StatusVarSub PROGMEM = {subRelay3StatusStr, evaluate_relay_status, reinterpret_cast<void *> (3)};
-const ReplacementTag subRelay4StatusVarSub PROGMEM = {subRelay4StatusStr, evaluate_relay_status, reinterpret_cast<void *> (4)};
-#ifdef ENABLE_THERMOMETER
-const ReplacementTag subDegCVarSub PROGMEM = {subDegCStr, evaluate_temp_deg, NULL};
-const ReplacementTag subDegFVarSub PROGMEM = {subDegFStr, evaluate_temp_fahr, NULL};
-const ReplacementTag subRelayTempVarSub PROGMEM = {subRelayTempStr, evaluate_relay_temp_checked, NULL};
-const ReplacementTag subRelayTempGTVarSub PROGMEM = {subRelayTempGTStr, evaluate_relay_temp_gtlt_checked, reinterpret_cast<void *> (RELMD_GT)};
-const ReplacementTag subRelayTempLTVarSub PROGMEM = {subRelayTempLTStr, evaluate_relay_temp_gtlt_checked, reinterpret_cast<void *> (RELMD_LT)};
-const ReplacementTag subRelayTempThresholdVarSub PROGMEM = {subRelayTempThresholdStr, evaluate_relay_temp_threshold, NULL};
-const ReplacementTag subRelayTempUnitsCVarSub PROGMEM = {subRelayTempUnitsCStr, evaluate_relay_temp_units_c_checked, NULL};
-const ReplacementTag subRelayTempUnitsFVarSub PROGMEM = {subRelayTempUnitsFStr, evaluate_relay_temp_units_f_checked, NULL};
-const ReplacementTag subRelayTempDelayVarSub PROGMEM = {subRelayTempDelayStr, evaluate_relay_temp_delay, NULL};
-const ReplacementTag subRelayTempMarginVarSub PROGMEM = {subRelayTempMarginStr, evaluate_relay_temp_margin, NULL};
-#endif
-const ReplacementTag subVerVarSub PROGMEM = {subVerStr, evaluate_version, NULL};
-const ReplacementTag subUptimeVarSub PROGMEM = {subUptimeStr, evaluate_uptime, NULL};
-const ReplacementTag subFreeRAMVarSub PROGMEM = {subFreeRAMStr, evaluate_free_ram, NULL};
+EasyReplacementTag (tagMacAddr, NET_MAC, evaluate_mac_addr);
+EasyReplacementTag (tagIPAddress, NET_IP, evaluate_ip);
+EasyReplacementTag (tagNetmask, NET_MASK, evaluate_netmask);
+EasyReplacementTag (tagGateway, NET_GW, evaluate_gw);
+EasyReplacementTag (tagVer, VERSION, evaluate_version);
+EasyReplacementTag (tagUptime, UPTIME, evaluate_uptime);
+EasyReplacementTag (tagFreeRAM, FREERAM, evaluate_free_ram);
 
-const ReplacementTag * const substitutions[] PROGMEM = {
-#ifdef USE_ARDUINO_TIME_LIBRARY
-	&subDateVarSub,
-	&subTimeVarSub,
-#endif
-	&subMacAddrVarSub,
-	&subIPAddressVarSub,
-	&subNetmaskVarSub,
-	&subGatewayVarSub,
-	&subNMDHCPVarSub,
-	&subNMStaticVarSub,
-	&subRelayOnVarSub,
-	&subRelayOffVarSub,
-	&subRelay1StatusVarSub,
-	&subRelay2StatusVarSub,
-	&subRelay3StatusVarSub,
-	&subRelay4StatusVarSub,
+EasyReplacementTag (tagNMDHCP, NETMODE_DHCP_CHK, evaluate_netmode, reinterpret_cast<void *> (NETMODE_DHCP));
+EasyReplacementTag (tagNMStatic, NETMODE_STATIC_CHK, evaluate_netmode, reinterpret_cast<void *> (NETMODE_STATIC));
+EasyReplacementTag (tagRelayOn, RELAY_ON_CHK, evaluate_relay_onoff_checked, reinterpret_cast<void *> (RELMD_ON));
+EasyReplacementTag (tagRelayOff, RELAY_OFF_CHK, evaluate_relay_onoff_checked, reinterpret_cast<void *> (RELMD_OFF));
+
+EasyReplacementTag (tagRelay1Status, RELAY1_ST, evaluate_relay_status, reinterpret_cast<void *> (1));
+EasyReplacementTag (tagRelay2Status, RELAY2_ST, evaluate_relay_status, reinterpret_cast<void *> (2));
+EasyReplacementTag (tagRelay3Status, RELAY3_ST, evaluate_relay_status, reinterpret_cast<void *> (3));
+EasyReplacementTag (tagRelay4Status, RELAY4_ST, evaluate_relay_status, reinterpret_cast<void *> (4));
+
 #ifdef ENABLE_THERMOMETER
-	&subDegCVarSub,
-	&subDegFVarSub,
-	&subRelayTempVarSub,
-	&subRelayTempGTVarSub,
-	&subRelayTempLTVarSub,
-	&subRelayTempThresholdVarSub,
-	&subRelayTempUnitsCVarSub,
-	&subRelayTempUnitsFVarSub,
-	&subRelayTempDelayVarSub,
-	&subRelayTempMarginVarSub,
+EasyReplacementTag (tagDegC, DEGC, evaluate_temp_deg);
+EasyReplacementTag (tagDegF, DEGF, evaluate_temp_fahr);
+EasyReplacementTag (tagRelay, RELAY_TEMP_CHK, evaluate_relay_temp_checked);
+EasyReplacementTag (tagRelayTempGT, RELAY_TGT_CHK, evaluate_relay_temp_gtlt_checked, reinterpret_cast<void *> (RELMD_GT));
+EasyReplacementTag (tagRelayTempLT, RELAY_TLT_CHK, evaluate_relay_temp_gtlt_checked, reinterpret_cast<void *> (RELMD_LT));
+EasyReplacementTag (tagRelayTempThreshold, RELAY_THRES, evaluate_relay_temp_threshold);
+EasyReplacementTag (tagRelayTempUnitsC, RELAY_TEMPC_CHK, evaluate_relay_temp_units_c_checked);
+EasyReplacementTag (tagRelayTempUnitsF, RELAY_TEMPF_CHK, evaluate_relay_temp_units_f_checked);
+EasyReplacementTag (tagRelayTempDelay, RELAY_DELAY, evaluate_relay_temp_delay);
+EasyReplacementTag (tagRelayTempMargin, RELAY_MARGIN, evaluate_relay_temp_margin);
 #endif
-	&subVerVarSub,
-	&subUptimeVarSub,
-	&subFreeRAMVarSub,
+
+EasyReplacementTagArray tags[] PROGMEM = {
+	&tagMacAddr,
+	&tagIPAddress,
+	&tagNetmask,
+	&tagGateway,
+	&tagVer,
+	&tagUptime,
+	&tagFreeRAM,
+
+	&tagNMDHCP,
+	&tagNMStatic,
+	&tagRelayOn,
+	&tagRelayOff,
+
+	&tagRelay1Status,
+	&tagRelay2Status,
+	&tagRelay3Status,
+	&tagRelay4Status,
+
+#ifdef ENABLE_THERMOMETER
+	&tagDegC,
+	&tagDegF,
+    &tagRelay,
+    &tagRelayTempGT,
+    &tagRelayTempLT,
+    &tagRelayTempThreshold,
+    &tagRelayTempUnitsC,
+    &tagRelayTempUnitsF,
+    &tagRelayTempDelay,
+	&tagRelayTempMargin,
+#endif
+
 	NULL
 };
+
+//~ #ifdef USE_ARDUINO_TIME_LIBRARY
+	//~ &subDateVarSub,
+	//~ &subTimeVarSub,
+//~ #endif
+//~ #ifdef ENABLE_THERMOMETER
+	//~ &subDegCVarSub,
+	//~ &subDegFVarSub,
+	//~ &subRelayTempVarSub,
+	//~ &subRelayTempGTVarSub,
+	//~ &subRelayTempLTVarSub,
+	//~ &subRelayTempThresholdVarSub,
+	//~ &subRelayTempUnitsCVarSub,
+	//~ &subRelayTempUnitsFVarSub,
+	//~ &subRelayTempDelayVarSub,
+	//~ &subRelayTempMarginVarSub,
+//~ #endif
 
 
 /******************************************************************************
  * MAIN STUFF                                                                 *
  ******************************************************************************/
 
-#endif
-
-
 void setup () {
 	byte i;
 
-	DSTART ();
-	DPRINTLN (F("SmartStrip " PROGRAM_VERSION));
-	DPRINTLN (F("Using Webbino " WEBBINO_VERSION));
+	WDSTART ();
+	WDPRINTLN (F("SmartStrip " PROGRAM_VERSION));
+	WDPRINTLN (F("Using Webbino " WEBBINO_VERSION));
 
 	// Check and format EEPROM, in case
 	checkAndFormatEEPROM ();
@@ -792,61 +857,75 @@ void setup () {
 				EEPROM.get (EEPROM_GATEWAY_ADDR + i, gw[i]);
 			}
 
-#if defined (WEBBINO_USE_ENC28J60) || defined (WEBBINO_USE_WIZ5100)
+#if defined (WEBBINO_USE_ENC28J60) || defined (WEBBINO_USE_WIZ5100) || \
+    defined (WEBBINO_USE_WIZ5500) || defined (WEBBINO_USE_FISHINO)
 			bool ok = netint.begin (mac, ip, gw, gw /* FIXME: DNS */, mask);
-#elif defined (WEBBINO_USE_ESP8266) || defined (WEBBINO_USE_DIGIFI)
+#elif defined (WEBBINO_USE_ESP8266) || defined (WEBBINO_USE_WIFI) || \
+      defined (WEBBINO_USE_WIFI101) || defined (WEBBINO_USE_ESP8266_STANDALONE) || \
+      defined (WEBBINO_USE_DIGIFI)
 			// This is incredibly not possible at the moment!
 			//~ swSerial.begin (9600);
 			//~ bool ok = netint.begin (FIXME);
 			bool ok = false;		// Always fail
+#else
+			#error "Unsupported network interface"
 #endif
 			if (!ok) {
-				DPRINTLN (F("Failed to set static IP address"));
+				WDPRINTLN (F("Failed to set static IP address"));
 				while (1)
 					;
 			} else {
-				DPRINTLN (F("Static IP setup done"));
+				WDPRINTLN (F("Static IP setup done"));
 			}
 			break;
 		}
 		default:
-			DPRINTLN (F("Unknown netmode, defaulting to DHCP"));
+			WDPRINTLN (F("Unknown netmode, defaulting to DHCP"));
 			// No break here
 		case NETMODE_DHCP:
-			DPRINTLN (F("Trying to get an IP address through DHCP"));
-#if defined (WEBBINO_USE_ENC28J60) || defined (WEBBINO_USE_WIZ5100)
+			WDPRINTLN (F("Trying to get an IP address through DHCP"));
+#if defined (WEBBINO_USE_ENC28J60) || defined (WEBBINO_USE_WIZ5100) || \
+    defined (WEBBINO_USE_WIZ5500)
 			bool ok = netint.begin (mac);
 #elif defined (WEBBINO_USE_ESP8266)
 			swSerial.begin (9600);
 			bool ok = netint.begin (swSerial, WIFI_SSID, WIFI_PASSWORD);
-#elif defined (WEBBINO_USE_DIGIFI)
+#elif defined (WEBBINO_USE_DIGIFI) || defined (WEBBINO_USE_FISHINO)
 			bool ok = netint.begin ();
+#elif defined  (WEBBINO_USE_WIFI) || defined (WEBBINO_USE_WIFI101) || \
+	  defined (WEBBINO_USE_ESP8266_STANDALONE)
+			bool ok = netint.begin (WIFI_SSID, WIFI_PASSWORD);
 #endif
 			if (!ok) {
-				DPRINTLN (F("Failed to get configuration from DHCP"));
+				WDPRINTLN (F("Failed to get configuration from DHCP"));
 				while (1)
 					;
 			} else {
-				DPRINTLN (F("DHCP configuration done:"));
-				DPRINT (F("- IP: "));
-				DPRINTLN (netint.getIP ());
-				DPRINT (F("- Netmask: "));
-				DPRINTLN (netint.getNetmask ());
-				DPRINT (F("- Default Gateway: "));
-				DPRINTLN (netint.getGateway ());
+				WDPRINTLN (F("DHCP configuration done:"));
+				WDPRINT (F("- IP: "));
+				WDPRINTLN (netint.getIP ());
+				WDPRINT (F("- Netmask: "));
+				WDPRINTLN (netint.getNetmask ());
+				WDPRINT (F("- Default Gateway: "));
+				WDPRINTLN (netint.getGateway ());
 			}
 			break;
 	}
 
 	// Init webserver
-	webserver.begin (netint, pages, substitutions);
+	webserver.begin (netint);
+	webserver.enableReplacementTags (tags);
+	webserver.associateFunctions (associations);
+
+	flashStorage.begin (pages);
+	webserver.addStorage (flashStorage);
 
 #ifdef ENABLE_THERMOMETER
 	thermometer.begin (THERMOMETER_PIN);
 #endif
 
 	// Signal we're ready!
- 	DPRINTLN (F("SmartStrip is ready!"));
+ 	WDPRINTLN (F("SmartStrip is ready!"));
 
 	/* Note that this might intrfere with Ethernet boards that use SPI,
 	 * since pin 13 is SCK.
@@ -870,9 +949,9 @@ void loop () {
 		if (temp.valid) {
 			temperature = temp.celsius;
 
-			DPRINT (F("Temperature is now: "));
-			DPRINT (temperature);
-			DPRINTLN (F(" *C"));
+			WDPRINT (F("Temperature is now: "));
+			WDPRINT (temperature);
+			WDPRINTLN (F(" *C"));
 
 			lastTemperatureRequest = millis ();
 		}
@@ -922,8 +1001,8 @@ void loop () {
 				break;
 #endif
 			default:
-				DPRINT (F("Bad relay mode: "));
-				DPRINTLN (r.mode);
+				WDPRINT (F("Bad relay mode: "));
+				WDPRINTLN (r.mode);
 				break;
 		}
 	}

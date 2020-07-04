@@ -28,7 +28,9 @@ const int Relay::optionAddress[RELAYS_NO] = {
 	EEPROM_R1_PARAM_ADDR,
 	EEPROM_R2_PARAM_ADDR,
 	EEPROM_R3_PARAM_ADDR,
+#if RELAYS_NO == 4
 	EEPROM_R4_PARAM_ADDR
+#endif
 };
 
 Relay::Relay (byte _id, byte _pin): id (_id), pin (_pin) {
@@ -39,23 +41,28 @@ Relay::Relay (byte _id, byte _pin): id (_id), pin (_pin) {
 void Relay::readOptions () {
 	EEPROM.get (optionAddress[id - 1], static_cast<RelayOptions&> (*this));
 
-	DPRINT (F("sizeof (RelayOptions) = "));
-	DPRINTLN (sizeof (RelayOptions));
-	DPRINT (F("Relay "));
-	DPRINT (id);
-	DPRINT (F(" mode is "));
-	DPRINT (mode);
-	DPRINT (F(" and state is "));
-	DPRINT (state);
-	DPRINT (F(" and delay is "));
-	DPRINTLN (delay);
+	WDPRINT (F("sizeof (RelayOptions) = "));
+	WDPRINTLN (sizeof (RelayOptions));
+	WDPRINT (F("Relay "));
+	WDPRINT (id);
+	WDPRINT (F(" mode is "));
+	WDPRINT (mode);
+	WDPRINT (F(" and state is "));
+	WDPRINT (state);
+	WDPRINT (F(" and delay is "));
+	WDPRINTLN (delay);
 }
 
 void Relay::writeOptions () {
-	DPRINT (F("Saving options for relay "));
-	DPRINTLN (id);
+	WDPRINT (F("Saving options for relay "));
+	WDPRINTLN (id);
 
 	EEPROM.put (optionAddress[id - 1], static_cast<RelayOptions&> (*this));
+
+#ifdef ARDUINO_ARCH_ESP32
+	EEPROM.commit ();
+#endif
+
 }
 
 void Relay::setDefaults () {
@@ -68,10 +75,10 @@ void Relay::setDefaults () {
 }
 
 void Relay::switchState (RelayState newState) {
-	DPRINT (F("Turning "));
-	DPRINT (newState == RELAY_ON ? F("ON") : F("OFF"));
-	DPRINT (F(" relay "));
-	DPRINTLN (id, DEC);
+	WDPRINT (F("Turning "));
+	WDPRINT (newState == RELAY_ON ? F("ON") : F("OFF"));
+	WDPRINT (F(" relay "));
+	WDPRINTLN (id, DEC);
 
 	state = newState;
 	effectState ();
