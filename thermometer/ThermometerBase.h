@@ -25,7 +25,7 @@
 
 
 struct Temperature {
-	bool valid;
+	boolean valid;
 	float celsius;
 
 	float toFahrenheit () const {

@@ -17,9 +17,55 @@
  *   along with Sukkino.  If not, see <http://www.gnu.org/licenses/>.      *
  ***************************************************************************/
 
+#ifndef _TMP37THERMO_H_
+#define _TMP37THERMO_H_
+
 #include "thermometer_common.h"
+
+#ifdef USE_TMP37_THERMO
+
 #include "ThermometerBase.h"
-#include "DallasThermometer.h"
-#include "DHTThermometer.h"
-#include "Tmp37Thermometer.h"
-#include "DummyThermometer.h"
+#include "thermometer_debug.h"
+
+
+class Tmp37Thermometer: public ThermometerBase {
+private:
+	// Number of actual ADC samplings per read operation
+	static const byte N_READS = 5;
+
+	// ADC resolution
+	static const word ADC_STEPS = 1024;
+
+	// ADC reference voltage
+	static const word VCC = 5000; // Millivolt
+
+	byte pin;
+
+	bool refreshTemperature () {
+		word tot = 0;
+
+		for (byte i = 0; i < N_READS; ++i) {
+			tot += analogRead (pin);
+		}
+		word adc = tot / N_READS;
+		word v = (unsigned long) adc * VCC / ADC_STEPS;
+
+		currentTemp.celsius = v / 20;	// TMP37 has 20 mV/deg
+
+		return true;
+	}
+
+public:
+	void begin (byte _pin) {
+		pin = _pin;
+		available = true;	// No way of knowing if it's actually there or not
+		currentTemp.valid = true;	// So temp will always be valid too
+	}
+
+};
+
+typedef Tmp37Thermometer Thermometer;
+
+#endif
+
+#endif

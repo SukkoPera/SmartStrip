@@ -27,7 +27,7 @@
 #include "ThermometerBase.h"
 
 
-class DallasThermometer: public ThermometerBase {
+class DummyThermometer: public ThermometerBase {
 private:
 	bool refreshTemperature () {
 		currentTemp.celsius = 21.5;
@@ -37,12 +37,13 @@ private:
 	}
 
 public:
-	void begin (byte busPin) {
+	void begin (byte pin) {
+		(void) pin;
 		available = true;
 	}
 };
 
-class Thermometer: public DallasThermometer {
+class Thermometer: public DummyThermometer {
 };
 
 #endif

@@ -27,9 +27,10 @@
 /* Temperature sensor selection: please enable *only one* of the following,
  * corresponding to the sensor you will be using
  */
-#define USE_DALLAS_THERMO
+//~ #define USE_DALLAS_THERMO
 //~ #define USE_DHT_THERMO
-//~ #define USE_DUMMY_THERMO
+#define USE_DUMMY_THERMO
+//~ #define USE_TMP37_THERMO
 
 // Don't touch :)
 #define THERMOMETER_VERSION "0.4git"
