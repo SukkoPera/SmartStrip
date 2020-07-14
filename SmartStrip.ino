@@ -821,6 +821,15 @@ EasyReplacementTagArray tags[] PROGMEM = {
  * MAIN STUFF                                                                 *
  ******************************************************************************/
 
+boolean authorize (const char *user, const char *passwd) {
+	WDPRINT (F("Validating username \""));
+	WDPRINT (user);
+	WDPRINT (F("\" with password \""));
+	WDPRINT (passwd);
+	WDPRINTLN ("\"");
+	return strcmp_P (user, PSTR ("smart")) == 0 && strcmp_P (passwd, PSTR ("strip")) == 0;
+}
+
 void setup () {
 	byte i;
 
@@ -919,6 +928,9 @@ void setup () {
 
 	flashStorage.begin (pages);
 	webserver.addStorage (flashStorage);
+
+	static const char *realm = "SmartStrip";
+	webserver.enableAuth (realm, authorize);
 
 #ifdef ENABLE_THERMOMETER
 	thermometer.begin (THERMOMETER_PIN);
