@@ -1034,7 +1034,7 @@ void setup () {
 	// Signal we're ready!
  	WDPRINTLN (F("SmartStrip is ready!"));
 
-	/* Note that this might intrfere with Ethernet boards that use SPI,
+	/* Note that this might interfere with Ethernet boards that use SPI,
 	 * since pin 13 is SCK.
 	 */
 	pinMode (LED_BUILTIN, OUTPUT);
