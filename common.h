@@ -1,7 +1,7 @@
 /***************************************************************************
  *   This file is part of SmartStrip.                                      *
  *                                                                         *
- *   Copyright (C) 2012-2016 by SukkoPera                                  *
+ *   Copyright (C) 2012-2020 by SukkoPera                                  *
  *                                                                         *
  *   SmartStrip is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by  *
@@ -36,7 +36,7 @@
 #define RELAY1_PIN 12
 #define RELAY2_PIN 13
 #define RELAY3_PIN 14
-#define RELAY4_PIN 15
+#define RELAY4_PIN LED_BUILTIN
 #else
 #error "Please define relay pins for this board"
 #endif

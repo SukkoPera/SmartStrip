@@ -1,7 +1,7 @@
 /***************************************************************************
  *   This file is part of SmartStrip.                                      *
  *                                                                         *
- *   Copyright (C) 2012-2016 by SukkoPera                                  *
+ *   Copyright (C) 2012-2020 by SukkoPera                                  *
  *                                                                         *
  *   SmartStrip is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by  *
@@ -88,6 +88,8 @@ unsigned long lastTemperatureRequest = 0;
 #include <TimeLib.h>
 #include <WiFiUdp.h>
 #include <NTPClient.h>
+
+byte rtCheckIdx = 0;
 
 const byte UTC_OFFSET = +1;
 
@@ -389,6 +391,8 @@ void opts_func (HTTPRequestParser& request) {
 void sck_func (HTTPRequestParser& request) {
 	char *param;
 
+	rtCheckIdx = 0;
+
 	param = request.get_parameter (F("rel"));
 	if (strlen (param) > 0) {
 		int relayNo = atoi (param);
@@ -479,10 +483,12 @@ char replaceBuffer[REP_BUFFER_LEN];
 PString pBuffer (replaceBuffer, REP_BUFFER_LEN);
 
 const char NOT_AVAIL_STR[] PROGMEM = "N/A";
+const char CHECKED_STRING[] PROGMEM = "checked";
+const char SELECTED_STRING[] PROGMEM = "selected=\"true\"";
 
 #ifdef ENABLE_TIME
 
-PString& evaluate_time (void *data __attribute__ ((unused))) {
+PString& evaluate_time (void *data) {
 	int x;
 
 	(void) data;
@@ -545,42 +551,31 @@ PString& evaluate_date (void *data) {
 	return pBuffer;
 }
 
+/* We're cheating quite a bit here, as we assume this function will be called
+ * sequentially for every checkbox, so we can calculate the hour and minute for
+ * the checkbox we are currently being called for.
+ *
+ * PS: rtCheckIdx is first zero'ed in sck_func().
+ */
+PString& evaluate_relay_time_checked (void *data) {
+	(void) data;
+
+	if (lastSelectedRelay >= 1 && lastSelectedRelay <= RELAYS_NO) {
+		byte h = rtCheckIdx % 24;
+		byte m = (rtCheckIdx / 24) * 15;
+
+		if (relays[lastSelectedRelay - 1].schedule.get (h, m)) {
+			pBuffer.print (CHECKED_STRING);
+		}
+
+		++rtCheckIdx;
+	}
+
+ 	return pBuffer;
+}
+
 #endif	// ENABLE_TIME
 
-
-/* This is a modified version of the floatToString posted by the Arduino forums
- * user "zitron" at http://www.arduino.cc/cgi-bin/yabb2/YaBB.pl?num=1205038401.
- * This is slimmer than dstrtof() (350 vs. 1700 bytes!) and works well enough
- * for our needs, so here we go!
- *
- * NOTE: Precision is fixed to two digits, which is just what we need.
- */
-//~ char *floatToString (double val, char *outstr) {
-	//~ char temp[8];
-	//~ unsigned long frac;
-
-	//~ temp[0] = '\0';
-	//~ outstr[0] = '\0';
-
-	//~ if (val < 0.0){
-		//~ strcpy (outstr, "-\0");  //print "-" sign
-		//~ val *= -1;
-	//~ }
-
-	//~ val += 0.005;		// Round
-
-	//~ strcat (outstr, itoa ((int) val, temp, 10));  //prints the integer part without rounding
-	//~ strcat (outstr, ".\0");		// print the decimal point
-
-	//~ frac = (val - (int) val) * 100;
-
-	//~ if (frac < 10)
-		//~ strcat (outstr, "0\0");    // print padding zeros
-
-	//~ strcat (outstr, itoa (frac, temp, 10));  // print fraction part
-
-	//~ return outstr;
-//~ }
 
 #ifdef ENABLE_THERMOMETER
 static PString& evaluate_temp_deg (void *data __attribute__ ((unused))) {
@@ -644,10 +639,6 @@ PString& evaluate_mac_addr (void *data __attribute__ ((unused))) {
 
 	return pBuffer;
 }
-
-
-const char CHECKED_STRING[] PROGMEM = "checked";
-const char SELECTED_STRING[] PROGMEM = "selected=\"true\"";
 
 PString& evaluate_netmode (void *data) {
 	NetworkMode netmode;
@@ -852,6 +843,7 @@ EasyReplacementTag (tagRelayTempMargin, RELAY_MARGIN, evaluate_relay_temp_margin
 EasyReplacementTag (tagDateStr, DATE, evaluate_date);
 EasyReplacementTag (tagTimeStr, TIME, evaluate_time);
 EasyReplacementTag (tagRelayTimed, RELAY_TIME_CHK, evaluate_relay_onoff_checked, reinterpret_cast<void *> (RELMD_TIMED));
+EasyReplacementTag (tagRelayTimeChecked, RTIME_CHK, evaluate_relay_time_checked);
 #endif
 
 
@@ -891,6 +883,7 @@ EasyReplacementTagArray tags[] PROGMEM = {
 	&tagDateStr,
 	&tagTimeStr,
 	&tagRelayTimed,
+	&tagRelayTimeChecked,
 #endif
 
 	NULL
