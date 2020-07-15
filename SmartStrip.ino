@@ -185,6 +185,7 @@ void checkAndFormatEEPROM () {
 		for (byte i = 0; i < RELAYS_NO; i++) {
 			relays[i].setDefaults ();
 			relays[i].writeOptions ();
+			relays[i].schedule.clear ();
 		}
 
 		// Network configuration
@@ -449,10 +450,14 @@ void sck_func (HTTPRequestParser& request) {
 						}
 					}
 
+					relay.schedule.save ();
+
 					relay.mode = RELMD_TIMED;
 #endif
 				}
 			}
+
+			relay.writeOptions ();
 		}
 	}
 }
@@ -1069,13 +1074,13 @@ void loop () {
 			case RELMD_ON:
 				if (r.state != RELAY_ON) {
 					r.switchState (RELAY_ON);
-					r.writeOptions ();
+					//~ r.writeOptions ();
 				}
 				break;
 			case RELMD_OFF:
 				if (r.state != RELAY_OFF) {
 					r.switchState (RELAY_OFF);
-					r.writeOptions ();
+					//~ r.writeOptions ();
 				}
 				break;
 #ifdef ENABLE_THERMOMETER

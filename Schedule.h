@@ -18,6 +18,7 @@
  ***************************************************************************/
 
 #include <Arduino.h>
+#include <EEPROM.h>
 
 class Schedule {
 private:
@@ -28,12 +29,16 @@ private:
 	static const byte HOURS_PER_BYTE = 8 / SLOTS_PER_HOUR;
 	static const byte BYTES_PER_DAY = N_HOURS / HOURS_PER_BYTE;
 
-	byte schedule[BYTES_PER_DAY];
+	uint16_t baseAddr;
 
 public:
-	void begin () {
+	void begin (uint16_t _eepromAddress) {
+		baseAddr = _eepromAddress;
+	}
+
+	void clear () {
 		for (byte i = 0; i < BYTES_PER_DAY; ++i) {
-			schedule[i] = 0;
+			EEPROM.write (baseAddr + i, 0);
 		}
 	}
 
@@ -41,18 +46,26 @@ public:
 		byte b = h / HOURS_PER_BYTE;
 		byte hi = h % HOURS_PER_BYTE;
 		byte bit = m / MINS_PER_SLOT;
-		return schedule[b] & (1 << (hi ? bit + 4 : bit));
+		byte e = EEPROM.read (baseAddr + b);
+		return e & (1 << (hi ? bit + 4 : bit));
 	}
 
 	void set (const byte h, const byte m, boolean on) {
 		byte b = h / HOURS_PER_BYTE;
 		byte hi = h % HOURS_PER_BYTE;
 		byte bit = m / MINS_PER_SLOT;
+		byte e = EEPROM.read (baseAddr + b);
 
 		if (on) {
-			schedule[b] |= (1 << (hi ? bit + 4 : bit));
+			e |= (1 << (hi ? bit + 4 : bit));
 		} else {
-			schedule[b] &= ~(1 << (hi ? bit + 4 : bit));
+			e &= ~(1 << (hi ? bit + 4 : bit));
 		}
+
+		EEPROM.write (baseAddr + b, e);
+	}
+
+	void save () {
+		EEPROM.commit ();
 	}
 };

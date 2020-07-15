@@ -80,6 +80,15 @@
 #define EEPROM_NETMASK_ADDR 82
 #define EEPROM_GATEWAY_ADDR 86
 
+#ifdef ENABLE_TIME
+// Schedule size is about 12 byte per day * 7 days
+// Note that these are used as EEPROM_R1_SCHEDULE_ADDR * relay_id (FIXME)
+#define EEPROM_R1_SCHEDULE_ADDR 100
+//~ #define EEPROM_R2_SCHEDULE_ADDR 200
+//~ #define EEPROM_R3_SCHEDULE_ADDR 300
+//~ #define EEPROM_R4_SCHEDULE_ADDR 400
+#endif
+
 
 
 /* Network parameter defaults: feel free to change these to fit your network

@@ -37,7 +37,7 @@ Relay::Relay (const byte _id, const byte _pin): id (_id), pin (_pin) {
 	pinMode (_pin, OUTPUT);
 
 #ifdef ENABLE_TIME
-	schedule.begin ();
+	schedule.begin (EEPROM_R1_SCHEDULE_ADDR * (id + 1));		// FIXME
 #endif
 }
 
