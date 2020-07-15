@@ -84,6 +84,62 @@ float temperature = 25;
 unsigned long lastTemperatureRequest = 0;
 #endif
 
+#ifdef ENABLE_TIME
+#include <TimeLib.h>
+#include <WiFiUdp.h>
+#include <NTPClient.h>
+
+const byte UTC_OFFSET = +1;
+
+WiFiUDP ntpUDP;
+
+// You can specify the time server pool and the offset (in seconds, can be
+// changed later with setTimeOffset() ). Additionaly you can specify the
+// update interval (in milliseconds, can be changed using setUpdateInterval() ).
+NTPClient timeClient (ntpUDP, "pool.ntp.org", 0, 60000UL * 5);    // TZ and DST will be compensated in timeProvider()
+
+byte dstOffset (byte d, byte m, unsigned int y, byte h) {
+	/* This function returns the DST offset for the current UTC time.
+	 * This is valid for the EU, for other places see
+	 * http://www.webexhibits.org/daylightsaving/i.html
+	 *
+	 * Results have been checked for 2012-2030 (but should be correct
+	 * since 1996 to 2099) against the following references:
+	 * - http://www.uniquevisitor.it/magazine/ora-legale-italia.php
+	 * - http://www.calendario-365.it/ora-legale-orario-invernale.html
+	 */
+
+	// Day in March that DST starts on, at 1 am
+	byte dstOn = (31 - (5 * y / 4 + 4) % 7);
+
+	// Day in October that DST ends  on, at 2 am
+	byte dstOff = (31 - (5 * y / 4 + 1) % 7);
+
+	if ((m > 3 && m < 10) ||
+		(m == 3 && (d > dstOn || (d == dstOn && h >= 1))) ||
+		(m == 10 && (d < dstOff || (d == dstOff && h <= 1))))
+		return 1;
+	else
+		return 0;
+}
+
+// FIXME: I think this should return 0 if NTP update failed, but current library
+// has no means of detecting such a case
+time_t timeProvider () {
+	Serial.println ("timeProvider() called");
+	timeClient.update ();
+	//timeClient.setTimeOffset ((UTC_OFFSET + dstOffset ()) * SECS_PER_HOUR);
+	time_t t = timeClient.getEpochTime ();
+
+	TimeElements tm;
+	breakTime (t, tm);
+	t += (UTC_OFFSET + dstOffset (tm.Day, tm.Month, tm.Year + 1970, tm.Hour)) * SECS_PER_HOUR;
+
+	return t;
+}
+
+#endif
+
 // Other stuff
 byte lastSelectedRelay;
 
@@ -178,7 +234,11 @@ const Page page04 PROGMEM = {main_html_name, main_html, main_html_len};
 #endif
 const Page page05 PROGMEM = {net_html_name, net_html, net_html_len};
 const Page page06 PROGMEM = {opts_html_name, opts_html, opts_html_len};
+#ifdef ENABLE_TIME
+const Page page07 PROGMEM = {sck_html_name, sck_time_html, sck_time_html_len};
+#else
 const Page page07 PROGMEM = {sck_html_name, sck_html, sck_html_len};
+#endif
 
 
 const Page* const pages[] PROGMEM = {
@@ -363,6 +423,30 @@ void sck_func (HTTPRequestParser& request) {
 						relay.units = TEMP_C;
 
 					relayHysteresis[relayNo - 1] = false;
+#ifdef ENABLE_TIME
+				} else if (strcmp_P (param, PSTR ("time")) == 0) {
+					char tmpBuf[8];
+					PString tmp (tmpBuf, sizeof (tmpBuf));
+					for (byte h = 0; h < 24; ++h) {
+						for (byte m = 0; m < 60; m += 15) {
+							tmp.begin ();
+							tmp.print ('t');
+							tmp.print (h);
+							tmp.print ('_');
+							tmp.print (m);
+
+							param = request.get_parameter (static_cast<const char *> (tmp));
+							if (strlen (param) > 0) {
+								DPRINT (F("On at"));
+								DPRINTLN (tmp);
+							}
+
+							relay.schedule.set (h, m, strlen (param) > 0);
+						}
+					}
+
+					relay.mode = RELMD_TIMED;
+#endif
 				}
 			}
 		}
@@ -396,63 +480,72 @@ PString pBuffer (replaceBuffer, REP_BUFFER_LEN);
 
 const char NOT_AVAIL_STR[] PROGMEM = "N/A";
 
-#ifdef USE_ARDUINO_TIME_LIBRARY
+#ifdef ENABLE_TIME
 
 PString& evaluate_time (void *data __attribute__ ((unused))) {
 	int x;
 
-	time_t t = now ();
+	(void) data;
 
-	x = hour (t);
-	if (x < 10)
-		pBuffer.print ('0');
-	pBuffer.print (x);
-	pBuffer.print (':');
+	if (timeStatus () != timeNotSet) {
+		time_t t = now ();
 
-	x = minute (t);
-	if (x < 10)
-		pBuffer.print ('0');
-	pBuffer.print (x);
-	pBuffer.print (':');
+		x = hour (t);
+		if (x < 10)
+			pBuffer.print ('0');
+		pBuffer.print (x);
+		pBuffer.print (':');
 
-	x = second (t);
-	if (x < 10)
-		pBuffer.print ('0');
-	pBuffer.print (x);
+		x = minute (t);
+		if (x < 10)
+			pBuffer.print ('0');
+		pBuffer.print (x);
+		pBuffer.print (':');
+
+		x = second (t);
+		if (x < 10)
+			pBuffer.print ('0');
+		pBuffer.print (x);
+	} else {
+		pBuffer.print (NOT_AVAIL_STR);
+	}
 
 	return pBuffer;
 }
 
-// FIXME
-PString& evaluate_date (void *data __attribute__ ((unused))) {
+PString& evaluate_date (void *data) {
 	int x;
 
-	time_t t = now ();
+	(void) data;
 
-	x = day (t);
-	pBuffer[0] = (x / 10) + '0';
-	pBuffer[1] = (x % 10) + '0';
+	if (timeStatus () != timeNotSet) {
+		time_t t = now ();
 
-	pBuffer[2] = '/';
+		x = day (t);
+		if (x < 10)
+			pBuffer.print ('0');
+		pBuffer.print (x);
 
-	x = month (t);
-	pBuffer[3] = (x / 10) + '0';
-	pBuffer[4] = (x % 10) + '0';
+		pBuffer.print ('/');
 
-	pBuffer[5] = '/';
+		x = month (t);
+		if (x < 10)
+			pBuffer.print ('0');
+		pBuffer.print (x);
 
-	x = year (t);
-	pBuffer[6] = (x / 1000) + '0';
-	pBuffer[7] = ((x % 1000) / 100) + '0';
-	pBuffer[8] = ((x % 100) / 10) + '0';
-	pBuffer[9] = (x % 10) + '0';
+		pBuffer.print ('/');
 
-	pBuffer[10] = '\0';
+		x = year (t);
+		pBuffer.print (x);
+		} else {
+		pBuffer.print (NOT_AVAIL_STR);
+	}
+
 
 	return pBuffer;
 }
 
-#endif	// USE_ARDUINO_TIME_LIBRARY
+#endif	// ENABLE_TIME
 
 
 /* This is a modified version of the floatToString posted by the Arduino forums
@@ -724,15 +817,6 @@ static PString& evaluate_free_ram (void *data __attribute__ ((unused))) {
 
 
 // Max length of these is MAX_TAG_LEN (24)
-#ifdef USE_ARDUINO_TIME_LIBRARY
-const char subDateStr[] PROGMEM = "DATE";
-const char subTimeStr[] PROGMEM = "TIME";
-#endif
-
-#ifdef USE_ARDUINO_TIME_LIBRARY
-const ReplacementTag subDateVarSub PROGMEM = {subDateStr, evaluate_date, NULL};
-const ReplacementTag subTimeVarSub PROGMEM =	{subTimeStr, evaluate_time, NULL};
-#endif
 EasyReplacementTag (tagMacAddr, NET_MAC, evaluate_mac_addr);
 EasyReplacementTag (tagIPAddress, NET_IP, evaluate_ip);
 EasyReplacementTag (tagNetmask, NET_MASK, evaluate_netmask);
@@ -763,6 +847,13 @@ EasyReplacementTag (tagRelayTempUnitsF, RELAY_TEMPF_CHK, evaluate_relay_temp_uni
 EasyReplacementTag (tagRelayTempDelay, RELAY_DELAY, evaluate_relay_temp_delay);
 EasyReplacementTag (tagRelayTempMargin, RELAY_MARGIN, evaluate_relay_temp_margin);
 #endif
+
+#ifdef ENABLE_TIME
+EasyReplacementTag (tagDateStr, DATE, evaluate_date);
+EasyReplacementTag (tagTimeStr, TIME, evaluate_time);
+EasyReplacementTag (tagRelayTimed, RELAY_TIME_CHK, evaluate_relay_onoff_checked, reinterpret_cast<void *> (RELMD_TIMED));
+#endif
+
 
 EasyReplacementTagArray tags[] PROGMEM = {
 	&tagMacAddr,
@@ -796,26 +887,26 @@ EasyReplacementTagArray tags[] PROGMEM = {
 	&tagRelayTempMargin,
 #endif
 
+#ifdef ENABLE_TIME
+	&tagDateStr,
+	&tagTimeStr,
+	&tagRelayTimed,
+#endif
+
 	NULL
 };
 
-//~ #ifdef USE_ARDUINO_TIME_LIBRARY
-	//~ &subDateVarSub,
-	//~ &subTimeVarSub,
-//~ #endif
-//~ #ifdef ENABLE_THERMOMETER
-	//~ &subDegCVarSub,
-	//~ &subDegFVarSub,
-	//~ &subRelayTempVarSub,
-	//~ &subRelayTempGTVarSub,
-	//~ &subRelayTempLTVarSub,
-	//~ &subRelayTempThresholdVarSub,
-	//~ &subRelayTempUnitsCVarSub,
-	//~ &subRelayTempUnitsFVarSub,
-	//~ &subRelayTempDelayVarSub,
-	//~ &subRelayTempMarginVarSub,
-//~ #endif
 
+
+/******************************************************************************
+ * TIME
+ ******************************************************************************/
+#ifdef ENABLE_TIME
+// FIXME
+//~ time_t syncProvider () {
+	//~ return 1594764336;
+//~ }
+#endif
 
 /******************************************************************************
  * MAIN STUFF                                                                 *
@@ -936,6 +1027,10 @@ void setup () {
 	thermometer.begin (THERMOMETER_PIN);
 #endif
 
+#ifdef ENABLE_TIME
+	setSyncProvider (timeProvider);
+#endif
+
 	// Signal we're ready!
  	WDPRINTLN (F("SmartStrip is ready!"));
 
@@ -994,23 +1089,34 @@ void loop () {
 			case RELMD_GT:
 				if (((!hysteresisEnabled && temperature > r.threshold) || (hysteresisEnabled && temperature > r.threshold + r.hysteresis / 10.0)) && r.state != RELAY_ON) {
 					r.switchState (RELAY_ON);
-					r.writeOptions ();
+					//~ r.writeOptions ();
 					hysteresisEnabled = true;
 				} else if (temperature <= r.threshold && r.state != RELAY_OFF) {
 					r.switchState (RELAY_OFF);
-					r.writeOptions ();
+					//~ r.writeOptions ();
 				}
 				break;
 			case RELMD_LT:
 				if (((!hysteresisEnabled && temperature < r.threshold) || (hysteresisEnabled && temperature < r.threshold - r.hysteresis / 10.0)) && r.state != RELAY_ON) {
 					r.switchState (RELAY_ON);
-					r.writeOptions ();
+					//~ r.writeOptions ();
 					hysteresisEnabled = true;
 				} else if (temperature >= r.threshold && r.state != RELAY_OFF) {
 					r.switchState (RELAY_OFF);
-					r.writeOptions ();
+					//~ r.writeOptions ();
 				}
 				break;
+#endif
+#ifdef ENABLE_TIME
+			case RELMD_TIMED: {
+				boolean shouldBeOn = r.schedule.get (hour (), minute ());
+				if (shouldBeOn && r.state != RELAY_ON) {
+					r.switchState (RELAY_ON);
+				} else if (!shouldBeOn && r.state != RELAY_OFF) {
+					r.switchState (RELAY_OFF);
+				}
+				break;
+			}
 #endif
 			default:
 				WDPRINT (F("Bad relay mode: "));

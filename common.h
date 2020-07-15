@@ -59,8 +59,8 @@
 // Delay between temperature readings
 #define THERMO_READ_INTERVAL (60 * 1000UL)
 
-// Totally useless at this time ;)
-//#define USE_ARDUINO_TIME_LIBRARY
+// Enable the possibility to schedule on/off times according to time (Experimental)
+#define ENABLE_TIME
 
 // Size of a MAC address (bytes)
 #define MAC_SIZE 6

@@ -23,15 +23,22 @@
 #include "enums.h"
 #include "common.h"
 
+#ifdef ENABLE_TIME
+#include "Schedule.h"
+#endif
 
 class Relay: public RelayOptions {
 	static const int optionAddress[RELAYS_NO];
 
 public:
-	byte id;
-	byte pin;
+	const byte id;
+	const byte pin;
 
-	Relay (byte _id, byte _pin);
+#ifdef ENABLE_TIME
+	Schedule schedule;
+#endif
+
+	Relay (const byte _id, const byte _pin);
 
 	void readOptions ();
 	void writeOptions ();

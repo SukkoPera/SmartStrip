@@ -33,9 +33,12 @@ const int Relay::optionAddress[RELAYS_NO] = {
 #endif
 };
 
-Relay::Relay (byte _id, byte _pin): id (_id), pin (_pin) {
-	//if (_id >= 1 && _id <= RELAYS_NO)
-        pinMode (_pin, OUTPUT);
+Relay::Relay (const byte _id, const byte _pin): id (_id), pin (_pin) {
+	pinMode (_pin, OUTPUT);
+
+#ifdef ENABLE_TIME
+	schedule.begin ();
+#endif
 }
 
 void Relay::readOptions () {

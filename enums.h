@@ -20,11 +20,18 @@
 #ifndef _ENUMS_H_
 #define _ENUMS_H_
 
+#include "common.h"
+
 enum RelayMode {
 	RELMD_ON = 0,			// Always on
 	RELMD_OFF = 1,			// Always off
+#ifdef ENABLE_THERMOMETER
 	RELMD_GT = 2,			// On if T > Tthres
-	RELMD_LT = 3			// On if T < Tthres
+	RELMD_LT = 3,			// On if T < Tthres
+#endif
+#ifdef ENABLE_TIME
+	RELMD_TIMED = 4,		// Timed on/off
+#endif
 };
 
 enum TemperatureUnits {
