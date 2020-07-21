@@ -22,4 +22,6 @@
 #include "DallasThermometer.h"
 #include "DHTThermometer.h"
 #include "Tmp37Thermometer.h"
+#include "Lm35Thermometer.h"
+#include "Bme280Thermometer.h"
 #include "DummyThermometer.h"

@@ -34,10 +34,22 @@ private:
 	static const byte N_READS = 5;
 
 	// ADC resolution
+#ifdef ARDUINO_ARCH_AVR
 	static const word ADC_STEPS = 1024;
+#elif defined ARDUINO_ARCH_STM32F1
+	static const word ADC_STEPS = 4096;
+#else
+	#error "Please define ADC resolution"
+#endif
 
 	// ADC reference voltage
+#ifdef ARDUINO_ARCH_AVR
 	static const word VCC = 5000; // Millivolt
+#elif defined ARDUINO_ARCH_STM32F1
+	static const word VCC = 3300;
+#else
+	#error "Please define ADC reference voltage"
+#endif
 
 	byte pin;
 

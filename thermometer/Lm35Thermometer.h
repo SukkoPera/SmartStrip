@@ -17,24 +17,67 @@
  *   along with Sukkino.  If not, see <http://www.gnu.org/licenses/>.      *
  ***************************************************************************/
 
-#ifndef THERMOMETERCOMMON_H_
-#define THERMOMETERCOMMON_H_
+#ifndef _LM35THERMO_H_
+#define _LM35THERMO_H_
 
-/* DEFINE this to DISABLE debug messages
- */
-#define THERMOMETER_NDEBUG
+#include "thermometer_common.h"
 
-/* Temperature sensor selection: please enable *only one* of the following,
- * corresponding to the sensor you will be using
- */
-//~ #define USE_DALLAS_THERMO
-//~ #define USE_DHT_THERMO
-//~ #define USE_DUMMY_THERMO
-//~ #define USE_TMP37_THERMO
-#define USE_LM35_THERMO
-//~ #define USE_BME280_THERMO
+#ifdef USE_LM35_THERMO
 
-// Don't touch :)
-#define THERMOMETER_VERSION "0.5git"
+#include "ThermometerBase.h"
+#include "thermometer_debug.h"
+
+
+class Lm35Thermometer: public ThermometerBase {
+private:
+	// Number of actual ADC samplings per read operation
+	static const byte N_READS = 5;
+
+	// ADC resolution
+#ifdef ARDUINO_ARCH_AVR
+	static const word ADC_STEPS = 1024;
+#elif defined ARDUINO_ARCH_STM32F1
+	static const word ADC_STEPS = 4096;
+#else
+	#error "Please define ADC resolution"
+#endif
+
+	// ADC reference voltage
+#ifdef ARDUINO_ARCH_AVR
+	static const word VCC = 5000; // Millivolt
+#elif defined ARDUINO_ARCH_STM32F1
+	static const word VCC = 3300;
+#else
+	#error "Please define ADC reference voltage"
+#endif
+
+	byte pin;
+
+	bool refreshTemperature () {
+		word tot = 0;
+
+		for (byte i = 0; i < N_READS; ++i) {
+			tot += analogRead (pin);
+		}
+		word adc = tot / N_READS;
+		word v = (unsigned long) adc * VCC / ADC_STEPS;
+
+		currentTemp.celsius = v / 10;	// LM35 has 10 mV/deg
+
+		return true;
+	}
+
+public:
+	void begin (byte _pin) {
+		pin = _pin;
+		available = true;	// No way of knowing if it's actually there or not
+		currentTemp.valid = true;	// So temp will always be valid too
+	}
+
+};
+
+typedef Lm35Thermometer Thermometer;
+
+#endif
 
 #endif
