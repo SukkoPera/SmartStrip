@@ -17,6 +17,9 @@
  *   along with SmartStrip.  If not, see <http://www.gnu.org/licenses/>.   *
  ***************************************************************************/
 
+#ifndef SCHEDULE_H_INCLUDED
+#define SCHEDULE_H_INCLUDED
+
 #include <Arduino.h>
 #include <EEPROM.h>
 
@@ -66,6 +69,10 @@ public:
 	}
 
 	void save () {
+#ifdef ARDUINO_ARCH_ESP32
 		EEPROM.commit ();
+#endif
 	}
 };
+
+#endif
