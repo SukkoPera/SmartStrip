@@ -33,7 +33,8 @@ FlashStorage flashStorage;
 #if defined (WEBBINO_USE_ENC28J60)
 	#include <WebbinoInterfaces/ENC28J60.h>
 	NetworkInterfaceENC28J60 netint;
-#elif defined (WEBBINO_USE_WIZ5100) || defined (WEBBINO_USE_WIZ5500)
+#elif defined (WEBBINO_USE_WIZ5100) || defined (WEBBINO_USE_WIZ5500) || \
+	  defined (WEBBINO_USE_ENC28J60_UIP)
 	#include <WebbinoInterfaces/WIZ5x00.h>
 	NetworkInterfaceWIZ5x00 netint;
 #elif defined (WEBBINO_USE_ESP8266)
@@ -85,61 +86,9 @@ unsigned long lastTemperatureRequest = 0;
 #endif
 
 #ifdef ENABLE_TIME
-#include <TimeLib.h>
-#include <WiFiUdp.h>
-#include <NTPClient.h>
+#include "sstime.h"
 
 byte rtCheckIdx = 0;
-
-const byte UTC_OFFSET = +1;
-
-WiFiUDP ntpUDP;
-
-// You can specify the time server pool and the offset (in seconds, can be
-// changed later with setTimeOffset() ). Additionaly you can specify the
-// update interval (in milliseconds, can be changed using setUpdateInterval() ).
-NTPClient timeClient (ntpUDP, "pool.ntp.org", 0, 60000UL * 5);    // TZ and DST will be compensated in timeProvider()
-
-byte dstOffset (byte d, byte m, unsigned int y, byte h) {
-	/* This function returns the DST offset for the current UTC time.
-	 * This is valid for the EU, for other places see
-	 * http://www.webexhibits.org/daylightsaving/i.html
-	 *
-	 * Results have been checked for 2012-2030 (but should be correct
-	 * since 1996 to 2099) against the following references:
-	 * - http://www.uniquevisitor.it/magazine/ora-legale-italia.php
-	 * - http://www.calendario-365.it/ora-legale-orario-invernale.html
-	 */
-
-	// Day in March that DST starts on, at 1 am
-	byte dstOn = (31 - (5 * y / 4 + 4) % 7);
-
-	// Day in October that DST ends  on, at 2 am
-	byte dstOff = (31 - (5 * y / 4 + 1) % 7);
-
-	if ((m > 3 && m < 10) ||
-		(m == 3 && (d > dstOn || (d == dstOn && h >= 1))) ||
-		(m == 10 && (d < dstOff || (d == dstOff && h <= 1))))
-		return 1;
-	else
-		return 0;
-}
-
-// FIXME: I think this should return 0 if NTP update failed, but current library
-// has no means of detecting such a case
-time_t timeProvider () {
-	Serial.println ("timeProvider() called");
-	timeClient.update ();
-	//timeClient.setTimeOffset ((UTC_OFFSET + dstOffset ()) * SECS_PER_HOUR);
-	time_t t = timeClient.getEpochTime ();
-
-	TimeElements tm;
-	breakTime (t, tm);
-	t += (UTC_OFFSET + dstOffset (tm.Day, tm.Month, tm.Year + 1970, tm.Hour)) * SECS_PER_HOUR;
-
-	return t;
-}
-
 #endif
 
 // Other stuff
@@ -185,7 +134,9 @@ void checkAndFormatEEPROM () {
 		for (byte i = 0; i < RELAYS_NO; i++) {
 			relays[i].setDefaults ();
 			relays[i].writeOptions ();
+#ifdef ENABLE_TIME
 			relays[i].schedule.clear ();
+#endif
 		}
 
 		// Network configuration
@@ -224,24 +175,14 @@ void checkAndFormatEEPROM () {
  * DEFINITION OF PAGES                                                        *
  ******************************************************************************/
 
+// Make sure to compile the pages with the proper #defines!
 const Page page01 PROGMEM = {about_html_name, about_html, about_html_len};
 const Page page02 PROGMEM = {index_html_name, index_html, index_html_len};
-#if RELAYS_NO == 3
-const Page page03 PROGMEM = {left_html_name, left_3r_html, left_3r_html_len};
-const Page page04 PROGMEM = {main_html_name, main_3r_html, main_3r_html_len};
-#elif RELAYS_NO == 4
 const Page page03 PROGMEM = {left_html_name, left_html, left_html_len};
 const Page page04 PROGMEM = {main_html_name, main_html, main_html_len};
-#else
-#error "This number of relays is unsupported"
-#endif
 const Page page05 PROGMEM = {net_html_name, net_html, net_html_len};
 const Page page06 PROGMEM = {opts_html_name, opts_html, opts_html_len};
-#ifdef ENABLE_TIME
-const Page page07 PROGMEM = {sck_html_name, sck_time_html, sck_time_html_len};
-#else
 const Page page07 PROGMEM = {sck_html_name, sck_html, sck_html_len};
-#endif
 
 
 const Page* const pages[] PROGMEM = {
@@ -392,7 +333,9 @@ void opts_func (HTTPRequestParser& request) {
 void sck_func (HTTPRequestParser& request) {
 	char *param;
 
+#ifdef ENABLE_TIME
 	rtCheckIdx = 0;
+#endif
 
 	param = request.get_parameter (F("rel"));
 	if (strlen (param) > 0) {
@@ -789,6 +732,12 @@ PString& evaluate_uptime (void *data __attribute__ ((unused))) {
 	return pBuffer;
 }
 
+
+#ifdef __arm__
+#include <malloc.h>		// For struct mallinfo
+#include <unistd.h>		// For sbrk()
+#endif
+
 static PString& evaluate_free_ram (void *data __attribute__ ((unused))) {
 #ifdef __arm__
 	// http://forum.arduino.cc/index.php?topic=404908
@@ -895,17 +844,6 @@ EasyReplacementTagArray tags[] PROGMEM = {
 };
 
 
-
-/******************************************************************************
- * TIME
- ******************************************************************************/
-#ifdef ENABLE_TIME
-// FIXME
-//~ time_t syncProvider () {
-	//~ return 1594764336;
-//~ }
-#endif
-
 /******************************************************************************
  * MAIN STUFF                                                                 *
  ******************************************************************************/
@@ -935,7 +873,9 @@ void setup () {
 		relayHysteresis[i] = false;     // Start with no hysteresis
 	}
 
-#if defined (WEBBINO_USE_ENC28J60) || defined (WEBBINO_USE_WIZ5100)
+#if defined (WEBBINO_USE_ENC28J60) || defined (WEBBINO_USE_WIZ5100) || \
+      defined (WEBBINO_USE_ENC28J60_UIP)
+
 	// Get MAC from EEPROM and init network interface
 	byte mac[MAC_SIZE];
 
@@ -956,7 +896,8 @@ void setup () {
 			}
 
 #if defined (WEBBINO_USE_ENC28J60) || defined (WEBBINO_USE_WIZ5100) || \
-    defined (WEBBINO_USE_WIZ5500) || defined (WEBBINO_USE_FISHINO)
+    defined (WEBBINO_USE_WIZ5500) || defined (WEBBINO_USE_FISHINO) || \
+    defined (WEBBINO_USE_ENC28J60_UIP)
 			bool ok = netint.begin (mac, ip, gw, gw /* FIXME: DNS */, mask);
 #elif defined (WEBBINO_USE_ESP8266) || defined (WEBBINO_USE_WIFI) || \
       defined (WEBBINO_USE_WIFI101) || defined (WEBBINO_USE_ESP8266_STANDALONE) || \
@@ -983,7 +924,7 @@ void setup () {
 		case NETMODE_DHCP:
 			WDPRINTLN (F("Trying to get an IP address through DHCP"));
 #if defined (WEBBINO_USE_ENC28J60) || defined (WEBBINO_USE_WIZ5100) || \
-    defined (WEBBINO_USE_WIZ5500)
+    defined (WEBBINO_USE_WIZ5500) || defined (WEBBINO_USE_ENC28J60_UIP)
 			bool ok = netint.begin (mac);
 #elif defined (WEBBINO_USE_ESP8266)
 			swSerial.begin (9600);
@@ -1034,17 +975,36 @@ void setup () {
 
 	/* Note that this might interfere with Ethernet boards that use SPI,
 	 * since pin 13 is SCK.
+	 *
+	 * Note that on Blue Pills, the led is actually active low
 	 */
+#ifdef ARDUINO_ARCH_STM32F1
+#define LED_ON LOW
+#define LED_OFF HIGH
+#else
+#define LED_ON HIGH
+#define LED_OFF LOW
+#endif
 	pinMode (LED_BUILTIN, OUTPUT);
 	for (int i = 0; i < 3; i++) {
-		digitalWrite (LED_BUILTIN, HIGH);
+		digitalWrite (LED_BUILTIN, LED_ON);
 		delay (100);
-		digitalWrite (LED_BUILTIN, LOW);
+		digitalWrite (LED_BUILTIN, LED_OFF);
 		delay (100);
 	}
 }
 
 void loop () {
+//~ #ifdef ENABLE_TIME
+	//~ // FIXME TEMP!
+	//~ time_t pctime;
+
+	//~ if (Serial.find ("T")) {
+		//~ pctime = Serial.parseInt ();
+		//~ processSyncMessage (pctime);
+	//~ }
+//~ #endif
+
 	webserver.loop ();
 
 #ifdef ENABLE_THERMOMETER
