@@ -1,5 +1,4 @@
-SmartStrip
-==========
+# SmartStrip
 SmartStrip is a sketch for Arduino meant to allow advanced control of relays
 through a web interface.
 
@@ -8,28 +7,19 @@ relays, i.e.: a relay can be configured to turn on when the temperature goes
 above/below a given threshold (with a given hysteresis margin). The temperature
 is measured through a DS18B20 sensor connected to any pin of the Arduino.
 
-At the moment the main targeted platform is KMTronic's DINo:
-http://sigma-shop.com/product/72/web-internet-ethernet-controlled-relay-board-arduino-compatible-rs485-usb.html.
-I chose this board since it has everything I need for my purposes, so it is the
+At the moment the main targeted platform is [KMTronic's DINo](http://sigma-shop.com/product/72/web-internet-ethernet-controlled-relay-board-arduino-compatible-rs485-usb.html). I chose this board since it has everything I need for my purposes, so it is the
 only platform which should work "out of the box". Other boards/configurations
 can probably be supported with minor changes in the code. As SmartStrip uses
-the Webbino library for its webserver part, it is both compatible with the
-official Ethernet Shield and ENC28J60-based shields. Experimental support is
-also available for ESP8266-based wireless shields.
+the [Webbino](https://github.com/SukkoPera/Webbino) library for its webserver part, it is both compatible with the
+official Ethernet Shield and many other network interfaces, both wired and wireless.
 
 Some features can be enabled and disabled in the "common.h" file. The used I/O
 pins can also be changed there.
 
-As mentioned, SmartStrip uses the Webbino libraries, and actually depends upon
-other libraries that are part of my Sukkino collection, so you will need to
-install it if you want to compile this sketch. It is available at:
-https://github.com/SukkoPera/Sukkino.
-
 Some features being investigated for the future are time-based relay switching
 and LCD/Keypad control, but feel free to suggest your own :).
 
-License
-=======
+## License
 SmartStrip is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
