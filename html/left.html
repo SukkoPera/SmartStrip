@@ -1,19 +1,20 @@
 <html>
 <head>
-<base target="right">
+#ifdef ENABLE_CSS
+	<link href="style.css" rel="stylesheet">
+#endif
+	<base target="right">
 </head>
 <body>
-<ul style="list-style: none; padding:0; margin:0;">
-<li><a href="main.html">Status</a></li><br/>
-<li><a href="sck.html?rel=1">Socket 1</a></li><br/>
-<li><a href="sck.html?rel=2">Socket 2</a></li><br/>
-<li><a href="sck.html?rel=3">Socket 3</a></li><br/>
+		<a href="main.html">Status</a><br/><br/>
+		<a href="sck.html?rel=1">Socket 1</a><br/><br/>
+		<a href="sck.html?rel=2">Socket 2</a><br/><br/>
+		<a href="sck.html?rel=3">Socket 3</a><br/><br/>
 #ifdef ENABLE_4TH_RELAY
-<li><a href="sck.html?rel=4">Socket 4</a></li><br/>
+		<a href="sck.html?rel=4">Socket 4</a><br/><br/>
 #endif
-<li><a href="net.html">Network Configuration</a></li><br/>
-<li><a href="opts.html">Options</a></li><br/>
-<li><a href="about.html">About</a></li>
-</ul>
+		<a href="net.html">Network Configuration</a><br/><br/>
+		<a href="opts.html">Options</a><br/><br/>
+		<a href="about.html">About</a><br/>
 </body>
 </html>

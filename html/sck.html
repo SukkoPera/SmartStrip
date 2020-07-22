@@ -1,5 +1,10 @@
 <html>
-	<body>
+#ifdef ENABLE_CSS
+<head>
+	<link href="style.css" rel="stylesheet">
+</head>
+#endif
+<body>
 	<h3>Socket #GETP_rel#</h3>
 		<form method="get">
 			<input type="hidden" name="rel" value="#GETP_rel#"/>
