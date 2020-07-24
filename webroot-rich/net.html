@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>SmartStrip #VERSION#</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link rel="stylesheet" href="style.css">
+	</head>
+	<body>
+		<div class="header">
+			<div class="container">
+				<h1 class="header-heading">SmartStrip #VERSION#</h1>
+			</div>
+		</div>
+		<div class="nav-bar">
+			<div class="container">
+				<ul class="nav">
+					<li><a href="index.html">Status</a></li>
+					<li><a href="sck.html?rel=1">Socket 1</a></li>
+					<li><a href="sck.html?rel=2">Socket 2</a></li>
+					<li><a href="sck.html?rel=3">Socket 3</a></li>
+#ifdef ENABLE_4TH_RELAY
+					<li><a href="sck.html?rel=4">Socket 4</a></li>
+#endif
+					<li><a href="net.html">Network Configuration</a></li>
+					<li><a href="opts.html">Options</a></li>
+					<li><a href="https://github.com/SukkoPera/SmartStrip">GitHub Project</a></li>
+				</ul>
+			</div>
+		</div>
+		<div class="content">
+			<div class="container">
+				<div class="main">
+					<h1>Options</h1>
+					<hr>
+					<form>
+						<table cols="2">
+							<tr><td>MAC Address</td><td><input type="text" name="mac" value="#NET_MAC#"/></td></tr>
+							<tr><td>Mode</td><td><input type="radio" name="mode" value="dhcp" #NETMODE_DHCP_CHK#/>DHCP<input type="radio" name="mode" value="static" #NETMODE_STATIC_CHK#/>Static</td></tr>
+							<tr><td>IP Address</td><td><input type="text" name="ip" value="#NET_IP#"/></td></tr>
+							<tr><td>Netmask</td><td><input type="text" name="mask" value="#NET_MASK#"/></td></tr>
+							<tr><td>Default Gateway</td><td><input type="text" name="gw" value="#NET_GW#"/></td></tr>
+						</table>
+						<br />
+						<input class="btn" type="submit" value="Save" />
+					</form>
+					<hr>
+				</div>
+				<div class="aside">
+					<h3>Sidebar</h3>
+					<p>
+						<ul class="list-unstyled">
+							<li>Free RAM: #FREERAM# bytes</li>
+#ifdef ENABLE_TIME
+							<li>Current Time: #DATE# #TIME#</li>
+#endif
+							<li>System Uptime: #UPTIME#</li>
+							<li>Current Temperature: #DEGC# &deg;C (#DEGF# &deg;F)</li>
+						</ul>
+					</p>
+				</div>
+			</div>
+		</div>
+		<div class="footer">
+			<div class="container">
+				<ul class="list-unstyled">
+					This program comes with ABSOLUTELY NO WARRANTY. This is free software, and you are welcome to redistribute it <a href="http://www.gnu.org/licenses/gpl-3.0.html">under certain conditions</a>.
+				</ul>
+			</div>
+		</div>
+	</body>
+</html>

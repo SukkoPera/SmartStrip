@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>SmartStrip #VERSION#</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link rel="stylesheet" href="style.css">
+	</head>
+	<body>
+		<div class="header">
+			<div class="container">
+				<h1 class="header-heading">SmartStrip #VERSION#</h1>
+			</div>
+		</div>
+		<div class="nav-bar">
+			<div class="container">
+				<ul class="nav">
+					<li><a href="index.html">Status</a></li>
+					<li><a href="sck.html?rel=1">Socket 1</a></li>
+					<li><a href="sck.html?rel=2">Socket 2</a></li>
+					<li><a href="sck.html?rel=3">Socket 3</a></li>
+#ifdef ENABLE_4TH_RELAY
+					<li><a href="sck.html?rel=4">Socket 4</a></li>
+#endif
+					<li><a href="net.html">Network Configuration</a></li>
+					<li><a href="opts.html">Options</a></li>
+					<li><a href="https://github.com/SukkoPera/SmartStrip">GitHub Project</a></li>
+				</ul>
+			</div>
+		</div>
+		<div class="content">
+			<div class="container">
+				<div class="main">
+					<h1>Socket #GETP_rel#</h1>
+					<hr>
+					<form method="get">
+						<input type="hidden" name="rel" value="#GETP_rel#" />
+						<input type="radio" name="mode" value="on" #RELAY_ON_CHK#/>ON<br />
+						<input type="radio" name="mode" value="off" #RELAY_OFF_CHK#/>OFF<br />
+						<input type="radio" name="mode" value="temp" #RELAY_TEMP_CHK#/>Enabled when T
+						<select name="thres">
+							<option value="gt" #RELAY_TGT_CHK#>&gt;</option>
+							<option value="lt" #RELAY_TLT_CHK#>&lt;</option>
+						</select>
+						<input name="temp" size="3" value="#RELAY_THRES#"/>
+						<select name="units">
+							<option value="C" #RELAY_TEMPC_CHK#>&deg;C</option>
+							<option value="F" #RELAY_TEMPF_CHK#>&deg;F</option>
+						</select><br />
+#ifdef ENABLE_TIME
+						<input type="radio" name="mode" value="time" #RELAY_TIME_CHK#/>Enabled on:<br/>
+						<input type="checkbox" name="Sun" value="1" #DEN_SU#/>Su
+						<input type="checkbox" name="Mon" value="1" #DEN_MO#/>Mo
+						<input type="checkbox" name="Tue" value="1" #DEN_TU#/>Tu
+						<input type="checkbox" name="Wed" value="1" #DEN_WE#/>We
+						<input type="checkbox" name="Thu" value="1" #DEN_TH#/>Th
+						<input type="checkbox" name="Fri" value="1" #DEN_FR#/>Fr
+						<input type="checkbox" name="Sat" value="1" #DEN_SA#/>Sa
+						<br/>
+						<br/>
+						<table border="1">
+							<tr>
+								<td></td>
+								<td>0</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td>
+								<td>6</td><td>7</td><td>8</td><td>9</td><td>10</td><td>11</td>
+								<td>12</td><td>13</td><td>14</td><td>15</td><td>16</td><td>17</td>
+								<td>18</td><td>19</td><td>20</td><td>21</td><td>22</td><td>23</td>
+							</tr>
+							<tr>
+								<td>00</td>
+								<td><input type="checkbox" name="t0_0" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t1_0" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t2_0" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t3_0" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t4_0" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t5_0" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t6_0" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t7_0" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t8_0" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t9_0" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t10_0" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t11_0" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t12_0" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t13_0" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t14_0" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t15_0" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t16_0" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t17_0" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t18_0" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t19_0" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t20_0" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t21_0" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t22_0" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t23_0" #RTIME_CHK#/></td>
+							</tr>
+							<tr>
+								<td>15</td>
+								<td><input type="checkbox" name="t0_15" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t1_15" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t2_15" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t3_15" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t4_15" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t5_15" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t6_15" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t7_15" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t8_15" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t9_15" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t10_15" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t11_15" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t12_15" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t13_15" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t14_15" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t15_15" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t16_15" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t17_15" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t18_15" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t19_15" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t20_15" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t21_15" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t22_15" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t23_15" #RTIME_CHK#/></td>
+							</tr>
+							<tr>
+								<td>30</td>
+								<td><input type="checkbox" name="t0_30" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t1_30" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t2_30" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t3_30" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t4_30" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t5_30" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t6_30" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t7_30" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t8_30" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t9_30" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t10_30" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t11_30" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t12_30" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t13_30" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t14_30" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t15_30" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t16_30" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t17_30" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t18_30" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t19_30" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t20_30" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t21_30" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t22_30" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t23_30" #RTIME_CHK#/></td>
+							</tr>
+							<tr>
+								<td>45</td>
+								<td><input type="checkbox" name="t0_45" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t1_45" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t2_45" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t3_45" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t4_45" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t5_45" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t6_45" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t7_45" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t8_45" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t9_45" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t10_45" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t11_45" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t12_45" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t13_45" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t14_45" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t15_45" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t16_45" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t17_45" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t18_45" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t19_45" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t20_45" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t21_45" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t22_45" #RTIME_CHK#/></td>
+								<td><input type="checkbox" name="t23_45" #RTIME_CHK#/></td>
+							</tr>
+						</table>
+#endif
+						<br />
+						<input class="btn" type="submit" value="Save" />
+					</form>
+					<hr>
+				</div>
+				<div class="aside">
+					<h3>Sidebar</h3>
+					<p>
+						<ul class="list-unstyled">
+							<li>Free RAM: #FREERAM# bytes</li>
+#ifdef ENABLE_TIME
+							<li>Current Time: #DATE# #TIME#</li>
+#endif
+							<li>System Uptime: #UPTIME#</li>
+							<li>Current Temperature: #DEGC# &deg;C (#DEGF# &deg;F)</li>
+						</ul>
+					</p>
+				</div>
+			</div>
+		</div>
+		<div class="footer">
+			<div class="container">
+				<ul class="list-unstyled">
+					This program comes with ABSOLUTELY NO WARRANTY. This is free software, and you are welcome to redistribute it <a href="http://www.gnu.org/licenses/gpl-3.0.html">under certain conditions</a>.
+				</ul>
+			</div>
+		</div>
+	</body>
+</html>
