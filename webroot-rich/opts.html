@@ -2,14 +2,14 @@
 <html>
 	<head>
 		<meta charset="utf-8">
-		<title>SmartStrip #VERSION#</title>
+		<title>SmartStrip $VERSION$</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<link rel="stylesheet" href="style.css">
 	</head>
 	<body>
 		<div class="header">
 			<div class="container">
-				<h1 class="header-heading">SmartStrip #VERSION#</h1>
+				<h1 class="header-heading">SmartStrip $VERSION$</h1>
 			</div>
 		</div>
 		<div class="nav-bar">
@@ -35,8 +35,8 @@
 					<hr>
 					<form>
 						<table cols="2">
-							<tr><td>Delay</td><td><input type="text" name="delay" value="#RELAY_DELAY#"/></td></tr>
-							<tr><td>Hysteresis Margin</td><td><input type="text" name="hyst" value="#RELAY_MARGIN#"/></td></tr>
+							<tr><td>Delay</td><td><input type="text" name="delay" value="$RELAY_DELAY$"/></td></tr>
+							<tr><td>Hysteresis Margin</td><td><input type="text" name="hyst" value="$RELAY_MARGIN$"/></td></tr>
 						</table>
 						<br />
 						<input class="btn" type="submit" value="Save" />
@@ -47,12 +47,12 @@
 					<h3>Sidebar</h3>
 					<p>
 						<ul class="list-unstyled">
-							<li>Free RAM: #FREERAM# bytes</li>
+							<li>Free RAM: $FREERAM$ bytes</li>
 #ifdef ENABLE_TIME
-							<li>Current Time: #DATE# #TIME#</li>
+							<li>Current Time: $DATE$ $TIME$</li>
 #endif
-							<li>System Uptime: #UPTIME#</li>
-							<li>Current Temperature: #DEGC# &deg;C (#DEGF# &deg;F)</li>
+							<li>System Uptime: $UPTIME$</li>
+							<li>Current Temperature: $DEGC$ &deg;C ($DEGF$ &deg;F)</li>
 						</ul>
 					</p>
 				</div>

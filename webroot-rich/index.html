@@ -2,14 +2,14 @@
 <html>
 	<head>
 		<meta charset="utf-8">
-		<title>SmartStrip #VERSION#</title>
+		<title>SmartStrip $VERSION$</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<link rel="stylesheet" href="style.css">
 	</head>
 	<body>
 		<div class="header">
 			<div class="container">
-				<h1 class="header-heading">SmartStrip #VERSION#</h1>
+				<h1 class="header-heading">SmartStrip $VERSION$</h1>
 			</div>
 		</div>
 		<div class="nav-bar">
@@ -34,11 +34,11 @@
 					<h1>Status</h1>
 					<hr>
 					<ul class="list-unstyled">
-						<li>Socket 1: #RELAY1_ST#</li>
-						<li>Socket 2: #RELAY2_ST#</li>
-						<li>Socket 3: #RELAY3_ST#</li>
+						<li>Socket 1: $RELAY1_ST$</li>
+						<li>Socket 2: $RELAY2_ST$</li>
+						<li>Socket 3: $RELAY3_ST$</li>
 #ifdef ENABLE_4TH_RELAY
-						<li>Socket 4: #RELAY4_ST#</li>
+						<li>Socket 4: $RELAY4_ST$</li>
 #endif
 					</ul>
 					<hr>
@@ -47,12 +47,12 @@
 					<h3>Sidebar</h3>
 					<p>
 						<ul class="list-unstyled">
-							<li>Free RAM: #FREERAM# bytes</li>
+							<li>Free RAM: $FREERAM$ bytes</li>
 #ifdef ENABLE_TIME
-							<li>Current Time: #DATE# #TIME#</li>
+							<li>Current Time: $DATE$ $TIME$</li>
 #endif
-							<li>System Uptime: #UPTIME#</li>
-							<li>Current Temperature: #DEGC# &deg;C (#DEGF# &deg;F)</li>
+							<li>System Uptime: $UPTIME$</li>
+							<li>Current Temperature: $DEGC$ &deg;C ($DEGF$ &deg;F)</li>
 						</ul>
 					</p>
 				</div>
