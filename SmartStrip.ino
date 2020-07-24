@@ -37,6 +37,9 @@ FlashStorage flashStorage;
 	  defined (WEBBINO_USE_ENC28J60_UIP)
 	#include <WebbinoInterfaces/WIZ5x00.h>
 	NetworkInterfaceWIZ5x00 netint;
+
+	// ENC28J60_UIP also needs an SS pin
+	const byte SS_PIN = PA4;		// STM32
 #elif defined (WEBBINO_USE_ESP8266)
 	#include <WebbinoInterfaces/AllWiFi.h>
 
@@ -896,9 +899,10 @@ void setup () {
 			}
 
 #if defined (WEBBINO_USE_ENC28J60) || defined (WEBBINO_USE_WIZ5100) || \
-    defined (WEBBINO_USE_WIZ5500) || defined (WEBBINO_USE_FISHINO) || \
-    defined (WEBBINO_USE_ENC28J60_UIP)
+    defined (WEBBINO_USE_WIZ5500) || defined (WEBBINO_USE_FISHINO)
 			bool ok = netint.begin (mac, ip, gw, gw /* FIXME: DNS */, mask);
+#elif defined (WEBBINO_USE_ENC28J60_UIP)
+			bool ok = netint.begin (mac, ip, gw, gw /* FIXME: DNS */, mask, SS_PIN);
 #elif defined (WEBBINO_USE_ESP8266) || defined (WEBBINO_USE_WIFI) || \
       defined (WEBBINO_USE_WIFI101) || defined (WEBBINO_USE_ESP8266_STANDALONE) || \
       defined (WEBBINO_USE_DIGIFI)
@@ -924,8 +928,10 @@ void setup () {
 		case NETMODE_DHCP:
 			WDPRINTLN (F("Trying to get an IP address through DHCP"));
 #if defined (WEBBINO_USE_ENC28J60) || defined (WEBBINO_USE_WIZ5100) || \
-    defined (WEBBINO_USE_WIZ5500) || defined (WEBBINO_USE_ENC28J60_UIP)
+    defined (WEBBINO_USE_WIZ5500)
 			bool ok = netint.begin (mac);
+#elif defined (WEBBINO_USE_ENC28J60_UIP)
+			bool ok = netint.begin (mac, SS_PIN);
 #elif defined (WEBBINO_USE_ESP8266)
 			swSerial.begin (9600);
 			bool ok = netint.begin (swSerial, WIFI_SSID, WIFI_PASSWORD);
@@ -995,15 +1001,7 @@ void setup () {
 }
 
 void loop () {
-//~ #ifdef ENABLE_TIME
-	//~ // FIXME TEMP!
-	//~ time_t pctime;
 
-	//~ if (Serial.find ("T")) {
-		//~ pctime = Serial.parseInt ();
-		//~ processSyncMessage (pctime);
-	//~ }
-//~ #endif
 
 	webserver.loop ();
 
