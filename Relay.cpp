@@ -60,8 +60,8 @@ void Relay::readOptions () {
 	WDPRINT (id);
 	WDPRINT (F(" mode is "));
 	WDPRINT (mode);
-	WDPRINT (F(" and state is "));
-	WDPRINT (state);
+	WDPRINT (F(", hysteresis is "));
+	WDPRINT (hysteresis);
 	WDPRINT (F(" and delay is "));
 	WDPRINTLN (delay);
 }
@@ -79,28 +79,25 @@ void Relay::writeOptions () {
 }
 
 void Relay::setDefaults () {
+	enabled = false;
 	mode = DEFAULT_RELAY_MODE;
-	state = DEFAULT_RELAY_STATE;
 	threshold = DEFAULT_RELAY_THRESHOLD;
 	units = DEFAULT_RELAY_UNITS;
 	hysteresis = DEFAULT_RELAY_HYSTERESIS;
 	delay = DEFAULT_RELAY_DELAY;
 }
 
-void Relay::switchState (RelayState newState) {
+void Relay::setEnabled (boolean e) {
 	WDPRINT (F("Turning "));
-	WDPRINT (newState == RELAY_ON ? F("ON") : F("OFF"));
+	WDPRINT (e ? F("ON") : F("OFF"));
 	WDPRINT (F(" relay "));
 	WDPRINTLN (id, DEC);
 
-	state = newState;
-	effectState ();
-}
+	enabled = e;
 
-void Relay::effectState () {
 #ifdef RELAYS_ACTIVE_LOW
-	digitalWrite (pin, !state);
+	digitalWrite (pin, enabled ? LOW : HIGH);
 #else
-	digitalWrite (pin, state);
+	digitalWrite (pin, enabled ? HIGH : LOW);
 #endif
 }

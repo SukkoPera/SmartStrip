@@ -605,15 +605,10 @@ PString& evaluate_netmode (void *data) {
 PString& evaluate_relay_status (void *data) {
 	int relayNo = reinterpret_cast<int> (data);
 	if (relayNo >= 1 && relayNo <= RELAYS_NO) {
-		switch (relays[relayNo - 1].state) {
-			case RELAY_ON:
-				pBuffer.print (F("ON"));
-				break;
-			case RELAY_OFF:
-				pBuffer.print (F("OFF"));
-				break;
-			default:
-				break;
+		if (relays[relayNo - 1].enabled) {
+			pBuffer.print (F("ON"));
+		} else {
+			pBuffer.print (F("OFF"));
 		}
 	}
 
@@ -872,7 +867,6 @@ void setup () {
 
 	for (i = 0; i < RELAYS_NO; i++) {
 		relays[i].readOptions ();
-		relays[i].effectState ();
 		relayHysteresis[i] = false;     // Start with no hysteresis
 	}
 
@@ -1030,46 +1024,40 @@ void loop () {
 
 		switch (r.mode) {
 			case RELMD_ON:
-				if (r.state != RELAY_ON) {
-					r.switchState (RELAY_ON);
-					//~ r.writeOptions ();
+				if (!r.enabled) {
+					r.setEnabled (true);
 				}
 				break;
 			case RELMD_OFF:
-				if (r.state != RELAY_OFF) {
-					r.switchState (RELAY_OFF);
-					//~ r.writeOptions ();
+				if (r.enabled) {
+					r.setEnabled (false);
 				}
 				break;
 #ifdef ENABLE_THERMOMETER
 			case RELMD_GT:
-				if (((!hysteresisEnabled && temperature > r.threshold) || (hysteresisEnabled && temperature > r.threshold + r.hysteresis / 10.0)) && r.state != RELAY_ON) {
-					r.switchState (RELAY_ON);
-					//~ r.writeOptions ();
+				if (((!hysteresisEnabled && temperature > r.threshold) || (hysteresisEnabled && temperature > r.threshold + r.hysteresis / 10.0)) && !r.enabled) {
+					r.setEnabled (true);
 					hysteresisEnabled = true;
-				} else if (temperature <= r.threshold && r.state != RELAY_OFF) {
-					r.switchState (RELAY_OFF);
-					//~ r.writeOptions ();
+				} else if (temperature <= r.threshold && r.enabled) {
+					r.setEnabled (false);
 				}
 				break;
 			case RELMD_LT:
-				if (((!hysteresisEnabled && temperature < r.threshold) || (hysteresisEnabled && temperature < r.threshold - r.hysteresis / 10.0)) && r.state != RELAY_ON) {
-					r.switchState (RELAY_ON);
-					//~ r.writeOptions ();
+				if (((!hysteresisEnabled && temperature < r.threshold) || (hysteresisEnabled && temperature < r.threshold - r.hysteresis / 10.0)) && r.enabled) {
+					r.setEnabled (true);
 					hysteresisEnabled = true;
-				} else if (temperature >= r.threshold && r.state != RELAY_OFF) {
-					r.switchState (RELAY_OFF);
-					//~ r.writeOptions ();
+				} else if (temperature >= r.threshold && r.enabled) {
+					r.setEnabled (false);
 				}
 				break;
 #endif
 #ifdef ENABLE_TIME
 			case RELMD_TIMED: {
 				boolean shouldBeOn = r.schedule.get (hour (), minute ());
-				if (shouldBeOn && r.state != RELAY_ON) {
-					r.switchState (RELAY_ON);
-				} else if (!shouldBeOn && r.state != RELAY_OFF) {
-					r.switchState (RELAY_OFF);
+				if (shouldBeOn && !r.enabled) {
+					r.setEnabled (true);
+				} else if (!shouldBeOn && r.enabled) {
+					r.setEnabled (false);
 				}
 				break;
 			}

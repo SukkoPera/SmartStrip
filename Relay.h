@@ -34,6 +34,8 @@ public:
 	const byte id;
 	const byte pin;
 
+	boolean enabled;		// true when contacts are closed and relay is conducing
+
 #ifdef ENABLE_TIME
 	Schedule schedule;
 #endif
@@ -44,8 +46,7 @@ public:
 	void writeOptions ();
 	void setDefaults ();
 
-	void switchState (RelayState newState);
-	void effectState ();
+	void setEnabled (boolean e);
 };
 
 #endif

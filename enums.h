@@ -39,11 +39,6 @@ enum TemperatureUnits {
 	TEMP_F = 1
 };
 
-enum RelayState {
-	RELAY_OFF = LOW,
-	RELAY_ON = HIGH
-};
-
 enum NetworkMode {
 	NETMODE_DHCP = 0,
 	NETMODE_STATIC = 1
@@ -52,7 +47,6 @@ enum NetworkMode {
 // If this is modified, please review the EEPROM offsets in common.h
 struct RelayOptions {
 	RelayMode mode;
-	RelayState state;
 	TemperatureUnits units;
 	byte threshold;
 	byte hysteresis;
