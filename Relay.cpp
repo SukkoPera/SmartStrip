@@ -34,6 +34,16 @@ const int Relay::optionAddress[RELAYS_NO] = {
 };
 
 Relay::Relay (const byte _id, const byte _pin): id (_id), pin (_pin) {
+#ifdef RELAYS_ACTIVE_LOW
+	/* Switching the pin from the start-up mode to OUTPUT will make it go low
+	 * and turn the relay on in this case. By writing the pin HIGH before
+	 * calling pinMode(), we will turn on its pull-up resistor and have it high
+	 * when mode is changed.
+	 *
+	 * Note that this works on both AVRs and STM32F1.
+	 */
+	digitalWrite (_pin, HIGH);
+#endif
 	pinMode (_pin, OUTPUT);
 
 #ifdef ENABLE_TIME
