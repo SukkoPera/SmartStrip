@@ -118,7 +118,7 @@ bool relayHysteresis[RELAYS_NO];
 void checkAndFormatEEPROM () {
 	unsigned long magic;
 
-#ifdef ARDUINO_ARCH_ESP32
+#if defined (ARDUINO_ARCH_ESP32) || defined (ARDUINO_ARCH_ESP8266)
 	EEPROM.begin (2048);
 #endif
 
@@ -163,7 +163,7 @@ void checkAndFormatEEPROM () {
 		EEPROM.put (EEPROM_GATEWAY_ADDR + 2, DEFAULT_GATEWAY_ADDRESS_B3);
 		EEPROM.put (EEPROM_GATEWAY_ADDR + 3, DEFAULT_GATEWAY_ADDRESS_B4);
 
-#ifdef ARDUINO_ARCH_ESP32
+#if defined (ARDUINO_ARCH_ESP32) || defined (ARDUINO_ARCH_ESP8266)
 		EEPROM.commit ();
 #endif
 
@@ -306,7 +306,7 @@ void netconfig_func (HTTPRequestParser& request) {
 			EEPROM.put (EEPROM_GATEWAY_ADDR + i, buf[i]);
 	}
 
-#ifdef ARDUINO_ARCH_ESP32
+#if defined  (ARDUINO_ARCH_ESP32) || defined (ARDUINO_ARCH_ESP8266)
 	EEPROM.commit ();
 #endif
 
@@ -745,7 +745,7 @@ static PString& evaluate_free_ram (void *data __attribute__ ((unused))) {
 	char* heapend = (char*) sbrk (0);
 	register char* stack_ptr asm ("sp");
 	pBuffer.print (stack_ptr - heapend + mi.fordblks);
-#elif defined (ARDUINO_ARCH_ESP32)
+#elif defined (ARDUINO_ARCH_ESP32) || defined (ARDUINO_ARCH_ESP8266)
 	pBuffer.print (ESP.getFreeHeap ());
 #elif defined (ARDUINO_ARCH_AVR)
 	// http://playground.arduino.cc/Code/AvailableMemory
@@ -978,9 +978,10 @@ void setup () {
 	/* Note that this might interfere with Ethernet boards that use SPI,
 	 * since pin 13 is SCK.
 	 *
-	 * Note that on Blue Pills, the led is actually active low
+	 * Note that on Blue Pills and NodeMCU, the led is actually active low.
+	 * It might be the case on other ESP8266 boards, too.
 	 */
-#ifdef ARDUINO_ARCH_STM32F1
+#if defined (ARDUINO_ARCH_STM32F1) || defined (ARDUINO_ESP8266_NODEMCU)
 #define LED_ON LOW
 #define LED_OFF HIGH
 #else

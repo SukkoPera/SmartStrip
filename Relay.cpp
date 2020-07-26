@@ -72,7 +72,7 @@ void Relay::writeOptions () {
 
 	EEPROM.put (optionAddress[id - 1], static_cast<RelayOptions&> (*this));
 
-#ifdef ARDUINO_ARCH_ESP32
+#if defined (ARDUINO_ARCH_ESP32) || defined (ARDUINO_ARCH_ESP8266)
 	EEPROM.commit ();
 #endif
 
