@@ -848,14 +848,21 @@ EasyReplacementTagArray tags[] PROGMEM = {
  * MAIN STUFF                                                                 *
  ******************************************************************************/
 
+#ifdef AUTH_REALM
+
+#ifndef ENABLE_HTTPAUTH
+#error "HTTP Auth must be enabed in Webbino"
+#endif
+
 boolean authorize (const char *user, const char *passwd) {
 	WDPRINT (F("Validating username \""));
 	WDPRINT (user);
 	WDPRINT (F("\" with password \""));
 	WDPRINT (passwd);
 	WDPRINTLN ("\"");
-	return strcmp_P (user, PSTR ("smart")) == 0 && strcmp_P (passwd, PSTR ("strip")) == 0;
+	return strcmp_P (user, PSTR (AUTH_USER)) == 0 && strcmp_P (passwd, PSTR (AUTH_PASSWD)) == 0;
 }
+#endif
 
 void setup () {
 	byte i;
@@ -961,8 +968,9 @@ void setup () {
 	flashStorage.begin (pages);
 	webserver.addStorage (flashStorage);
 
-	static const char *realm = "SmartStrip";
-	webserver.enableAuth (realm, authorize);
+#if defined (AUTH_REALM)
+	webserver.enableAuth (AUTH_REALM, authorize);
+#endif
 
 #ifdef ENABLE_THERMOMETER
 	thermometer.begin (THERMOMETER_PIN);

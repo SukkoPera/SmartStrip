@@ -41,6 +41,13 @@
 #error "Please define relay pins for this board"
 #endif
 
+/* Define these to enable HTTP authentication. Note that HTTP authentication
+ * must also be enabled in Webbino for this to work.
+ */
+#define AUTH_REALM "SmartStrip"
+#define AUTH_USER "smart"
+#define AUTH_PASSWD "strip"
+
 /* Define this if your relays are activated setting their input pin LOW.
  * Note that this applies to all relays, you can't currently have mixed active-
  * high and active-low relays.
