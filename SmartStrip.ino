@@ -357,6 +357,7 @@ void sck_func (HTTPRequestParser& request) {
 					relay.mode = RELMD_ON;
 				} else if (strcmp_P (param, PSTR ("off")) == 0) {
 					relay.mode = RELMD_OFF;
+#ifdef ENABLE_THERMOMETER
 				} else if (strcmp_P (param, PSTR ("temp")) == 0) {
 					param = request.get_parameter (F("thres"));
 					if (strcmp_P (param, PSTR ("gt")) == 0)
@@ -374,6 +375,7 @@ void sck_func (HTTPRequestParser& request) {
 						relay.units = TEMP_C;
 
 					relayHysteresis[relayNo - 1] = false;
+#endif
 #ifdef ENABLE_TIME
 				} else if (strcmp_P (param, PSTR ("time")) == 0) {
 					char tmpBuf[8];
