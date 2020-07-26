@@ -23,7 +23,9 @@
 					<li><a href="sck.html?rel=4">Socket 4</a></li>
 #endif
 					<li><a href="net.html">Network Configuration</a></li>
+#ifdef ENABLE_TEMPERATURE
 					<li><a href="opts.html">Options</a></li>
+#endif
 					<li><a href="https://github.com/SukkoPera/SmartStrip">GitHub Project</a></li>
 				</ul>
 			</div>
@@ -48,11 +50,13 @@
 					<p>
 						<ul class="list-unstyled">
 							<li>Free RAM: $FREERAM$ bytes</li>
+#ifdef ENABLE_TEMPERATURE
+							<li>Current Temperature: $DEGC$ &deg;C ($DEGF$ &deg;F)</li>
+#endif
 #ifdef ENABLE_TIME
 							<li>Current Time: $DATE$ $TIME$</li>
 #endif
 							<li>System Uptime: $UPTIME$</li>
-							<li>Current Temperature: $DEGC$ &deg;C ($DEGF$ &deg;F)</li>
 						</ul>
 					</p>
 				</div>

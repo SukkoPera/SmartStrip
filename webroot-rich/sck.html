@@ -23,7 +23,9 @@
 					<li><a href="sck.html?rel=4">Socket 4</a></li>
 #endif
 					<li><a href="net.html">Network Configuration</a></li>
+#ifdef ENABLE_TEMPERATURE
 					<li><a href="opts.html">Options</a></li>
+#endif
 					<li><a href="https://github.com/SukkoPera/SmartStrip">GitHub Project</a></li>
 				</ul>
 			</div>
@@ -37,6 +39,7 @@
 						<input type="hidden" name="rel" value="$GETP_rel$" />
 						<input type="radio" name="mode" value="on" $RELAY_ON_CHK$/>ON<br />
 						<input type="radio" name="mode" value="off" $RELAY_OFF_CHK$/>OFF<br />
+#ifdef ENABLE_TEMPERATURE
 						<input type="radio" name="mode" value="temp" $RELAY_TEMP_CHK$/>Enabled when T
 						<select name="thres">
 							<option value="gt" $RELAY_TGT_CHK$>&gt;</option>
@@ -47,6 +50,7 @@
 							<option value="C" $RELAY_TEMPC_CHK$>&deg;C</option>
 							<option value="F" $RELAY_TEMPF_CHK$>&deg;F</option>
 						</select><br />
+#endif
 #ifdef ENABLE_TIME
 						<input type="radio" name="mode" value="time" $RELAY_TIME_CHK$/>Enabled on:<br/>
 						<input type="checkbox" name="Sun" value="1" $DEN_SU$/>Su
@@ -186,11 +190,13 @@
 					<p>
 						<ul class="list-unstyled">
 							<li>Free RAM: $FREERAM$ bytes</li>
+#ifdef ENABLE_TEMPERATURE
+							<li>Current Temperature: $DEGC$ &deg;C ($DEGF$ &deg;F)</li>
+#endif
 #ifdef ENABLE_TIME
 							<li>Current Time: $DATE$ $TIME$</li>
 #endif
 							<li>System Uptime: $UPTIME$</li>
-							<li>Current Temperature: $DEGC$ &deg;C ($DEGF$ &deg;F)</li>
 						</ul>
 					</p>
 				</div>
