@@ -531,25 +531,17 @@ PString& evaluate_relay_time_checked (void *data) {
 
 
 #ifdef ENABLE_THERMOMETER
-static PString& evaluate_temp_deg (void *data __attribute__ ((unused))) {
+static PString& evaluate_temp (void *data) {
+	(void) data;
+
 	if (thermometer.available) {
 		Temperature& temp = thermometer.getTemp ();
 		if (temp.valid)
-			pBuffer.print (temp.celsius, 2);
-		else
-			pBuffer.print (PSTR_TO_F (NOT_AVAIL_STR));
-	} else {
-		pBuffer.print (PSTR_TO_F (NOT_AVAIL_STR));
-	}
-
-	return pBuffer;
-}
-
-static PString& evaluate_temp_fahr (void *data __attribute__ ((unused))) {
-	if (thermometer.available) {
-		Temperature& temp = thermometer.getTemp ();
-		if (temp.valid)
+#ifdef USE_FAHRENHEIT
 			pBuffer.print (temp.toFahrenheit (), 2);
+#else
+			pBuffer.print (temp.celsius, 2);
+#endif
 		else
 			pBuffer.print (PSTR_TO_F (NOT_AVAIL_STR));
 	} else {
@@ -661,24 +653,6 @@ PString& evaluate_relay_temp_threshold (void *data __attribute__ ((unused))) {
 	return pBuffer;
 }
 
-PString& evaluate_relay_temp_units_c_checked (void *data __attribute__ ((unused))) {
-	if (lastSelectedRelay >= 1 && lastSelectedRelay <= RELAYS_NO) {
-		if (relays[lastSelectedRelay - 1].units == TEMP_C)
-			pBuffer.print (PSTR_TO_F (SELECTED_STRING));
-	}
-
-	return pBuffer;
-}
-
-PString& evaluate_relay_temp_units_f_checked (void *data __attribute__ ((unused))) {
-	if (lastSelectedRelay >= 1 && lastSelectedRelay <= RELAYS_NO) {
-		if (relays[lastSelectedRelay - 1].units == TEMP_F)
-			pBuffer.print (PSTR_TO_F (SELECTED_STRING));
-	}
-
-	return pBuffer;
-}
-
 PString& evaluate_relay_temp_delay (void *data __attribute__ ((unused))) {
 	// Always use first relay's data
 	pBuffer.print (relays[0].delay);
@@ -781,14 +755,11 @@ EasyReplacementTag (tagRelay3Status, RELAY3_ST, evaluate_relay_status, reinterpr
 EasyReplacementTag (tagRelay4Status, RELAY4_ST, evaluate_relay_status, reinterpret_cast<void *> (4));
 
 #ifdef ENABLE_THERMOMETER
-EasyReplacementTag (tagDegC, DEGC, evaluate_temp_deg);
-EasyReplacementTag (tagDegF, DEGF, evaluate_temp_fahr);
+EasyReplacementTag (tagTemp, TEMP, evaluate_temp);
 EasyReplacementTag (tagRelay, RELAY_TEMP_CHK, evaluate_relay_temp_checked);
 EasyReplacementTag (tagRelayTempGT, RELAY_TGT_CHK, evaluate_relay_temp_gtlt_checked, reinterpret_cast<void *> (RELMD_GT));
 EasyReplacementTag (tagRelayTempLT, RELAY_TLT_CHK, evaluate_relay_temp_gtlt_checked, reinterpret_cast<void *> (RELMD_LT));
 EasyReplacementTag (tagRelayTempThreshold, RELAY_THRES, evaluate_relay_temp_threshold);
-EasyReplacementTag (tagRelayTempUnitsC, RELAY_TEMPC_CHK, evaluate_relay_temp_units_c_checked);
-EasyReplacementTag (tagRelayTempUnitsF, RELAY_TEMPF_CHK, evaluate_relay_temp_units_f_checked);
 EasyReplacementTag (tagRelayTempDelay, RELAY_DELAY, evaluate_relay_temp_delay);
 EasyReplacementTag (tagRelayTempMargin, RELAY_MARGIN, evaluate_relay_temp_margin);
 #endif
@@ -821,14 +792,11 @@ EasyReplacementTagArray tags[] PROGMEM = {
 	&tagRelay4Status,
 
 #ifdef ENABLE_THERMOMETER
-	&tagDegC,
-	&tagDegF,
+	&tagTemp,
     &tagRelay,
     &tagRelayTempGT,
     &tagRelayTempLT,
     &tagRelayTempThreshold,
-    &tagRelayTempUnitsC,
-    &tagRelayTempUnitsF,
     &tagRelayTempDelay,
 	&tagRelayTempMargin,
 #endif

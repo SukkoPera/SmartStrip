@@ -54,7 +54,13 @@
 						<ul class="list-unstyled">
 							<li>Free RAM: $FREERAM$ bytes</li>
 #ifdef ENABLE_TEMPERATURE
-							<li>Current Temperature: $DEGC$ &deg;C ($DEGF$ &deg;F)</li>
+							<li>Current Temperature: $TEMP$ &deg;
+#ifdef ENABLE_FAHRENHEIT
+							F
+#else
+							C
+#endif
+							</li>
 #endif
 #ifdef ENABLE_TIME
 							<li>Current Time: $DATE$ $TIME$</li>

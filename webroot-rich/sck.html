@@ -45,11 +45,13 @@
 							<option value="gt" $RELAY_TGT_CHK$>&gt;</option>
 							<option value="lt" $RELAY_TLT_CHK$>&lt;</option>
 						</select>
-						<input name="temp" size="3" value="$RELAY_THRES$"/>
-						<select name="units">
-							<option value="C" $RELAY_TEMPC_CHK$>&deg;C</option>
-							<option value="F" $RELAY_TEMPF_CHK$>&deg;F</option>
-						</select><br />
+						<input name="temp" size="3" value="$RELAY_THRES$"/>&deg;
+#ifdef ENABLE_FAHRENHEIT
+						F
+#else
+						C
+#endif
+						<br />
 #endif
 #ifdef ENABLE_TIME
 						<input type="radio" name="mode" value="time" $RELAY_TIME_CHK$/>Enabled on:<br/>
@@ -191,7 +193,13 @@
 						<ul class="list-unstyled">
 							<li>Free RAM: $FREERAM$ bytes</li>
 #ifdef ENABLE_TEMPERATURE
-							<li>Current Temperature: $DEGC$ &deg;C ($DEGF$ &deg;F)</li>
+							<li>Current Temperature: $TEMP$ &deg;
+#ifdef ENABLE_FAHRENHEIT
+							F
+#else
+							C
+#endif
+							</li>
 #endif
 #ifdef ENABLE_TIME
 							<li>Current Time: $DATE$ $TIME$</li>

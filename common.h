@@ -60,8 +60,8 @@
 // Thermometer's data wire is connected to pin 2
 #define THERMOMETER_PIN 2
 
-// DS18B20's data resolution
-#define THERMOMETER_RESOLUTION 9
+// Define to express temperatures in degrees Fahrenheit
+//#define USE_FAHRENHEIT
 
 // Delay between temperature readings
 #define THERMO_READ_INTERVAL (60 * 1000UL)

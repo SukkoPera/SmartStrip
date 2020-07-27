@@ -5,20 +5,26 @@
 </head>
 #endif
 <body>
-<h2>SmartStrip #VERSION#</h2>
+<h2>SmartStrip $VERSION$</h2>
 <hr>
-<h4>Socket 1: #RELAY1_ST#</h4>
-<h4>Socket 2: #RELAY2_ST#</h4>
-<h4>Socket 3: #RELAY3_ST#</h4>
+<h4>Socket 1: $RELAY1_ST$</h4>
+<h4>Socket 2: $RELAY2_ST$</h4>
+<h4>Socket 3: $RELAY3_ST$</h4>
 #ifdef ENABLE_4TH_RELAY
-<h4>Socket 4: #RELAY4_ST#</h4>
+<h4>Socket 4: $RELAY4_ST$</h4>
 #endif
 <hr>
-<h5>Free RAM: #FREERAM# bytes</h5>
+<h5>Free RAM: $FREERAM$ bytes</h5>
 #ifdef ENABLE_TIME
-<h5>Current Time: #DATE# #TIME#</h5>
+<h5>Current Time: $DATE$ $TIME$</h5>
 #endif
-<h5>System Uptime: #UPTIME#</h5>
-<h5>Current Temperature: #DEGC# &deg;C (#DEGF# &deg;F)</h5>
+<h5>System Uptime: $UPTIME$</h5>
+<h5>Current Temperature: $TEMP$ &deg;
+#ifdef ENABLE_FAHRENHEIT
+F
+#else
+C
+#endif
+</h5>
 </body>
 </html>
