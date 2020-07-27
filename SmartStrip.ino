@@ -874,12 +874,13 @@ void setup () {
 			bool ok = netint.begin (mac, ip, gw, gw /* FIXME: DNS */, mask);
 #elif defined (WEBBINO_USE_ENC28J60_UIP)
 			bool ok = netint.begin (mac, ip, gw, gw /* FIXME: DNS */, mask, SS_PIN);
-#elif defined (WEBBINO_USE_ESP8266) || defined (WEBBINO_USE_WIFI) || \
-      defined (WEBBINO_USE_WIFI101) || defined (WEBBINO_USE_ESP8266_STANDALONE) || \
-      defined (WEBBINO_USE_DIGIFI)
-			// This is incredibly not possible at the moment!
-			//~ swSerial.begin (9600);
-			//~ bool ok = netint.begin (FIXME);
+#elif defined (WEBBINO_USE_WIFI101) || defined (WEBBINO_USE_WIFI) || \
+      defined (WEBBINO_USE_ESP8266_STANDALONE) || defined (WEBBINO_USE_FISHINO)
+			bool ok = netint.begin (WIFI_SSID, WIFI_PASSWORD, ip, gw, gw /* FIXME: DNS */, mask);
+#elif defined (WEBBINO_USE_ESP8266) || defined (WEBBINO_USE_DIGIFI)
+			/* These interfaces do not support static IP configuration (at least
+			 * not this way)
+			 */
 			bool ok = false;		// Always fail
 #else
 			#error "Unsupported network interface"
