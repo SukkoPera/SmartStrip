@@ -835,6 +835,11 @@ boolean authorize (const char *user, const char *passwd) {
 void setup () {
 	byte i;
 
+#ifdef WEBBINO_USE_ESP8266_STANDALONE
+	// It seems the ESP8266 needs some time to initialize its serial port
+	delay (300);
+#endif
+
 	WDSTART ();
 	WDPRINTLN (F("SmartStrip " PROGRAM_VERSION));
 	WDPRINTLN (F("Using Webbino " WEBBINO_VERSION));
