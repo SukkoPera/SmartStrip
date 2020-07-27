@@ -24,8 +24,8 @@
 
 #ifdef USE_DALLAS_THERMO
 
-#include <OneWire.h>
-#include <DallasTemperature.h>
+#include <OneWire.h>			// https://github.com/PaulStoffregen/OneWire
+#include <DallasTemperature.h>	// https://github.com/milesburton/Arduino-Temperature-Control-Library
 #include "ThermometerBase.h"
 #include "thermometer_debug.h"
 
@@ -35,8 +35,6 @@
 
 class DallasThermometer: public ThermometerBase {
 private:
-	//byte busPin;
-
 	// OneWire instance to communicate with OneWire devices
 	OneWire oneWire;
 	DallasTemperature sensors;
@@ -44,14 +42,15 @@ private:
 
 	// function to print a device address
 	void printAddress (DeviceAddress deviceAddress) {
-		for (uint8_t i = 0; i < 8; i++) {
-			if (deviceAddress[i] < 16)
+		for (byte i = 0; i < 8; i++) {
+			if (deviceAddress[i] < 16) {
 				DPRINT (F("0"));
+			}
 			DPRINT (deviceAddress[i], HEX);
 		}
 	}
 
-	bool refreshTemperature () {
+	boolean refreshTemperature () override {
 		if (available) {
 			/* Call sensors.requestTemperatures() to issue a global temperature
 			* request to all devices on the bus.
@@ -59,7 +58,7 @@ private:
 			DPRINT (F("Requesting temperatures..."));
 			sensors.requestTemperatures ();
 			currentTemp.celsius = sensors.getTempC (thermometerAddress);
-			currentTemp.valid = true;
+			currentTemp.valid = currentTemp.celsius != DEVICE_DISCONNECTED_C;
 			DPRINTLN (F(" Done"));
 		}
 
@@ -67,17 +66,14 @@ private:
 	}
 
 public:
-	DallasThermometer (): oneWire (2), sensors (&oneWire) {
-	}
-
-
-
 	void begin (byte busPin) {
-		// locate devices on the bus
+		// Locate devices on the bus
+		available = false;
 		DPRINT (F("Scanning for temperature sensors on pin "));
 		DPRINT (busPin);
 		DPRINTLN ();
-		oneWire = OneWire (busPin);
+		oneWire.begin (busPin);
+		sensors.setOneWire (&oneWire);
 		sensors.begin ();
 
 		// Report parasite power requirements
@@ -91,7 +87,7 @@ public:
 
 			if (!sensors.getAddress (thermometerAddress, 0)) {
 				DPRINTLN (F("Unable to find address for Device 0"));
-				available = false;
+
 			} else {
 				// show the addresses we found on the bus
 				DPRINT (F("Using device with address: "));
@@ -108,14 +104,11 @@ public:
 			}
 		} else {
 			DPRINTLN (F("No sensors found"));
-			available = false;
 		}
 	}
-
 };
 
-class Thermometer: public DallasThermometer {
-};
+typedef DallasThermometer Thermometer;
 
 #endif
 

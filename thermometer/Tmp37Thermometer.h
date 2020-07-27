@@ -53,7 +53,7 @@ private:
 
 	byte pin;
 
-	bool refreshTemperature () {
+	boolean refreshTemperature () override {
 		word tot = 0;
 
 		for (byte i = 0; i < N_READS; ++i) {

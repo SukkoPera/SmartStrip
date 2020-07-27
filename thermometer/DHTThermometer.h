@@ -24,25 +24,40 @@
 
 #ifdef USE_DHT_THERMO
 
-#include <DHT.h>
+#include <DHT.h>			// https://github.com/adafruit/DHT-sensor-library
 #include "ThermometerBase.h"
 
 
 class DHTThermometer: public ThermometerBase {
 private:
-	//int busPin;
 	DHT sensor;
-	
-	bool refreshTemperature ();
-	
+
+	boolean refreshTemperature () override {
+		if (available) {
+			DPRINT (F("Requesting temperature..."));
+			currentTemp.celsius = sensor.readTemperature ();
+			currentTemp.valid = !isnan (currentTemp.celsius);
+			DPRINTLN (F(" Done"));
+		}
+
+		return currentTemp.valid;
+	}
+
 public:
-	DHTThermometer ();
+	DHTThermometer (): sensor (0, 0) {		// Temporary values
+	}
 
-	void begin (byte busPin, byte type);		// Type is either 11, 21 or 22
+	void begin (byte busPin, byte type = 22) {		// Type is either 11, 21 or 22
+		DPRINT (F("Scanning for temperature sensors on pin "));
+		DPRINT (busPin);
+		DPRINTLN ();
+		sensor = DHT (busPin, type);			// Reinit with correct values. This is safe as of 22/01/2013
+		sensor.begin ();
+		available = sensor.read ();		 // Can we really detect if the sensor is available?
+	}
 };
 
-class Thermometer: public DHTThermometer {
-};
+typedef DHTThermometer Thermometer;
 
 #endif
 

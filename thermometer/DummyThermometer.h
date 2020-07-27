@@ -29,7 +29,7 @@
 
 class DummyThermometer: public ThermometerBase {
 private:
-	bool refreshTemperature () {
+	boolean refreshTemperature () {
 		currentTemp.celsius = 21.5;
 		currentTemp.valid = true;
 
@@ -43,8 +43,7 @@ public:
 	}
 };
 
-class Thermometer: public DummyThermometer {
-};
+typedef DummyThermometer Thermometer;
 
 #endif
 

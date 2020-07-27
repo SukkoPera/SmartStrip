@@ -53,7 +53,7 @@ private:
 
 	byte pin;
 
-	bool refreshTemperature () {
+	boolean refreshTemperature () {
 		word tot = 0;
 
 		for (byte i = 0; i < N_READS; ++i) {
@@ -73,7 +73,6 @@ public:
 		available = true;	// No way of knowing if it's actually there or not
 		currentTemp.valid = true;	// So temp will always be valid too
 	}
-
 };
 
 typedef Lm35Thermometer Thermometer;

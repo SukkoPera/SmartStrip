@@ -47,10 +47,10 @@ protected:
 	}
 */
 
-	virtual bool refreshTemperature () = 0;
+	virtual boolean refreshTemperature () = 0;
 
 public:
-	bool available;
+	boolean available;
 	Temperature currentTemp;
 
 	/*ThermometerBase () {
