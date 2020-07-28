@@ -21,7 +21,7 @@
 #define _SSTIME_H_INCLUDED
 
 //~ #define USE_STM32_RTC
-//~ #define USE_NTP
+#define USE_NTP
 
 const byte UTC_OFFSET = +1;
 
@@ -55,18 +55,24 @@ byte dstOffset (byte d, byte m, unsigned int y, byte h) {
 
 #ifdef USE_NTP
 
-// FIXME: This crashes ArduinoUIP
-#include <WiFiUdp.h>
 #include <NTPClient.h>
 
+#if defined (WEBBINO_USE_ENC28J60_UIP) || defined (WEBBINO_USE_WIZ5100) || \
+    defined (WEBBINO_USE_WIZ5500)
+EthernetUDP ntpUDP;
+#elif defined (WEBBINO_USE_ESP8266) || defined (WEBBINO_USE_ESP8266_STANDALONE) \
+      defined (WEBBINO_USE_WIFI) || defined (WEBBINO_USE_WIFI101)  || \
+      defined (WEBBINO_USE_FISHINO)
+#include <WiFiUdp.h>
 WiFiUDP ntpUDP;
+#else
+#error "NTPClient is unsupported on WEBBINO_USE_DIGIFI and WEBBINO_USE_ENC28J60"
+#endif
 
 // You can specify the time server pool and the offset (in seconds, can be
 // changed later with setTimeOffset() ). Additionaly you can specify the
 // update interval (in milliseconds, can be changed using setUpdateInterval() ).
 NTPClient timeClient (ntpUDP, "pool.ntp.org", 0, 60000UL * 5);    // TZ and DST will be compensated in timeProvider()
-
-
 
 // FIXME: I think this should return 0 if NTP update failed, but current library
 // has no means of detecting such a case
@@ -105,7 +111,7 @@ time_t timeProvider () {
  */
 
 /*  code to process time sync messages from the serial port   */
-const char* TIME_HEADER = "T";   // Header tag for serial time sync message
+//~ const char* TIME_HEADER = "T";   // Header tag for serial time sync message
 
 boolean processSyncMessage (const time_t& pctime) {
 	const time_t DEFAULT_TIME = 1577836800; // Jan 1 2020
@@ -118,7 +124,7 @@ boolean processSyncMessage (const time_t& pctime) {
 		DPRINTLN (pctime);
 
 		rt.setTime (pctime);    // set the RTC and the system time to the received value
-		setTime (pctime);
+		//~ setTime (pctime);
 
 		ret = true;
 	}
@@ -128,7 +134,7 @@ boolean processSyncMessage (const time_t& pctime) {
 
 #else
 
-//~ #error "Please enable a method to get time"
+#warning "Please enable a method to get proper time!"
 
 time_t timeProvider () {
 	return 0;
