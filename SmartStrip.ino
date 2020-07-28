@@ -1048,8 +1048,9 @@ void loop () {
 			}
 #endif
 			default:
-				WDPRINT (F("Bad relay mode: "));
+				WDPRINT (F("Bad relay mode, fixing: "));
 				WDPRINTLN (r.mode);
+				r.mode = RELMD_OFF;
 				break;
 		}
 	}
