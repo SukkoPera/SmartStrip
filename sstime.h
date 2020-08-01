@@ -60,7 +60,7 @@ byte dstOffset (byte d, byte m, unsigned int y, byte h) {
 #if defined (WEBBINO_USE_ENC28J60_UIP) || defined (WEBBINO_USE_WIZ5100) || \
     defined (WEBBINO_USE_WIZ5500)
 EthernetUDP ntpUDP;
-#elif defined (WEBBINO_USE_ESP8266) || defined (WEBBINO_USE_ESP8266_STANDALONE) \
+#elif defined (WEBBINO_USE_ESP8266) || defined (WEBBINO_USE_ESP8266_STANDALONE) || \
       defined (WEBBINO_USE_WIFI) || defined (WEBBINO_USE_WIFI101)  || \
       defined (WEBBINO_USE_FISHINO)
 #include <WiFiUdp.h>
