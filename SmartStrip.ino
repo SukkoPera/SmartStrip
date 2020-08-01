@@ -874,8 +874,11 @@ void setup () {
 				EEPROM.get (EEPROM_GATEWAY_ADDR + i, gw[i]);
 			}
 
+			WDPRINT (F("Configuring static IP: "));
+			WDPRINTLN (IPAddress (ip));
+
 #if defined (WEBBINO_USE_ENC28J60) || defined (WEBBINO_USE_WIZ5100) || \
-    defined (WEBBINO_USE_WIZ5500) || defined (WEBBINO_USE_FISHINO)
+    defined (WEBBINO_USE_WIZ5500)
 			bool ok = netint.begin (mac, ip, gw, gw /* FIXME: DNS */, mask);
 #elif defined (WEBBINO_USE_ENC28J60_UIP)
 			bool ok = netint.begin (mac, ip, gw, gw /* FIXME: DNS */, mask, SS_PIN);
@@ -912,10 +915,10 @@ void setup () {
 #elif defined (WEBBINO_USE_ESP8266)
 			swSerial.begin (9600);
 			bool ok = netint.begin (swSerial, WIFI_SSID, WIFI_PASSWORD);
-#elif defined (WEBBINO_USE_DIGIFI) || defined (WEBBINO_USE_FISHINO)
+#elif defined (WEBBINO_USE_DIGIFI)
 			bool ok = netint.begin ();
 #elif defined  (WEBBINO_USE_WIFI) || defined (WEBBINO_USE_WIFI101) || \
-	  defined (WEBBINO_USE_ESP8266_STANDALONE)
+	  defined (WEBBINO_USE_ESP8266_STANDALONE) || defined (WEBBINO_USE_FISHINO)
 			bool ok = netint.begin (WIFI_SSID, WIFI_PASSWORD);
 #endif
 			if (!ok) {
