@@ -82,7 +82,6 @@ void Relay::setDefaults () {
 	enabled = false;
 	mode = DEFAULT_RELAY_MODE;
 	threshold = DEFAULT_RELAY_THRESHOLD;
-	units = DEFAULT_RELAY_UNITS;
 	hysteresis = DEFAULT_RELAY_HYSTERESIS;
 	delay = DEFAULT_RELAY_DELAY;
 }

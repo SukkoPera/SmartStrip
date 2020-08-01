@@ -368,12 +368,6 @@ void sck_func (HTTPRequestParser& request) {
 					param = request.get_parameter (F("temp"));
 					relay.threshold = atoi (param);
 
-					param = request.get_parameter (F("units"));
-					if (strcmp_P (param, PSTR ("F")) == 0)
-						relay.units = TEMP_F;
-					else
-						relay.units = TEMP_C;
-
 					relayHysteresis[relayNo - 1] = false;
 #endif
 #ifdef ENABLE_TIME

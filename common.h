@@ -110,7 +110,6 @@
  */
 #define DEFAULT_RELAY_MODE RELMD_OFF
 #define DEFAULT_RELAY_THRESHOLD 25
-#define DEFAULT_RELAY_UNITS TEMP_C
 #define DEFAULT_RELAY_HYSTERESIS 10				// Tenths of degrees
 #define DEFAULT_RELAY_DELAY 5					// Minutes
 
