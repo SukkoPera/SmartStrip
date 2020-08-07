@@ -29,8 +29,8 @@
  */
 //~ #define USE_DALLAS_THERMO
 //~ #define USE_DHT_THERMO
-#define USE_DUMMY_THERMO
-//~ #define USE_TMP37_THERMO
+//~ #define USE_DUMMY_THERMO
+#define USE_TMP37_THERMO
 //~ #define USE_LM35_THERMO
 //~ #define USE_BME280_THERMO
 

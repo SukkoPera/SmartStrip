@@ -34,7 +34,7 @@ private:
 	static const byte N_READS = 5;
 
 	// ADC resolution
-#ifdef ARDUINO_ARCH_AVR
+#if defined (ARDUINO_ARCH_AVR) || defined (ARDUINO_ESP8266_NODEMCU)
 	static const word ADC_STEPS = 1024;
 #elif defined ARDUINO_ARCH_STM32F1
 	static const word ADC_STEPS = 4096;
@@ -45,7 +45,7 @@ private:
 	// ADC reference voltage
 #ifdef ARDUINO_ARCH_AVR
 	static const word VCC = 5000; // Millivolt
-#elif defined ARDUINO_ARCH_STM32F1
+#elif defined (ARDUINO_ARCH_STM32F1) || defined (ARDUINO_ESP8266_NODEMCU)
 	static const word VCC = 3300;
 #else
 	#error "Please define ADC reference voltage"

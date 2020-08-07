@@ -19,6 +19,7 @@
 
 #include <Webbino.h>
 #include <EEPROM.h>
+#include "GlobalOptions.h"
 #include "debug.h"
 #include "Relay.h"
 #include "enums.h"
@@ -56,8 +57,8 @@ FlashStorage flashStorage;
 	#include <WebbinoInterfaces/AllWiFi.h>
 
 	// Wi-Fi parameters
-	#define WIFI_SSID        "SukkoNet-TO"
-	#define WIFI_PASSWORD    "everythingyouknowiswrong"
+	#define WIFI_SSID        "ssid"
+	#define WIFI_PASSWORD    "password"
 
 	NetworkInterfaceWiFi netint;
 #elif defined (WEBBINO_USE_FISHINO)
@@ -106,72 +107,13 @@ Relay relays[RELAYS_NO] = {
 #endif
 };
 
-bool relayHysteresis[RELAYS_NO];
+GlobalOptions globalOptions;
 
 #ifndef PSTR_TO_F
 #define PSTR_TO_F(s) reinterpret_cast<const __FlashStringHelper *> (s)
 #endif
 //~ #define F_TO_PSTR(s) reinterpret_cast<PGM_P> (s)
 //~ #define FlashString const __FlashStringHelper *
-
-
-void checkAndFormatEEPROM () {
-	unsigned long magic;
-
-#if defined (ARDUINO_ARCH_ESP32) || defined (ARDUINO_ARCH_ESP8266)
-	EEPROM.begin (2048);
-#endif
-
-	// The casts here are very important
-	EEPROM.get (0, magic);
-	if (magic != EEPROM_MAGIC) {
-		// Need to format EEPROM
-		WDPRINT (F("Formatting EEPROM (Wrong Magic: 0x"));
-		WDPRINT (magic, HEX);
-		WDPRINTLN (F(")"));
-
-		// Magic header
-		EEPROM.put (0, EEPROM_MAGIC);
-
-		// Relay data
-		for (byte i = 0; i < RELAYS_NO; i++) {
-			relays[i].setDefaults ();
-			relays[i].writeOptions ();
-#ifdef ENABLE_TIME
-			relays[i].schedule.clear ();
-#endif
-		}
-
-		// Network configuration
-		EEPROM.put (EEPROM_MAC_ADDR, DEFAULT_MAC_ADDRESS_B1);
-		EEPROM.put (EEPROM_MAC_ADDR + 1, DEFAULT_MAC_ADDRESS_B2);
-		EEPROM.put (EEPROM_MAC_ADDR + 2, DEFAULT_MAC_ADDRESS_B3);
-		EEPROM.put (EEPROM_MAC_ADDR + 3, DEFAULT_MAC_ADDRESS_B4);
-		EEPROM.put (EEPROM_MAC_ADDR + 4, DEFAULT_MAC_ADDRESS_B5);
-		EEPROM.put (EEPROM_MAC_ADDR + 5, DEFAULT_MAC_ADDRESS_B6);
-		EEPROM.put (EEPROM_NETMODE_ADDR, DEFAULT_NET_MODE);
-		EEPROM.put (EEPROM_IP_ADDR, DEFAULT_IP_ADDRESS_B1);
-		EEPROM.put (EEPROM_IP_ADDR + 1, DEFAULT_IP_ADDRESS_B2);
-		EEPROM.put (EEPROM_IP_ADDR + 2, DEFAULT_IP_ADDRESS_B3);
-		EEPROM.put (EEPROM_IP_ADDR + 3, DEFAULT_IP_ADDRESS_B4);
-		EEPROM.put (EEPROM_NETMASK_ADDR, DEFAULT_NETMASK_B1);
-		EEPROM.put (EEPROM_NETMASK_ADDR + 1, DEFAULT_NETMASK_B2);
-		EEPROM.put (EEPROM_NETMASK_ADDR + 2, DEFAULT_NETMASK_B3);
-		EEPROM.put (EEPROM_NETMASK_ADDR + 3, DEFAULT_NETMASK_B4);
-		EEPROM.put (EEPROM_GATEWAY_ADDR, DEFAULT_GATEWAY_ADDRESS_B1);
-		EEPROM.put (EEPROM_GATEWAY_ADDR + 1, DEFAULT_GATEWAY_ADDRESS_B2);
-		EEPROM.put (EEPROM_GATEWAY_ADDR + 2, DEFAULT_GATEWAY_ADDRESS_B3);
-		EEPROM.put (EEPROM_GATEWAY_ADDR + 3, DEFAULT_GATEWAY_ADDRESS_B4);
-
-#if defined (ARDUINO_ARCH_ESP32) || defined (ARDUINO_ARCH_ESP8266)
-		EEPROM.commit ();
-#endif
-
-		WDPRINTLN (F("EEPROM Format complete"));
-	} else {
-		WDPRINTLN (F("EEPROM OK"));
-	}
-}
 
 
 /******************************************************************************
@@ -270,66 +212,55 @@ bool tokenize (const char *str, PGM_P sep, byte *buffer, size_t bufsize, int bas
 
 void netconfig_func (HTTPRequestParser& request) {
 	char *param;
-	byte buf[MAC_SIZE], i;
+	byte buf[MAC_SIZE];
 
 	param = request.get_parameter (F("mac"));
 	if (strlen (param) > 0) {
 		if (tokenize (param, PSTR ("%3A"), buf, MAC_SIZE, 16)) {		// ':' gets encoded to "%3A" when submitting the form
-			for (i = 0; i < MAC_SIZE; i++)
-				EEPROM.put (EEPROM_MAC_ADDR + i, buf[i]);
+			globalOptions.setMacAddress (buf);
 		}
 	}
 
 	param = request.get_parameter (F("mode"));
 	if (strlen (param) > 0) {
 		if (strcmp_P (param, PSTR ("static")) == 0)
-			EEPROM.put (EEPROM_NETMODE_ADDR, NETMODE_STATIC);
+			globalOptions.setNetworkMode (NETMODE_STATIC);
 		else
-			EEPROM.put (EEPROM_NETMODE_ADDR, NETMODE_DHCP);
+			globalOptions.setNetworkMode (NETMODE_DHCP);
 	}
 
 	param = request.get_parameter (F("ip"));
 	if (strlen (param) > 0 && tokenize (param, PSTR ("."), buf, IP_SIZE, 10)) {
-		for (i = 0; i < IP_SIZE; i++)
-			EEPROM.put (EEPROM_IP_ADDR + i, buf[i]);
+		globalOptions.setFixedIpAddress (buf);
 	}
 
 	param = request.get_parameter (F("mask"));
 	if (strlen (param) > 0 && tokenize (param, PSTR ("."), buf, IP_SIZE, 10)) {
-		for (i = 0; i < IP_SIZE; i++)
-			EEPROM.put (EEPROM_NETMASK_ADDR + i, buf[i]);
+		globalOptions.setNetmask (buf);
 	}
 
 	param = request.get_parameter (F("gw"));
 	if (strlen (param) > 0 && tokenize (param, PSTR ("."), buf, IP_SIZE, 10)) {
-		for (i = 0; i < IP_SIZE; i++)
-			EEPROM.put (EEPROM_GATEWAY_ADDR + i, buf[i]);
+		globalOptions.setGatewayAddress (buf);
 	}
 
-#if defined  (ARDUINO_ARCH_ESP32) || defined (ARDUINO_ARCH_ESP8266)
-	EEPROM.commit ();
-#endif
-
-	WDPRINTLN (F("Configuration saved"));
+	param = request.get_parameter (F("dns"));
+	if (strlen (param) > 0 && tokenize (param, PSTR ("."), buf, IP_SIZE, 10)) {
+		globalOptions.setDnsAddress (buf);
+	}
 }
 
 void opts_func (HTTPRequestParser& request) {
 	char *param;
 
-	for (byte i = 0; i < RELAYS_NO; i++) {
-		Relay& relay = relays[i];
+	param = request.get_parameter (F("delay"));
+	if (strlen (param) > 0) {
+		globalOptions.setRelayDelay (atoi (param));
+	}
 
-		param = request.get_parameter (F("delay"));
-		if (strlen (param) > 0) {
-			relay.delay = atoi (param);
-		}
-
-		param = request.get_parameter (F("hyst"));
-		if (strlen (param) > 0) {
-			relay.hysteresis = atoi (param) * 10;
-		}
-
-		relay.writeOptions ();
+	param = request.get_parameter (F("hyst"));
+	if (strlen (param) > 0) {
+		globalOptions.setRelayHysteresis (atoi (param));
 	}
 }
 
@@ -354,21 +285,29 @@ void sck_func (HTTPRequestParser& request) {
 			param = request.get_parameter (F("mode"));
 			if (strlen (param) > 0) {		// Only do something if we got this parameter
 				if (strcmp_P (param, PSTR ("on")) == 0) {
-					relay.mode = RELMD_ON;
+					relay.setMode (RELMD_ON);
 				} else if (strcmp_P (param, PSTR ("off")) == 0) {
-					relay.mode = RELMD_OFF;
+					relay.setMode (RELMD_OFF);
 #ifdef ENABLE_THERMOMETER
 				} else if (strcmp_P (param, PSTR ("temp")) == 0) {
+					RelayMode newMode;
 					param = request.get_parameter (F("thres"));
 					if (strcmp_P (param, PSTR ("gt")) == 0)
-						relay.mode = RELMD_GT;
+						newMode = RELMD_GT;
 					else
-						relay.mode = RELMD_LT;
+						newMode = RELMD_LT;
+
+					if (newMode != relay.getMode ()) {
+						relay.setMode (newMode);
+						relay.threshold = relay.getSetPoint ();
+					}
 
 					param = request.get_parameter (F("temp"));
-					relay.threshold = atoi (param);
-
-					relayHysteresis[relayNo - 1] = false;
+					int newSetPoint = atoi (param);
+					if (newSetPoint != relay.getSetPoint ()) {
+						relay.setSetPoint (newSetPoint);
+						relay.threshold = relay.getSetPoint ();
+					}
 #endif
 #ifdef ENABLE_TIME
 				} else if (strcmp_P (param, PSTR ("time")) == 0) {
@@ -394,12 +333,10 @@ void sck_func (HTTPRequestParser& request) {
 
 					relay.schedule.save ();
 
-					relay.mode = RELMD_TIMED;
+					relay.setMode (RELMD_TIMED);
 #endif
 				}
 			}
-
-			relay.writeOptions ();
 		}
 	}
 }
@@ -564,6 +501,12 @@ PString& evaluate_gw (void *data __attribute__ ((unused))) {
  	return pBuffer;
 }
 
+PString& evaluate_dns (void *data __attribute__ ((unused))) {
+	pBuffer.print (netint.getDns ());
+
+ 	return pBuffer;
+}
+
 PString& evaluate_mac_addr (void *data __attribute__ ((unused))) {
 	const byte *buf = netint.getMAC ();
 
@@ -612,7 +555,7 @@ PString& evaluate_relay_status (void *data) {
 static PString& evaluate_relay_onoff_checked (void *data) {
 	if (lastSelectedRelay >= 1 && lastSelectedRelay <= RELAYS_NO) {
 		int md = reinterpret_cast<int> (data);			// If we cast to RelayMode it won't compile, nevermind!
-		if (relays[lastSelectedRelay - 1].mode == md)
+		if (relays[lastSelectedRelay - 1].getMode () == md)
 			pBuffer.print (PSTR_TO_F (CHECKED_STRING));
 	}
 
@@ -624,7 +567,7 @@ static PString& evaluate_relay_onoff_checked (void *data) {
 
 PString& evaluate_relay_temp_checked (void *data __attribute__ ((unused))) {
 	if (lastSelectedRelay >= 1 && lastSelectedRelay <= RELAYS_NO) {
-		if (relays[lastSelectedRelay - 1].mode == RELMD_GT || relays[lastSelectedRelay - 1].mode == RELMD_LT)
+		if (relays[lastSelectedRelay - 1].getMode () == RELMD_GT || relays[lastSelectedRelay - 1].getMode () == RELMD_LT)
 			pBuffer.print (PSTR_TO_F (CHECKED_STRING));
 	}
 
@@ -634,29 +577,27 @@ PString& evaluate_relay_temp_checked (void *data __attribute__ ((unused))) {
 PString& evaluate_relay_temp_gtlt_checked (void *data) {
 	if (lastSelectedRelay >= 1 && lastSelectedRelay <= RELAYS_NO) {
 		int md = static_cast<RelayMode> (reinterpret_cast<int> (data));		// ;)
-		if (relays[lastSelectedRelay - 1].mode == md)
+		if (relays[lastSelectedRelay - 1].getMode () == md)
 			pBuffer.print (PSTR_TO_F (CHECKED_STRING));
 	}
 	return pBuffer;
 }
 
-PString& evaluate_relay_temp_threshold (void *data __attribute__ ((unused))) {
+PString& evaluate_relay_setpoint (void *data __attribute__ ((unused))) {
 	if (lastSelectedRelay >= 1 && lastSelectedRelay <= RELAYS_NO)
-		pBuffer.print (relays[lastSelectedRelay - 1].threshold);
+		pBuffer.print (relays[lastSelectedRelay - 1].getSetPoint ());
 
 	return pBuffer;
 }
 
 PString& evaluate_relay_temp_delay (void *data __attribute__ ((unused))) {
-	// Always use first relay's data
-	pBuffer.print (relays[0].delay);
+	pBuffer.print (globalOptions.getRelayDelay ());
 
 	return pBuffer;
 }
 
 PString& evaluate_relay_temp_margin (void *data __attribute__ ((unused))) {
-	// Always use first relay's data
-	pBuffer.print (relays[0].hysteresis / 10);
+	pBuffer.print (globalOptions.getRelayHysteresis ());
 
 	return pBuffer;
 }
@@ -734,6 +675,7 @@ EasyReplacementTag (tagMacAddr, NET_MAC, evaluate_mac_addr);
 EasyReplacementTag (tagIPAddress, NET_IP, evaluate_ip);
 EasyReplacementTag (tagNetmask, NET_MASK, evaluate_netmask);
 EasyReplacementTag (tagGateway, NET_GW, evaluate_gw);
+EasyReplacementTag (tagDns, NET_DNS, evaluate_dns);
 EasyReplacementTag (tagVer, VERSION, evaluate_version);
 EasyReplacementTag (tagUptime, UPTIME, evaluate_uptime);
 EasyReplacementTag (tagFreeRAM, FREERAM, evaluate_free_ram);
@@ -753,7 +695,7 @@ EasyReplacementTag (tagTemp, TEMP, evaluate_temp);
 EasyReplacementTag (tagRelay, RELAY_TEMP_CHK, evaluate_relay_temp_checked);
 EasyReplacementTag (tagRelayTempGT, RELAY_TGT_CHK, evaluate_relay_temp_gtlt_checked, reinterpret_cast<void *> (RELMD_GT));
 EasyReplacementTag (tagRelayTempLT, RELAY_TLT_CHK, evaluate_relay_temp_gtlt_checked, reinterpret_cast<void *> (RELMD_LT));
-EasyReplacementTag (tagRelayTempThreshold, RELAY_THRES, evaluate_relay_temp_threshold);
+EasyReplacementTag (tagRelayTempThreshold, RELAY_THRES, evaluate_relay_setpoint);
 EasyReplacementTag (tagRelayTempDelay, RELAY_DELAY, evaluate_relay_temp_delay);
 EasyReplacementTag (tagRelayTempMargin, RELAY_MARGIN, evaluate_relay_temp_margin);
 #endif
@@ -771,6 +713,7 @@ EasyReplacementTagArray tags[] PROGMEM = {
 	&tagIPAddress,
 	&tagNetmask,
 	&tagGateway,
+	&tagDns,
 	&tagVer,
 	&tagUptime,
 	&tagFreeRAM,
@@ -838,12 +781,22 @@ void setup () {
 	WDPRINTLN (F("SmartStrip " PROGRAM_VERSION));
 	WDPRINTLN (F("Using Webbino " WEBBINO_VERSION));
 
-	// Check and format EEPROM, in case
-	checkAndFormatEEPROM ();
+	// Do this first!
+	boolean initRelays = globalOptions.begin ();
 
 	for (i = 0; i < RELAYS_NO; i++) {
-		relays[i].readOptions ();
-		relayHysteresis[i] = false;     // Start with no hysteresis
+		// EEPROM was just formatted, load default relay data (also inits schedules)
+		if (initRelays) {
+			relays[i].setDefaults ();
+		}
+
+		// Start with no hysteresis
+		relays[i].threshold = relays[i].getSetPoint ();
+
+		WDPRINT (F("Relay "));
+		WDPRINT (i);
+		WDPRINT (F(" mode is "));
+		WDPRINTLN (relays[i].getMode ());
 	}
 
 #if defined (WEBBINO_USE_ENC28J60) || defined (WEBBINO_USE_WIZ5100) || \
@@ -851,34 +804,28 @@ void setup () {
 
 	// Get MAC from EEPROM and init network interface
 	byte mac[MAC_SIZE];
-
-	for (i = 0; i < MAC_SIZE; i++)
-		EEPROM.get (EEPROM_MAC_ADDR + i, mac[i]);
+	globalOptions.getMacAddress (mac);
 #endif
 
-	NetworkMode netmode;
-	EEPROM.get (EEPROM_NETMODE_ADDR, netmode);
+	NetworkMode netmode = globalOptions.getNetworkMode ();
 	switch (netmode) {
 		case NETMODE_STATIC: {
-			byte ip[IP_SIZE], mask[IP_SIZE], gw[IP_SIZE];
-
-			for (i = 0; i < IP_SIZE; i++) {
-				EEPROM.get (EEPROM_IP_ADDR + i, ip[i]);
-				EEPROM.get (EEPROM_NETMASK_ADDR + i, mask[i]);
-				EEPROM.get (EEPROM_GATEWAY_ADDR + i, gw[i]);
-			}
+			IPAddress ip = globalOptions.getFixedIpAddress ();
+			IPAddress mask = globalOptions.getNetmask ();
+			IPAddress gw = globalOptions.getGatewayAddress ();
+			IPAddress dns = globalOptions.getDnsAddress ();
 
 			WDPRINT (F("Configuring static IP: "));
 			WDPRINTLN (IPAddress (ip));
 
 #if defined (WEBBINO_USE_ENC28J60) || defined (WEBBINO_USE_WIZ5100) || \
     defined (WEBBINO_USE_WIZ5500)
-			bool ok = netint.begin (mac, ip, gw, gw /* FIXME: DNS */, mask);
+			bool ok = netint.begin (mac, ip, gw, dns, mask);
 #elif defined (WEBBINO_USE_ENC28J60_UIP)
-			bool ok = netint.begin (mac, ip, gw, gw /* FIXME: DNS */, mask, SS_PIN);
+			bool ok = netint.begin (mac, ip, gw, dns, mask, SS_PIN);
 #elif defined (WEBBINO_USE_WIFI101) || defined (WEBBINO_USE_WIFI) || \
       defined (WEBBINO_USE_ESP8266_STANDALONE) || defined (WEBBINO_USE_FISHINO)
-			bool ok = netint.begin (WIFI_SSID, WIFI_PASSWORD, ip, gw, gw /* FIXME: DNS */, mask);
+			bool ok = netint.begin (WIFI_SSID, WIFI_PASSWORD, ip, gw, dns, mask);
 #elif defined (WEBBINO_USE_ESP8266) || defined (WEBBINO_USE_DIGIFI)
 			/* These interfaces do not support static IP configuration (at least
 			 * not this way)
@@ -890,7 +837,7 @@ void setup () {
 			if (!ok) {
 				WDPRINTLN (F("Failed to set static IP address"));
 				while (1)
-					;
+					yield ();
 			} else {
 				WDPRINTLN (F("Static IP setup done"));
 			}
@@ -918,7 +865,7 @@ void setup () {
 			if (!ok) {
 				WDPRINTLN (F("Failed to get configuration from DHCP"));
 				while (1)
-					;
+					yield ();
 			} else {
 				WDPRINTLN (F("DHCP configuration done:"));
 				WDPRINT (F("- IP: "));
@@ -976,14 +923,36 @@ void setup () {
 	}
 }
 
-void loop () {
+char serialBuf[16];
+PString serialInput (serialBuf, 16);
 
+void loop () {
+#if defined (ENABLE_TIME) && defined (USE_STM32_RTC)
+	// FIXME TEMP!
+	time_t pctime;
+
+	while (Serial.available ()) {
+		char c = Serial.read ();
+		if (c != '\n') {
+			serialInput.print (c);
+		} else {
+			DPRINT (F("Received on serial: "));
+			DPRINTLN (serialInput);
+
+			if (serialInput[0] == 'T') {
+				pctime = atol (serialInput + 1);
+				processSyncMessage (pctime);
+			}
+			serialInput.begin ();
+		}
+	}
+#endif
 
 	webserver.loop ();
 
 #ifdef ENABLE_THERMOMETER
 	// Update temperature
-	if (thermometer.available && (millis () - lastTemperatureRequest > THERMO_READ_INTERVAL)) {
+	if (thermometer.available && (lastTemperatureRequest == 0 || millis () - lastTemperatureRequest > THERMO_READ_INTERVAL)) {
 		Temperature& temp = thermometer.getTemp ();
 		if (temp.valid) {
 			temperature = temp.celsius;
@@ -1000,11 +969,7 @@ void loop () {
 	for (byte i = 0; i < RELAYS_NO; i++) {
 		Relay& r = relays[i];
 
-#ifdef ENABLE_THERMOMETER
-		bool& hysteresisEnabled = relayHysteresis[i];
-#endif
-
-		switch (r.mode) {
+		switch (r.getMode ()) {
 			case RELMD_ON:
 				if (!r.enabled) {
 					r.setEnabled (true);
@@ -1017,19 +982,21 @@ void loop () {
 				break;
 #ifdef ENABLE_THERMOMETER
 			case RELMD_GT:
-				if (((!hysteresisEnabled && temperature > r.threshold) || (hysteresisEnabled && temperature > r.threshold + r.hysteresis / 10.0)) && !r.enabled) {
+				if (temperature > r.threshold && !r.enabled) {
 					r.setEnabled (true);
-					hysteresisEnabled = true;
-				} else if (temperature <= r.threshold && r.enabled) {
+					r.threshold = r.getSetPoint () - globalOptions.getRelayHysteresis ();
+				} else if (temperature < r.threshold && r.enabled) {
 					r.setEnabled (false);
+					r.threshold = r.getSetPoint () + globalOptions.getRelayHysteresis ();
 				}
 				break;
 			case RELMD_LT:
-				if (((!hysteresisEnabled && temperature < r.threshold) || (hysteresisEnabled && temperature < r.threshold - r.hysteresis / 10.0)) && r.enabled) {
+				if (temperature < r.threshold && r.enabled) {
 					r.setEnabled (true);
-					hysteresisEnabled = true;
+					r.threshold = r.getSetPoint () + globalOptions.getRelayHysteresis ();
 				} else if (temperature >= r.threshold && r.enabled) {
 					r.setEnabled (false);
+					r.threshold = r.getSetPoint () - globalOptions.getRelayHysteresis ();
 				}
 				break;
 #endif
@@ -1046,8 +1013,8 @@ void loop () {
 #endif
 			default:
 				WDPRINT (F("Bad relay mode, fixing: "));
-				WDPRINTLN (r.mode);
-				r.mode = RELMD_OFF;
+				WDPRINTLN (r.getMode ());
+				r.setMode (RELMD_OFF);
 				break;
 		}
 	}

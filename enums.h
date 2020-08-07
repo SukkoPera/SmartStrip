@@ -39,12 +39,4 @@ enum NetworkMode {
 	NETMODE_STATIC = 1
 };
 
-// If this is modified, please review the EEPROM offsets in common.h
-struct RelayOptions {
-	RelayMode mode;
-	byte threshold;
-	byte hysteresis;
-	byte delay;
-};
-
 #endif
