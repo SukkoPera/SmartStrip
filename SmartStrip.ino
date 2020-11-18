@@ -997,10 +997,10 @@ void loop () {
 				}
 				break;
 			case RELMD_LT:
-				if (temperature < r.threshold && r.enabled) {
+				if (temperature < r.threshold && !r.enabled) {
 					r.setEnabled (true);
 					r.threshold = r.getSetPoint () + globalOptions.getRelayHysteresis ();
-				} else if (temperature >= r.threshold && r.enabled) {
+				} else if (temperature > r.threshold && r.enabled) {
 					r.setEnabled (false);
 					r.threshold = r.getSetPoint () - globalOptions.getRelayHysteresis ();
 				}
