@@ -82,7 +82,10 @@
 #define THERMO_READ_INTERVAL (60 * 1000UL)
 
 // Enable the possibility to schedule on/off times according to time (Experimental)
-//~ #define ENABLE_TIME
+#define ENABLE_TIME
+
+// Enable EXPERIMENTAL RESTful API
+//~ #define SMARTSTRIP_ENABLE_REST
 
 // Size of a MAC address (bytes)
 #define MAC_SIZE 6
@@ -106,7 +109,7 @@
 #define DEFAULT_RELAY_HYSTERESIS 1				// Degrees
 #define DEFAULT_RELAY_DELAY 5					// Minutes
 
-#define DEFAULT_MAC_ADDRESS 0x00, 0x11, 0x22, 0x33, 0x44, 0x55
+#define DEFAULT_MAC_ADDRESS 0x00,0x11,0x22,0x33,0x44,0x55
 #define DEFAULT_NET_MODE NETMODE_DHCP // Set to NETMODE_STATIC to disable DHCP
 #define DEFAULT_IP_ADDRESS 192,168,1,42
 #define DEFAULT_NETMASK 255,255,255,0

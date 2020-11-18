@@ -30,6 +30,10 @@
 WebServer webserver;
 FlashStorage flashStorage;
 
+#ifdef SMARTSTRIP_ENABLE_REST
+DummyStorage dummyStorage;
+#endif
+
 // Instantiate the network interface defined in the Webbino headers
 #if defined (WEBBINO_USE_ENC28J60)
 	#include <WebbinoInterfaces/ENC28J60.h>
@@ -299,7 +303,7 @@ void sck_func (HTTPRequestParser& request) {
 
 					if (newMode != relay.getMode ()) {
 						relay.setMode (newMode);
-						relay.threshold = relay.getSetPoint ();
+						relay.threshold = relay.getSetPoint ();		// Reset hysteresis, just in case
 					}
 
 					param = request.get_parameter (F("temp"));
@@ -341,6 +345,91 @@ void sck_func (HTTPRequestParser& request) {
 	}
 }
 
+#ifdef SMARTSTRIP_ENABLE_REST
+extern PString pBuffer;
+
+void appendRestReply (const char *key, const char *val) {
+	if (pBuffer.length () > 0) {
+		pBuffer.print ('&');
+	}
+	pBuffer.print (key);
+	pBuffer.print ('=');
+	pBuffer.print (val);		// FIXME: Encode
+}
+
+void api_func (HTTPRequestParser& request) {
+	if (request.matchResult.nMatches == 1) {
+		char temp[8];
+		strlcpy (temp, request.uri + request.matchResult.matchPositions[0], request.matchResult.matchLengths[0] + 1);
+		byte relayNo = atoi (temp);
+		DPRINT (F("API request for relay "));
+		DPRINTLN (relayNo);
+
+		if (relayNo >= 1 && relayNo <= RELAYS_NO) {
+			Relay& relay = relays[relayNo - 1];
+
+			switch (request.method) {
+				case HTTPRequestParser::METHOD_GET:
+
+					appendRestReply ("state", relay.enabled ? "1" : "0");
+					break;
+				case HTTPRequestParser::METHOD_POST: {
+					const char *v = request.getPostValue ("mode");
+					DPRINT ("mode = ");
+					DPRINTLN (v);
+					if (strlen (v) > 0) {
+						RelayMode newMode = relay.getMode ();
+
+						if (strcmp_P (v, PSTR("on")) == 0) {
+							newMode = RELMD_ON;
+						} else if (strcmp_P (v, PSTR("off")) == 0) {
+							newMode = RELMD_OFF;
+#ifdef ENABLE_THERMOMETER
+						} else if (strcmp_P (v, PSTR("templt")) == 0) {
+							newMode = RELMD_LT;
+						} else if (strcmp_P (v, PSTR("tempgt")) == 0) {
+							newMode = RELMD_GT;
+#endif
+#ifdef ENABLE_TIME
+						} else if (strcmp_P (v, PSTR("timed")) == 0) {
+							newMode = RELMD_TIMED;
+#endif
+						}
+
+						if (newMode != relay.getMode ()) {
+							relay.setMode (newMode);
+							relay.threshold = relay.getSetPoint ();		// Reset hysteresis, just in case
+						}
+					}
+
+					v = request.getPostValue ("threshold");
+					DPRINT ("threshold = ");
+					DPRINTLN (v);
+					if (strlen (v) > 0) {
+						int newSetPoint = atoi (v);
+						if (newSetPoint != relay.getSetPoint ()) {
+							relay.setSetPoint (newSetPoint);
+							relay.threshold = relay.getSetPoint ();
+						}
+					}
+					break;
+				} case HTTPRequestParser::METHOD_DELETE:
+					pBuffer.print (F("ICH MUSS ZERSTOEREN!"));
+					break;
+				default:
+					break;
+			}
+		} else {
+			DPRINTLN (F("No such relay"));
+		}
+	} else {
+		// FIXME: Send 4xx response
+		DPRINTLN (F("Invalid request"));
+	}
+}
+
+FileFuncAssoc (apiAss, "/api/relay/*", api_func);
+#endif
 
 FileFuncAssoc (netAss, "/net.html", netconfig_func);
 FileFuncAssoc (relaysAss, "/opts.html", opts_func);
@@ -350,6 +439,9 @@ FileFuncAssociationArray associations[] PROGMEM = {
 	&netAss,
 	&relaysAss,
 	&sckAss,
+#ifdef SMARTSTRIP_ENABLE_REST
+	&apiAss,
+#endif
 	NULL
 };
 
@@ -669,6 +761,19 @@ static PString& evaluate_free_ram (void *data __attribute__ ((unused))) {
 	return pBuffer;
 }
 
+#ifdef SMARTSTRIP_ENABLE_REST
+static PString& evaluate_rest_reply (void *data) {
+	(void) data;		// Avoid unused warning
+
+	/* This has already been filled in by the api_func() page function, so
+	 * return it right away
+	 */
+	return pBuffer;
+}
+
+EasyReplacementTag (tagRestReply, DUMMY, evaluate_rest_reply);
+#endif
+
 
 // Max length of these is MAX_TAG_LEN (24)
 EasyReplacementTag (tagMacAddr, NET_MAC, evaluate_mac_addr);
@@ -743,6 +848,10 @@ EasyReplacementTagArray tags[] PROGMEM = {
 	&tagTimeStr,
 	&tagRelayTimed,
 	&tagRelayTimeChecked,
+#endif
+
+#ifdef SMARTSTRIP_ENABLE_REST
+	&tagRestReply,
 #endif
 
 	NULL
@@ -893,6 +1002,9 @@ void setup () {
 
 	flashStorage.begin (pages);
 	webserver.addStorage (flashStorage);
+#ifdef SMARTSTRIP_ENABLE_REST
+	webserver.addStorage (dummyStorage);
+#endif
 
 #if defined (AUTH_REALM)
 	webserver.enableAuth (AUTH_REALM, authorize);
