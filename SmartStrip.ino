@@ -368,7 +368,7 @@ PString pBuffer (replaceBuffer, REP_BUFFER_LEN);
 
 const char NOT_AVAIL_STR[] PROGMEM = "N/A";
 const char CHECKED_STRING[] PROGMEM = "checked";
-const char SELECTED_STRING[] PROGMEM = "selected=\"true\"";
+const char SELECTED_STRING[] PROGMEM = "selected";
 
 #ifdef ENABLE_TIME
 
@@ -578,7 +578,7 @@ PString& evaluate_relay_temp_gtlt_checked (void *data) {
 	if (lastSelectedRelay >= 1 && lastSelectedRelay <= RELAYS_NO) {
 		int md = static_cast<RelayMode> (reinterpret_cast<int> (data));		// ;)
 		if (relays[lastSelectedRelay - 1].getMode () == md)
-			pBuffer.print (PSTR_TO_F (CHECKED_STRING));
+			pBuffer.print (PSTR_TO_F (SELECTED_STRING));
 	}
 	return pBuffer;
 }
