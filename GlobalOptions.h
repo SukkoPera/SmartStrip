@@ -119,12 +119,16 @@ public:
 	}
 
 	byte *getMacAddress (byte buf[MAC_SIZE]) {
-		EEPROM.get (EEPROM_MAC_ADDR, buf);
+		for (byte i = 0; i < MAC_SIZE; ++i) {
+			buf[i] = EEPROM.read (EEPROM_MAC_ADDR + i);
+		}
 		return buf;
 	}
 
 	void setMacAddress (byte buf[MAC_SIZE]) {
-		EEPROM.put (EEPROM_MAC_ADDR, buf);
+		for (byte i = 0; i < MAC_SIZE; ++i) {
+			EEPROM.write (EEPROM_MAC_ADDR + i, buf[i]);
+		}
 #if defined (ARDUINO_ARCH_ESP32) || defined (ARDUINO_ARCH_ESP8266)
 		EEPROM.commit ();
 #endif
