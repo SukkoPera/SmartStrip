@@ -816,16 +816,22 @@ void setup () {
 			IPAddress dns = globalOptions.getDnsAddress ();
 
 			WDPRINT (F("Configuring static IP: "));
-			WDPRINTLN (IPAddress (ip));
+			WDPRINTLN (ip);
+			WDPRINT (F("Netmask: "));
+			WDPRINTLN (mask);
+			WDPRINT (F("Gateway: "));
+			WDPRINTLN (gw);
+			WDPRINT (F("DNS: "));
+			WDPRINTLN (dns);
 
 #if defined (WEBBINO_USE_ENC28J60) || defined (WEBBINO_USE_WIZ5100) || \
     defined (WEBBINO_USE_WIZ5500)
-			bool ok = netint.begin (mac, ip, gw, dns, mask);
+			bool ok = netint.begin (mac, ip, mask, gw, dns);
 #elif defined (WEBBINO_USE_ENC28J60_UIP)
-			bool ok = netint.begin (mac, ip, gw, dns, mask, SS_PIN);
+			bool ok = netint.begin (mac, ip, mask, gw, dns, SS_PIN);
 #elif defined (WEBBINO_USE_WIFI101) || defined (WEBBINO_USE_WIFI) || \
       defined (WEBBINO_USE_ESP8266_STANDALONE) || defined (WEBBINO_USE_FISHINO)
-			bool ok = netint.begin (WIFI_SSID, WIFI_PASSWORD, ip, gw, dns, mask);
+			bool ok = netint.begin (WIFI_SSID, WIFI_PASSWORD, ip, mask, gw, dns);
 #elif defined (WEBBINO_USE_ESP8266) || defined (WEBBINO_USE_DIGIFI)
 			/* These interfaces do not support static IP configuration (at least
 			 * not this way)
