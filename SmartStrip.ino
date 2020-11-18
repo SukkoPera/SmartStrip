@@ -790,8 +790,10 @@ void setup () {
 			relays[i].setDefaults ();
 		}
 
+#ifdef ENABLE_THERMOMETER
 		// Start with no hysteresis
 		relays[i].threshold = relays[i].getSetPoint ();
+#endif
 
 		WDPRINT (F("Relay "));
 		WDPRINT (i);
