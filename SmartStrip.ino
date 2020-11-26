@@ -78,6 +78,12 @@ DummyStorage dummyStorage;
 	NetworkInterfaceDigiFi netint;
 #endif
 
+#ifdef SSBRD_THINGSWITCHER_WIFI
+#include "ThingSwitcherWifi.h"
+
+ThingSwitcherWifi tswifi;
+#endif
+
 
 #ifdef ENABLE_THERMOMETER
 
@@ -102,14 +108,7 @@ byte rtCheckIdx = 0;
 // Other stuff
 byte lastSelectedRelay;
 
-Relay relays[RELAYS_NO] = {
-	Relay (1, RELAY1_PIN),
-	Relay (2, RELAY2_PIN),
-	Relay (3, RELAY3_PIN),
-#if RELAYS_NO == 4
-	Relay (4, RELAY4_PIN)
-#endif
-};
+Relay relays[RELAYS_NO];
 
 GlobalOptions globalOptions;
 
@@ -892,6 +891,18 @@ void setup () {
 
 	// Do this first!
 	boolean initRelays = globalOptions.begin ();
+
+#ifdef SSBRD_THINGSWITCHER_WIFI
+	tswifi.begin ();
+#endif
+
+	// Init relays
+	relays[0].begin (1, RELAY1_PIN);
+	relays[1].begin (2, RELAY2_PIN);
+	relays[2].begin (3, RELAY3_PIN);
+#if RELAYS_NO == 4
+	relays[3].begin (4, RELAY4_PIN);
+#endif
 
 	for (i = 0; i < RELAYS_NO; i++) {
 		// EEPROM was just formatted, load default relay data (also inits schedules)

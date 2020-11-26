@@ -28,12 +28,19 @@
 #include "Schedule.h"
 #endif
 
+#ifdef SSBRD_THINGSWITCHER_WIFI
+#include "ThingSwitcherWifi.h"
+
+extern ThingSwitcherWifi tswifi;
+#endif
+
+
 class Relay {
 private:
-	const byte pin;
+	byte pin;
 
 public:
-	const byte id;
+	byte id;
 
 	boolean enabled;		// true when contacts are closed and relay is conducing
 
@@ -45,7 +52,10 @@ public:
 	Schedule schedule;
 #endif
 
-	Relay (const byte _id, const byte _pin): pin (_pin), id (_id) {
+	void begin (const byte _id, const byte _pin) {
+		pin = _pin;
+		id = _id;
+
 #ifdef RELAYS_ACTIVE_LOW
 		/* Switching the pin from the start-up mode to OUTPUT will make it go low
 		 * and turn the relay on in this case. By writing the pin HIGH before
@@ -54,9 +64,18 @@ public:
 		 *
 		 * Note that this works on both AVRs and STM32F1.
 		 */
+#ifdef SSBRD_THINGSWITCHER_WIFI
+		tswifi.digitalWrite (_pin, HIGH);
+#else
 		digitalWrite (_pin, HIGH);
 #endif
+#endif
+
+#ifdef SSBRD_THINGSWITCHER_WIFI
+		tswifi.pinMode (_pin, OUTPUT);
+#else
 		pinMode (_pin, OUTPUT);
+#endif
 
 		enabled = false;
 
@@ -111,9 +130,17 @@ public:
 		enabled = e;
 
 #ifdef RELAYS_ACTIVE_LOW
+#ifdef SSBRD_THINGSWITCHER_WIFI
+		tswifi.digitalWrite (pin, enabled ? LOW : HIGH);
+#else
 		digitalWrite (pin, enabled ? LOW : HIGH);
+#endif
+#else
+#ifdef SSBRD_THINGSWITCHER_WIFI
+		tswifi.digitalWrite (pin, enabled ? HIGH : LOW);
 #else
 		digitalWrite (pin, enabled ? HIGH : LOW);
+#endif
 #endif
 	}
 };
