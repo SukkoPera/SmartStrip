@@ -20,7 +20,7 @@
 #ifndef _DUMMYTHERMO_H_
 #define _DUMMYTHERMO_H_
 
-#include "thermometer_common.h"
+#include "../common.h"
 
 #ifdef USE_DUMMY_THERMO
 

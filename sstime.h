@@ -17,11 +17,10 @@
  *   along with SmartStrip.  If not, see <http://www.gnu.org/licenses/>.   *
  ***************************************************************************/
 
-#ifndef _SSTIME_H_INCLUDED
-#define _SSTIME_H_INCLUDED
+#ifndef SSTIME_H_INCLUDED
+#define SSTIME_H_INCLUDED
 
-//~ #define USE_STM32_RTC
-#define USE_NTP
+#include "common.h"
 
 const byte UTC_OFFSET = +1;
 
@@ -53,7 +52,7 @@ byte dstOffset (byte d, byte m, unsigned int y, byte h) {
 		return 0;
 }
 
-#ifdef USE_NTP
+#ifdef TIMESRC_NTP
 
 #include <NTPClient.h>
 
@@ -89,7 +88,7 @@ time_t timeProvider () {
 	return t;
 }
 
-#elif defined (USE_STM32_RTC)
+#elif defined (TIMESRC_STM32_RTC)
 
 #include <RTClock.h>    // Library for STM32-builtin RTC
 

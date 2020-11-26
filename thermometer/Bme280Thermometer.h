@@ -21,7 +21,7 @@
 #define _BME280THERMO_H_
 
 #include <Wire.h>
-#include "thermometer_common.h"
+#include "../common.h"
 
 #ifdef USE_BME280_THERMO
 

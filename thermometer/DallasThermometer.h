@@ -20,7 +20,7 @@
 #ifndef _DALLASTHERMO_H_
 #define _DALLASTHERMO_H_
 
-#include "thermometer_common.h"
+#include "../common.h"
 
 #ifdef USE_DALLAS_THERMO
 

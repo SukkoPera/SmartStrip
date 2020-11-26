@@ -17,7 +17,7 @@
  *   along with Sukkino.  If not, see <http://www.gnu.org/licenses/>.      *
  ***************************************************************************/
 
-#include "thermometer_common.h"
+#include "../common.h"
 #include "ThermometerBase.h"
 #include "DallasThermometer.h"
 #include "DHTThermometer.h"

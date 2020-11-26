@@ -20,49 +20,40 @@
 #ifndef _LM35THERMO_H_
 #define _LM35THERMO_H_
 
-#include "thermometer_common.h"
+#include "../common.h"
 
 #ifdef USE_LM35_THERMO
 
 #include "ThermometerBase.h"
 #include "thermometer_debug.h"
 
+#ifdef SSBRD_THINGSWITCHER_WIFI
+#include "../ThingSwitcherWifi.h"
+
+extern ThingSwitcherWifi tswifi;
+#endif
 
 class Lm35Thermometer: public ThermometerBase {
 private:
 	// Number of actual ADC samplings per read operation
 	static const byte N_READS = 5;
 
-	// ADC resolution
-#ifdef ARDUINO_ARCH_AVR
-	static const word ADC_STEPS = 1024;
-#elif defined ARDUINO_ARCH_STM32F1
-	static const word ADC_STEPS = 4096;
-#else
-	#error "Please define ADC resolution"
-#endif
-
-	// ADC reference voltage
-#ifdef ARDUINO_ARCH_AVR
-	static const word VCC = 5000; // Millivolt
-#elif defined ARDUINO_ARCH_STM32F1
-	static const word VCC = 3300;
-#else
-	#error "Please define ADC reference voltage"
-#endif
-
 	byte pin;
 
 	boolean refreshTemperature () {
+#ifdef SSBRD_THINGSWITCHER_WIFI
+		word adc = tswifi.analogRead (pin);
+#else
+		analogRead (pin);		// Discard first read
 		word tot = 0;
-
 		for (byte i = 0; i < N_READS; ++i) {
 			tot += analogRead (pin);
 		}
 		word adc = tot / N_READS;
+#endif
 		word v = (unsigned long) adc * VCC / ADC_STEPS;
 
-		currentTemp.celsius = v / 10;	// LM35 has 10 mV/deg
+		currentTemp.celsius = v / 10.0;	// LM35 has 10 mV/deg
 
 		return true;
 	}

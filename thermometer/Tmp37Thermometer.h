@@ -20,7 +20,7 @@
 #ifndef _TMP37THERMO_H_
 #define _TMP37THERMO_H_
 
-#include "thermometer_common.h"
+#include "../common.h"
 
 #ifdef USE_TMP37_THERMO
 
@@ -32,24 +32,6 @@ class Tmp37Thermometer: public ThermometerBase {
 private:
 	// Number of actual ADC samplings per read operation
 	static const byte N_READS = 5;
-
-	// ADC resolution
-#if defined (ARDUINO_ARCH_AVR) || defined (ARDUINO_ESP8266_NODEMCU)
-	static const word ADC_STEPS = 1024;
-#elif defined ARDUINO_ARCH_STM32F1
-	static const word ADC_STEPS = 4096;
-#else
-	#error "Please define ADC resolution"
-#endif
-
-	// ADC reference voltage
-#ifdef ARDUINO_ARCH_AVR
-	static const word VCC = 5000; // Millivolt
-#elif defined (ARDUINO_ARCH_STM32F1) || defined (ARDUINO_ESP8266_NODEMCU)
-	static const word VCC = 3300;
-#else
-	#error "Please define ADC reference voltage"
-#endif
 
 	byte pin;
 

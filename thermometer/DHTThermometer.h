@@ -20,7 +20,7 @@
 #ifndef _DHTTHERMO_H_
 #define _DHTTHERMO_H_
 
-#include "thermometer_common.h"
+#include "../common.h"
 
 #ifdef USE_DHT_THERMO
 

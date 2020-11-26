@@ -20,7 +20,7 @@
 #ifndef _THERMOMETERDEBUG_H_
 #define _THERMOMETERDEBUG_H_
 
-#include "thermometer_common.h"
+#include "../common.h"
 
 #ifndef THERMOMETER_NDEBUG
 	#ifndef DPRINT

@@ -20,136 +20,37 @@
 #ifndef COMMON_H_
 #define COMMON_H_
 
-/* Uncomment one of these #defines according to the board you will be compiling
- * for. If you want to fine-tune the settings, leave these all commented out and
- * see below (Look for "#else").
- */
-//! \name Board selection
-//! @{
-//#define SSBRD_KMTRONIC_DINO_328
-//#define SSBRD_THINGSWITCHER
-//#define SSBRD_THINGSWITCHER_WIFI
-//#define SSBRD_GENERIC_328
-//#define SSBRD_GENERIC_ESP8266
-//#define SSBRD_GENERIC_ESP32
-//#define SSBRD_GENERIC_STM32
-//! @}
+// Size of a MAC address (bytes)
+#define MAC_SIZE 6
 
-/* Define these to enable HTTP authentication. Note that HTTP authentication
- * must also be enabled in Webbino for this to work.
- */
-//! @{ \name HTTP Authentication
-//~ #define AUTH_REALM "SmartStrip"
-//~ #define AUTH_USER "smart"
-//~ #define AUTH_PASSWD "strip"
-//! @}
+// Size of an IP address (bytes)
+#define IP_SIZE 4
 
-/** \def USE_FAHRENHEIT
+/* Network parameter defaults: feel free to change these to fit your network
+ * setup. Note that these are the DEFAULTS, so they will only be used when your
+ * board's EEPROM is being formatted.
  *
- * \brief Use degrees Fahrneheit
- * 
- * Define to express temperatures in degrees Fahrenheit, leave undefined for
- * Celsius
+ * You can change the actual parameters through the web interface, but changing
+ * these can be useful for the initial setup.
+ *
+ * To force formatting of the EEPROM use the "eeprom_clear" sketch provided
+ * with Arduino.
  */
-//#define USE_FAHRENHEIT
+#define DEFAULT_RELAY_MODE RELMD_OFF
+#define DEFAULT_RELAY_THRESHOLD 25
+#define DEFAULT_RELAY_HYSTERESIS 1				// Degrees
+#define DEFAULT_RELAY_DELAY 5					// Minutes
 
-//! \brief Delay between temperature readings
-#define THERMO_READ_INTERVAL (60 * 1000UL)
-
-/** \def NDEBUG
- * 
- * \brief Define this to \a disable debug messages
- */
-#define NDEBUG
+#define DEFAULT_MAC_ADDRESS 0x00,0x11,0x22,0x33,0x44,0x55
+#define DEFAULT_NET_MODE NETMODE_DHCP // Set to NETMODE_STATIC to disable DHCP
+#define DEFAULT_IP_ADDRESS 192,168,1,42
+#define DEFAULT_NETMASK 255,255,255,0
+#define DEFAULT_GATEWAY_ADDRESS 192,168,1,254
+#define DEFAULT_DNS_ADDRESS 8,8,8,8
 
 
-/*******************************************************************************
- * BOARD SETTINGS
- ******************************************************************************/
+#define PROGRAM_VERSION "0.6git"
 
-#if defined (SSBRD_KMTRONIC_DINO_328)
-	// The ATmega328-based KMTronic DINo was our first supported board ever!
-	#define RELAYS_NO 4
-	#define RELAY1_PIN 8
-	#define RELAY2_PIN 7
-	#define RELAY3_PIN 6
-	#define RELAY4_PIN 5
-	#define WEBINTF_SIMPLE
-#elif defined (SSBRD_THINGSWITCHER)
-	/* Configuration for my (private) STM32-based ThingSwitcher board
-	 * 
-	 * Build as Generic STM32F1
-	 */
-	#define RELAYS_NO 3
-	#define RELAY1_PIN PB14
-	#define RELAY2_PIN PB13
-	#define RELAY3_PIN PB12
-	#define RELAYS_ACTIVE_LOW
-	#define ENABLE_THERMOMETER
-	#define THERMOMETER_PIN PB0
-	#define ENABLE_TIME
-	#define TIMESRC_STM32_RTC
-	#define WEBINTF_RICH
-	#define SMARTSTRIP_ENABLE_REST
-#elif defined (SSBRD_THINGSWITCHER_WIFI)
-	/* Configuration for my (private) ESP8266-based ThingSwitcherWifi board
-	 * 
-	 * Build as NodeMCU 1.0
-	 */
-	#define RELAYS_NO 3
-	#define RELAY1_PIN 2
-	#define RELAY2_PIN 1
-	#define RELAY3_PIN 0
-	#define RELAYS_ACTIVE_LOW
-	#define ENABLE_THERMOMETER
-	#define THERMOMETER_PIN 7		// Actually this is the multiplexer channel
-	#define ENABLE_TIME
-	#define TIMESRC_NTP
-	#define WEBINTF_RICH
-	#define SMARTSTRIP_ENABLE_REST
-#elif defined (SSBRD_GENERIC_328)
-	// FIXME
-#elif defined (SSBRD_GENERIC_ESP8266)
-	// FIXME
-#elif defined (SSBRD_GENERIC_ESP32)
-	#define RELAYS_NO 4
-	#define RELAY1_PIN 12
-	#define RELAY2_PIN 13
-	#define RELAY3_PIN 14
-	#define RELAY4_PIN LED_BUILTIN
-	#define RELAYS_ACTIVE_LOW
-	#define ENABLE_TIME
-	#define TIMESRC_NTP
-	#define WEBINTF_RICH
-#elif defined (SSBRD_GENERIC_STM32)
-	// FIXME
-#else
-	#warning "Using generic board"
+#include "board.h"
 
-	/* If you are using a custom board, feel free to customize the settings in
-	 * this section
-	 */
-	
-	#define RELAYS_NO 3
-	#define RELAY1_PIN 2
-	#define RELAY2_PIN 1
-	#define RELAY3_PIN 0
-	
-	/* Define this if your relays are activated setting their input pin LOW.
-	 * Note that this applies to all relays, you can't currently have mixed active-
-	 * high and active-low relays.
-	 */
-	#define RELAYS_ACTIVE_LOW
-
-	// Define to enable temperature-controlled relays
-	//~ #define ENABLE_THERMOMETER
-
-	// Thermometer's data wire is connected to pin 2
-	//~ #define THERMOMETER_PIN 2
-
-	// Enable the possibility to schedule on/off times according to time (Experimental)
-	//~ #define ENABLE_TIME
-
-	// Enable EXPERIMENTAL RESTful API
-	//~ #define SMARTSTRIP_ENABLE_REST
 #endif
