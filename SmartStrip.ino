@@ -1084,6 +1084,7 @@ void loop () {
 #ifdef ENABLE_THERMOMETER
 	// Update temperature
 	if (thermometer.available && (lastTemperatureRequest == 0 || millis () - lastTemperatureRequest > THERMO_READ_INTERVAL)) {
+		digitalWrite (LED_BUILTIN, LED_ON);
 		Temperature& temp = thermometer.getTemp ();
 		if (temp.valid) {
 			temperature = temp.celsius;
@@ -1094,6 +1095,7 @@ void loop () {
 
 			lastTemperatureRequest = millis ();
 		}
+		digitalWrite (LED_BUILTIN, LED_OFF);
 	}
 #endif
 
