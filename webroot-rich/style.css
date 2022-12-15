@@ -75,8 +75,9 @@ Layout styles
 
 .container
 {
-	max-width: 70em;
+	max-width: 82em;
 	margin: 0 auto;
+	overflow-x: auto;
 }
 
 .header
